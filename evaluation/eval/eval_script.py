@@ -19,9 +19,6 @@ def is_correct(item, pred_key='prediction', prec=1e-3):
                 if is_correct(item_cpy, pred_key=pred_key, prec=prec):
                     pred_matched.add(i)
                     ans_matched.add(j)
-                    if item_cpy[pred_key] == '2,3,4':
-                        print(item, flush=True)
-                        print("wtf", flush=True)
         return len(pred_matched) == len(pred) and len(ans_matched) == len(ans)
     elif isinstance(pred, str) and isinstance(ans, str):
         if '\\cup' in pred and '\\cup' in ans:
@@ -40,8 +37,7 @@ def is_correct(item, pred_key='prediction', prec=1e-3):
             label = label or (ans and pred == ans) or math_equal(pred, ans)
             return label
     else:
-        print(item, flush=True)
-        raise NotImplementedError()
+        raise NotImplementedError(f"Unsupported types: pred={type(pred)}, ans={type(ans)}")
 
 def eval_math(item, pred_key='prediction', prec=1e-3):
     pred = item[pred_key]
