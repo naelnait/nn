@@ -127,7 +127,7 @@ def strip_string(string):
     string = string.replace("infinity", "\\infty")
     if "\\infty" not in string:
         string = string.replace("inf", "\\infty")
-    string = string.replace("+\\inity", "\\infty")
+    string = string.replace("+\\infty", "\\infty")
 
     # and 
     # string = string.replace("and", "")
@@ -305,7 +305,6 @@ def extract_ocwcourses_few_shot_answer(question, reasoning, task):
     patt = regex.search(r"final answer is (?P<ans>.*)\. I hope it is correct.", reasoning)
     if patt is None:
         pred = "[invalid]"
-        print(f"DEBUG >>>\n{reasoning}", flush=True)
     else:
         pred = patt.group('ans')
     return pred
@@ -331,7 +330,6 @@ def extract_cmath_few_shot_test(question, reasoning, task):
         try:
             ans = [s for s in regex.findall(r'-?\d+\.?\d*', ans)][-1]
         except:
-            print(f"DEBUG CMATH: {reasoning}", flush=True)
             ans = "[invalid]"
     else:
         ans = extract_last_single_answer(question, reasoning, task)
