@@ -1,0 +1,14 @@
+[
+  { "id": "pa1", "name": "Leclerc Chartres", "tier": "gold", "logo": "/partners/leclerc.svg", "url": "https://www.e-leclerc.com" },
+  { "id": "pa2", "name": "McDonald's Chartres", "tier": "gold", "logo": "/partners/mcdonalds.svg", "url": "https://www.mcdonalds.fr" },
+  { "id": "pa3", "name": "Chartres Métropole", "tier": "gold", "logo": "/partners/chartres-metropole.svg", "url": "https://www.chartres-metropole.fr" },
+  { "id": "pa4", "name": "Crédit Agricole", "tier": "silver", "logo": "/partners/credit-agricole.svg", "url": "https://www.credit-agricole.fr" },
+  { "id": "pa5", "name": "Groupe Vernet", "tier": "silver", "logo": "/partners/vernet.svg", "url": "#" },
+  { "id": "pa6", "name": "BTP Centre", "tier": "silver", "logo": "/partners/btp-centre.svg", "url": "#" },
+  { "id": "pa7", "name": "L'Écho Républicain", "tier": "bronze", "logo": "/partners/echo-republicain.svg", "url": "https://www.lechorepublicain.fr" },
+  { "id": "pa8", "name": "Intersport Chartres", "tier": "bronze", "logo": "/partners/intersport.svg", "url": "#" },
+  { "id": "pa9", "name": "Garage Dubreuil", "tier": "bronze", "logo": "/partners/dubreuil.svg", "url": "#" },
+  { "id": "pa10", "name": "Pharmacie du Centre", "tier": "bronze", "logo": "/partners/pharmacie-centre.svg", "url": "#" },
+  { "id": "pa11", "name": "Hotel Le Grand Monarque", "tier": "bronze", "logo": "/partners/grand-monarque.svg", "url": "#" },
+  { "id": "pa12", "name": "Boulangerie Ferrand", "tier": "bronze", "logo": "/partners/ferrand.svg", "url": "#" }
+]

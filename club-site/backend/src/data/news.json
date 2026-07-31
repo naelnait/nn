@@ -1,0 +1,62 @@
+[
+  {
+    "id": "n1",
+    "title": "Victoire précieuse face à Aix Maurienne",
+    "slug": "victoire-precieuse-face-a-aix-maurienne",
+    "excerpt": "Le CCMB s'impose 88-79 devant son public lors de la 10e journée de NM1.",
+    "content": "Le CCMB Chartres a signé une belle victoire à domicile face à Aix Maurienne Savoie Basket (88-79) ce week-end à la Halle Jean Cochet. Portée par une défense solide en seconde période, l'équipe confirme sa dynamique positive et grimpe à la 4e place du classement.",
+    "date": "2026-07-02T09:00:00+02:00",
+    "category": "Match",
+    "image": "/news/n1.jpg"
+  },
+  {
+    "id": "n2",
+    "title": "Arrivée d'un nouveau renfort intérieur",
+    "slug": "arrivee-nouveau-renfort-interieur",
+    "excerpt": "Le club officialise l'arrivée de Marcus Johnson, pivot américain de 2m08.",
+    "content": "Le CCMB Chartres renforce son secteur intérieur avec l'arrivée de Marcus Johnson. Le pivot américain de 2m08 apportera puissance et expérience à l'équipe pour la suite de la saison de NM1.",
+    "date": "2026-06-20T14:00:00+02:00",
+    "category": "Transfert",
+    "image": "/news/n2.jpg"
+  },
+  {
+    "id": "n3",
+    "title": "Ouverture de la billetterie pour la réception du Portel",
+    "slug": "ouverture-billetterie-portel",
+    "excerpt": "Les places pour le prochain match à domicile sont disponibles en ligne.",
+    "content": "La billetterie pour le match CCMB Chartres - ESSM Le Portel du 5 août est désormais ouverte. Les supporters sont invités à réserver leurs places en ligne ou au guichet de la Halle Jean Cochet.",
+    "date": "2026-07-20T10:00:00+02:00",
+    "category": "Club",
+    "image": "/news/n3.jpg"
+  },
+  {
+    "id": "n4",
+    "title": "Le centre de formation à l'honneur",
+    "slug": "centre-formation-a-l-honneur",
+    "excerpt": "Retour sur une saison réussie pour les jeunes joueurs du centre de formation.",
+    "content": "Le centre de formation du CCMB Chartres poursuit son travail de fond avec plusieurs joueurs intégrant le groupe professionnel cette saison. Un signe encourageant pour l'avenir du club.",
+    "date": "2026-06-10T11:00:00+02:00",
+    "category": "Formation",
+    "image": "/news/n4.jpg"
+  },
+  {
+    "id": "n5",
+    "title": "Nouveau partenariat avec des acteurs locaux",
+    "slug": "nouveau-partenariat-acteurs-locaux",
+    "excerpt": "Le club renforce son réseau de partenaires pour la saison à venir.",
+    "content": "Le CCMB Chartres annonce la signature de plusieurs nouveaux partenariats avec des entreprises locales, confirmant l'ancrage territorial fort du club dans l'agglomération chartraine.",
+    "date": "2026-05-28T16:00:00+02:00",
+    "category": "Partenariat",
+    "image": "/news/n5.jpg"
+  },
+  {
+    "id": "n6",
+    "title": "Succès à l'extérieur face à Denain",
+    "slug": "succes-exterieur-face-a-denain",
+    "excerpt": "Le CCMB s'impose 90-85 sur le parquet de Denain Voltaire.",
+    "content": "Belle performance collective pour le CCMB Chartres qui s'impose 90-85 chez Denain Voltaire, confirmant la solidité de l'effectif chartrain sur la fin de saison régulière.",
+    "date": "2026-06-25T09:30:00+02:00",
+    "category": "Match",
+    "image": "/news/n6.jpg"
+  }
+]

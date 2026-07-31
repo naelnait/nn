@@ -1,0 +1,23 @@
+[
+  {
+    "id": "g1",
+    "title": "Journée 12 - CCMB vs Lyon-So Basket",
+    "date": "2026-07-15",
+    "cover": "/gallery/g1/cover.jpg",
+    "photos": ["/gallery/g1/1.jpg", "/gallery/g1/2.jpg", "/gallery/g1/3.jpg", "/gallery/g1/4.jpg"]
+  },
+  {
+    "id": "g2",
+    "title": "Journée 10 - CCMB vs Aix Maurienne",
+    "date": "2026-07-01",
+    "cover": "/gallery/g2/cover.jpg",
+    "photos": ["/gallery/g2/1.jpg", "/gallery/g2/2.jpg", "/gallery/g2/3.jpg"]
+  },
+  {
+    "id": "g3",
+    "title": "Journée 08 - Ambiance Halle Jean Cochet",
+    "date": "2026-06-17",
+    "cover": "/gallery/g3/cover.jpg",
+    "photos": ["/gallery/g3/1.jpg", "/gallery/g3/2.jpg", "/gallery/g3/3.jpg", "/gallery/g3/4.jpg", "/gallery/g3/5.jpg"]
+  }
+]

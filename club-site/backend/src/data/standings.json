@@ -1,0 +1,10 @@
+[
+  { "rank": 1, "team": "ESSM Le Portel", "played": 12, "won": 11, "lost": 1, "pointsFor": 1023, "pointsAgainst": 872, "points": 23 },
+  { "rank": 2, "team": "Lyon-So Basket", "played": 12, "won": 10, "lost": 2, "pointsFor": 998, "pointsAgainst": 901, "points": 22 },
+  { "rank": 3, "team": "Saint-Chamond Basket", "played": 12, "won": 9, "lost": 3, "pointsFor": 967, "pointsAgainst": 912, "points": 21 },
+  { "rank": 4, "team": "CCMB Chartres", "played": 12, "won": 8, "lost": 4, "pointsFor": 954, "pointsAgainst": 921, "points": 20, "isClub": true },
+  { "rank": 5, "team": "ALM Évreux Basket", "played": 12, "won": 7, "lost": 5, "pointsFor": 930, "pointsAgainst": 918, "points": 19 },
+  { "rank": 6, "team": "Denain Voltaire", "played": 12, "won": 6, "lost": 6, "pointsFor": 902, "pointsAgainst": 905, "points": 18 },
+  { "rank": 7, "team": "Poitiers Basket 86", "played": 12, "won": 5, "lost": 7, "pointsFor": 889, "pointsAgainst": 917, "points": 17 },
+  { "rank": 8, "team": "Aix Maurienne Savoie Basket", "played": 12, "won": 4, "lost": 8, "pointsFor": 861, "pointsAgainst": 930, "points": 16 }
+]

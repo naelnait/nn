@@ -1,0 +1,25 @@
+{
+  "name": "C'Chartres Métropole Basket",
+  "shortName": "CCMB",
+  "founded": 1970,
+  "league": "Nationale Masculine 1 (NM1)",
+  "venue": "Halle Jean Cochet",
+  "city": "Chartres",
+  "address": "Rue du Docteur Maunoury, 28000 Chartres",
+  "colors": ["#0b1f4b", "#f2a900"],
+  "description": "C'Chartres Métropole Basket est le club phare du basketball chartrain, évoluant en Nationale Masculine 1. Porté par une histoire riche et un public fidèle, le club forme et fait progresser des joueurs autour de valeurs de partage, d'exigence et de performance.",
+  "history": "Fondé en 1970, le club a connu de nombreuses évolutions avant de devenir une référence du basket amateur de haut niveau en région Centre-Val de Loire. La Halle Jean Cochet, son antre historique, résonne chaque week-end de match au rythme des supporters du club.",
+  "values": [
+    { "title": "Formation", "description": "Un centre de formation tourné vers la progression individuelle et collective des jeunes joueurs." },
+    { "title": "Exigence", "description": "Une culture de la performance et du travail, sur et en dehors du terrain." },
+    { "title": "Proximité", "description": "Un club ancré dans son territoire, proche de ses supporters et de ses partenaires." }
+  ],
+  "social": {
+    "facebook": "https://facebook.com",
+    "instagram": "https://instagram.com",
+    "twitter": "https://twitter.com",
+    "youtube": "https://youtube.com"
+  },
+  "contactEmail": "contact@ccmb-basket.example",
+  "contactPhone": "+33 2 37 00 00 00"
+}
