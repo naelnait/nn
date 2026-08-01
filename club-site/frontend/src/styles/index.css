@@ -25,6 +25,26 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Hero glow orbs: slow-drifting blurred blobs behind the headline, the
+   "mesh gradient neon glow" treatment — pure CSS, no canvas, cheap enough
+   to leave running continuously. */
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, -8%) scale(1.15); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-8%, 10%) scale(1.1); }
+}
+.hero-orb-a { animation: drift-a 14s ease-in-out infinite; }
+.hero-orb-b { animation: drift-b 18s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-orb-a, .hero-orb-b {
+    animation: none;
+  }
+}
+
 /* Hover shimmer on player portraits */
 .player-shimmer {
   background: linear-gradient(

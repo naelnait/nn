@@ -70,10 +70,18 @@ export function MagneticLink({ to, children, variant = "primary", className = ""
   const surface =
     variant === "ghost"
       ? "border border-white/25 text-white backdrop-blur-sm hover:border-white/50 hover:bg-white/10"
-      : "bg-cta-500 text-navy-950 shadow-[0_8px_24px_-8px_rgba(14,165,233,0.6)] hover:bg-cta-400";
+      : "bg-cta-500 text-navy-950 shadow-[0_0_28px_-4px_rgba(56,189,248,0.7)] hover:bg-cta-400 hover:shadow-[0_0_36px_-2px_rgba(56,189,248,0.9)]";
 
   return (
-    <MotionLink ref={ref} to={to} style={{ x: sx, y: sy }} className={`${base} ${surface} ${className}`}>
+    <MotionLink
+      ref={ref}
+      to={to}
+      style={{ x: sx, y: sy }}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 400, damping: 24 }}
+      className={`${base} ${surface} ${className}`}
+    >
       {children}
     </MotionLink>
   );

@@ -57,8 +57,23 @@ export default function Home() {
         {/* Duotone: recolors the (naturally warm, floodlit) photo into the
             site's blue rather than fighting it with a color-clashing overlay. */}
         <div className="absolute inset-0 bg-cta-600 mix-blend-color" />
-        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.9)_0%,rgba(7,16,34,.72)_38%,rgba(7,16,34,.35)_66%,rgba(7,16,34,.1)_88%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-navy-950 to-transparent" />
+        {/* Black/anthracite dominant per the Razer-style brief — a flat dark
+            wash on top of the duotone photo, not just the left-to-right
+            reading gradient below. */}
+        <div className="absolute inset-0 bg-navy-950/60" />
+        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.92)_0%,rgba(7,16,34,.78)_38%,rgba(7,16,34,.5)_66%,rgba(7,16,34,.25)_88%)]" />
+
+        {/* Neon glow orbs — the "mesh gradient" hero-background treatment,
+            reusing the site's own accent blue as the glow color rather than
+            introducing a new neon hue that would clash with the rest of the
+            site's blue/navy identity. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="hero-orb-a absolute -left-24 top-1/4 h-[28rem] w-[28rem] rounded-full bg-cta-500/50 blur-[100px]" />
+          <div className="hero-orb-b absolute -right-32 bottom-0 h-[24rem] w-[24rem] rounded-full bg-cta-400/40 blur-[110px]" />
+        </div>
+
+        {/* Diagonal cut into the next (navy) block, instead of a plain fade. */}
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-navy-950 [clip-path:polygon(0_100%,100%_45%,100%_100%)] sm:h-36" />
         <a
           href="https://commons.wikimedia.org/wiki/File:France_Eure_et_Loir_Chartres_Cathedrale_nuit_02.jpg"
           target="_blank"
@@ -94,7 +109,7 @@ export default function Home() {
           </motion.p>
           <StaggerHeadline
             text={club?.name ?? "CCMB Chartres"}
-            className="font-display text-[clamp(2.6rem,7vw,5.75rem)] font-semibold leading-[1.03] tracking-tight"
+            className="font-display text-[clamp(2.8rem,8vw,6.25rem)] font-extrabold uppercase leading-[1.02] tracking-tight [text-shadow:0_0_40px_rgba(56,189,248,0.35)]"
           />
           <motion.p
             initial={reduced ? false : { opacity: 0, y: 12 }}

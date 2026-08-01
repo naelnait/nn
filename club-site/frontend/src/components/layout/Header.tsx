@@ -20,7 +20,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-navy-950/70 text-white backdrop-blur-lg">
       <div className="container-page flex h-14 items-center justify-between">
-        <NavLink to="/" className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight" onClick={() => setOpen(false)}>
+        <NavLink to="/" end className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight" onClick={() => setOpen(false)}>
           <img
             src="/logo/ccmb-logo.webp"
             srcSet="/logo/ccmb-logo.webp 1x, /logo/ccmb-logo@2x.webp 2x"
