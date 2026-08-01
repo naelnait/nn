@@ -20,7 +20,7 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-navy-950 text-white shadow-lg">
       <div className="container-page flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-2 font-display text-xl font-bold uppercase tracking-wide" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 text-navy-950">CB</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-500 text-white">CB</span>
           CCMB Chartres
         </NavLink>
 
@@ -32,7 +32,7 @@ export function Header() {
               end={link.end}
               className={({ isActive }) =>
                 `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? "bg-white/10 text-gold-400" : "text-white/85 hover:bg-white/5 hover:text-white"
+                  isActive ? "bg-white/10 text-accent-400" : "text-white/85 hover:bg-white/5 hover:text-white"
                 }`
               }
             >
@@ -64,7 +64,7 @@ export function Header() {
                 end={link.end}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-3 text-sm font-medium ${isActive ? "text-gold-400" : "text-white/85"}`
+                  `rounded-md px-3 py-3 text-sm font-medium ${isActive ? "text-accent-400" : "text-white/85"}`
                 }
               >
                 {link.label}

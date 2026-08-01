@@ -19,7 +19,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-gold-400">Navigation</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent-400">Navigation</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link to="/club" className="hover:text-white">Le Club</Link></li>
             <li><Link to="/effectif" className="hover:text-white">Effectif</Link></li>
@@ -29,7 +29,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-gold-400">Club</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent-400">Club</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link to="/galerie" className="hover:text-white">Galerie</Link></li>
             <li><Link to="/partenaires" className="hover:text-white">Partenaires</Link></li>
@@ -38,7 +38,7 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-gold-400">Contact</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent-400">Contact</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li>{club?.address ?? "Chartres"}</li>
             <li>

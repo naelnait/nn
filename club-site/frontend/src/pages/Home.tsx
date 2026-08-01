@@ -23,9 +23,9 @@ export default function Home() {
       />
 
       <section className="relative overflow-hidden bg-navy-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(242,169,0,0.18),_transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(63,101,196,0.28),_transparent_55%)]" />
         <div className="container-page relative flex flex-col items-start gap-6 py-20 sm:py-28">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent-400">
             {club?.league ?? "Nationale Masculine 1"}
           </p>
           <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-6xl">
@@ -35,7 +35,7 @@ export default function Home() {
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link to="/calendrier" className="rounded-md bg-gold-500 px-5 py-2.5 text-sm font-semibold text-navy-950 transition-colors hover:bg-gold-400">
+            <Link to="/calendrier" className="rounded-md bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-400">
               Voir le calendrier
             </Link>
             <Link to="/effectif" className="rounded-md border border-white/30 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
@@ -58,7 +58,7 @@ export default function Home() {
       </Section>
 
       <Section eyebrow="NM1" title="Classement" tone="dark" action={
-        <Link to="/classement" className="text-sm font-semibold text-gold-400 hover:underline">
+        <Link to="/classement" className="text-sm font-semibold text-accent-400 hover:underline">
           Classement complet →
         </Link>
       }>

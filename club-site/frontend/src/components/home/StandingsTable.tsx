@@ -21,7 +21,7 @@ export function StandingsTable({ rows, compact = false }: { rows: StandingRow[];
           {visible.map((row) => (
             <tr
               key={row.team}
-              className={`border-b border-navy-50 last:border-0 ${row.isClub ? "bg-gold-500/10 font-semibold" : "odd:bg-navy-50/40"}`}
+              className={`border-b border-navy-50 last:border-0 ${row.isClub ? "bg-accent-500/10 font-semibold" : "odd:bg-navy-50/40"}`}
             >
               <td className="px-3 py-2.5 text-navy-500">{row.rank}</td>
               <td className="px-3 py-2.5 text-navy-900">{row.team}</td>

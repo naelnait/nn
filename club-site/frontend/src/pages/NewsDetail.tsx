@@ -20,7 +20,7 @@ export default function NewsDetail() {
       {item && (
         <>
           <Seo title={item.title} description={item.excerpt} />
-          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-gold-600">{item.category}</p>
+          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-accent-700">{item.category}</p>
           <h1 className="mt-2 font-display text-3xl font-bold text-navy-950 sm:text-4xl">{item.title}</h1>
           <p className="mt-2 text-sm text-navy-400">
             {new Date(item.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}

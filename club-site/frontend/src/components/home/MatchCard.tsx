@@ -29,7 +29,7 @@ export function MatchCard({ match }: { match: Match }) {
               {match.homeScore}-{match.awayScore}
             </span>
           ) : (
-            <span className="font-display text-sm font-semibold text-gold-400">{formatTime(match.date)}</span>
+            <span className="font-display text-sm font-semibold text-accent-400">{formatTime(match.date)}</span>
           )}
         </div>
         <span className="flex-1 text-left font-display text-lg font-semibold text-navy-900">{match.away}</span>

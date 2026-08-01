@@ -49,7 +49,7 @@ export default function Club() {
           <div className="grid gap-6 sm:grid-cols-3">
             {club.values.map((value) => (
               <div key={value.title} className="rounded-xl border border-white/10 bg-white/5 p-6">
-                <h3 className="font-display text-xl font-semibold text-gold-400">{value.title}</h3>
+                <h3 className="font-display text-xl font-semibold text-accent-400">{value.title}</h3>
                 <p className="mt-2 text-sm text-white/70">{value.description}</p>
               </div>
             ))}
