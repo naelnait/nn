@@ -39,23 +39,24 @@ export function Header() {
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? "text-accent-400" : "text-white/85 hover:text-white"
+                `relative rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive ? "text-white" : "text-white/85 hover:text-white"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {link.label}
-                  {/* One shared underline slides between sections instead of
-                      each link fading its own in and out. */}
+                  {/* One shared "liquid glass" pill slides between sections;
+                      the layout spring's bounce makes it stretch through the
+                      move and settle, rather than sliding as a rigid block. */}
                   {isActive && (
                     <motion.span
-                      layoutId="nav-underline"
-                      className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-accent-400"
-                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      layoutId="nav-glass"
+                      className="absolute inset-0 -z-10 rounded-full border border-white/25 bg-gradient-to-b from-white/25 via-white/10 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-6px_10px_rgba(255,255,255,0.06),0_4px_14px_rgba(0,0,0,0.3)] backdrop-blur-md"
+                      transition={{ type: "spring", bounce: 0.35, duration: 0.6 }}
                     />
                   )}
+                  <span className="relative z-10">{link.label}</span>
                 </>
               )}
             </NavLink>
