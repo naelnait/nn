@@ -50,20 +50,8 @@ body {
   to { transform: translateX(120%); }
 }
 
-/* Cathedral rose window, gently breathing like light through stained glass */
-.ccs-rose-glow {
-  animation: rose-glow 5s ease-in-out infinite;
-  transform-origin: 660px 236px;
-}
-
-@keyframes rose-glow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.95; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .animate-\[ticker_28s_linear_infinite\],
-  .ccs-rose-glow {
+  .animate-\[ticker_28s_linear_infinite\] {
     animation: none;
   }
 

@@ -6,7 +6,6 @@ import { MatchCard } from "../components/home/MatchCard";
 import { StandingsTable } from "../components/home/StandingsTable";
 import { NewsCard } from "../components/home/NewsCard";
 import { PartnersStrip } from "../components/home/PartnersStrip";
-import { ChartresSkyline } from "../components/originkit/ChartresSkyline";
 import { StaggerHeadline } from "../components/originkit/StaggerHeadline";
 import { MagneticLink } from "../components/originkit/MagneticLink";
 import { PlayerTicker } from "../components/originkit/PlayerTicker";
@@ -30,9 +29,27 @@ export default function Home() {
       />
 
       <section className="relative overflow-hidden bg-navy-950 text-white">
-        <ChartresSkyline uid="home" />
-        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.95)_0%,rgba(7,16,34,.78)_32%,rgba(7,16,34,.32)_60%,rgba(7,16,34,0)_78%)]" />
+        <img
+          src="/hero/chartres-cathedral.webp"
+          srcSet="/hero/chartres-cathedral-sm.webp 960w, /hero/chartres-cathedral.webp 1920w"
+          sizes="100vw"
+          alt=""
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Duotone: recolors the (naturally warm, floodlit) photo into the
+            site's blue rather than fighting it with a color-clashing overlay. */}
+        <div className="absolute inset-0 bg-accent-600 mix-blend-color" />
+        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.95)_0%,rgba(7,16,34,.82)_34%,rgba(7,16,34,.45)_62%,rgba(7,16,34,.15)_82%)]" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-950 to-transparent" />
+        <a
+          href="https://commons.wikimedia.org/wiki/File:France_Eure_et_Loir_Chartres_Cathedrale_nuit_02.jpg"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="absolute bottom-2 right-3 z-10 text-[0.65rem] text-white/35 transition-colors hover:text-white/70"
+        >
+          Photo : Calips / Wikimedia Commons, CC BY 2.5
+        </a>
         <div className="container-page relative flex flex-col items-start gap-6 py-20 sm:py-28">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-white/60">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
@@ -46,7 +63,7 @@ export default function Home() {
           </p>
           <StaggerHeadline
             text={club?.name ?? "CCMB Chartres"}
-            className="font-display text-6xl font-black italic uppercase leading-[0.9] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] sm:text-7xl lg:text-8xl"
+            className="font-display text-[clamp(2.4rem,7vw,5.6rem)] font-black italic uppercase leading-[0.9] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           />
           <p className="max-w-xl text-white/70">
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}

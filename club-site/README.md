@@ -61,6 +61,7 @@ Audit `axe-core` (WCAG 2.1 A + AA) sur les 9 pages : **aucune violation**.
 | Partenaires (noms, niveaux, sites) | [ccmbm.fr/partenaires](https://www.ccmbm.fr/partenaires) |
 | Logos E.Leclerc, McDonald's, Ford | [Simple Icons](https://simpleicons.org) (CC0) |
 | Autres logos partenaires | Emblèmes originaux, en attendant les visuels réels |
+| Photo de la cathédrale (fond du hero) | Calips, [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:France_Eure_et_Loir_Chartres_Cathedrale_nuit_02.jpg), CC BY 2.5 — recolorée en bleu et retournée horizontalement pour l'intégration |
 | Matchs, classement, actualités, albums | Données d'exemple |
 
 Les fiches joueurs ne contiennent que ce que le club publie (nom, numéro, poste, taille) — les champs non publiés sont optionnels et restent vides plutôt que d'être inventés.
