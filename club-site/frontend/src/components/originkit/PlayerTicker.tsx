@@ -32,10 +32,10 @@ function TickerRow({ players, reverse }: { players: Player[]; reverse?: boolean 
         return (
           <div
             key={`${p.id}-${i}`}
-            className="flex w-56 shrink-0 items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3.5 py-3 backdrop-blur-sm"
+            className="flex w-56 shrink-0 items-center gap-3 border-2 border-white/20 bg-navy-900 px-3.5 py-3"
           >
             <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md font-display text-lg font-bold text-white/90"
+              className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border-2 border-white/20 font-display text-lg font-bold text-white/90"
               style={{ background: ground }}
               aria-hidden="true"
             >

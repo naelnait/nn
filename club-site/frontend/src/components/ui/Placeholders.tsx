@@ -1,11 +1,20 @@
-function hashHue(seed: string): number {
+function hashIndex(seed: string, mod: number): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash << 5) - hash + seed.charCodeAt(i);
     hash |= 0;
   }
-  return Math.abs(hash) % 360;
+  return Math.abs(hash) % mod;
 }
+
+// Stand-ins for missing photos stay inside the brand's blue family instead
+// of a random hue per item — only the pairing varies.
+const GRADIENTS = [
+  "linear-gradient(135deg, #2f54a8, #0b1f4b)",
+  "linear-gradient(135deg, #0284c7, #070f26)",
+  "linear-gradient(135deg, #1f3d84, #070f26)",
+  "linear-gradient(135deg, #4f74c4, #111f42)",
+];
 
 export function MediaPlaceholder({
   seed,
@@ -18,13 +27,11 @@ export function MediaPlaceholder({
   ratio?: string;
   className?: string;
 }) {
-  const hue = hashHue(seed);
+  const gradient = GRADIENTS[hashIndex(seed, GRADIENTS.length)];
   return (
     <div
-      className={`relative flex ${ratio} items-center justify-center overflow-hidden ${className}`}
-      style={{
-        background: `linear-gradient(135deg, hsl(${hue} 60% 20%), hsl(${(hue + 40) % 360} 70% 12%))`,
-      }}
+      className={`relative flex ${ratio} items-center justify-center overflow-hidden border-2 border-navy-950 ${className}`}
+      style={{ background: gradient }}
       aria-hidden="true"
     >
       <svg viewBox="0 0 24 24" className="h-10 w-10 text-white/25" fill="none" stroke="currentColor" strokeWidth="1.2">

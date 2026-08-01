@@ -89,7 +89,7 @@ export function SupportersTicker() {
           {Array.from({ length: copies }).map((_, i) => (
             <div key={i} ref={i === 0 ? blockRef : null} className="flex shrink-0 items-center">
               {PHRASES.map((phrase, j) => (
-                <span key={j} className="mx-4 flex items-center gap-4 font-display text-sm font-bold uppercase tracking-[0.15em] text-accent-400">
+                <span key={j} className="mx-4 flex items-center gap-4 font-display text-sm font-bold uppercase tracking-[0.15em] text-cta-400">
                   {phrase}
                   <span className="text-white/25">●</span>
                 </span>

@@ -26,11 +26,11 @@ export default function Gallery() {
               <Link
                 key={album.id}
                 to={`/galerie/${album.id}`}
-                className="group block overflow-hidden rounded-xl border border-navy-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+                className="group block overflow-hidden border-2 border-navy-950 bg-white shadow-hard transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-cta"
               >
                 <MediaPlaceholder seed={album.id} label={`${album.photos.length} photos`} />
                 <div className="p-4">
-                  <h3 className="font-display text-lg font-semibold text-navy-900 group-hover:text-navy-600">{album.title}</h3>
+                  <h3 className="font-display text-lg font-bold uppercase text-navy-950">{album.title}</h3>
                   <p className="mt-1 text-sm text-navy-500">
                     {new Date(album.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>

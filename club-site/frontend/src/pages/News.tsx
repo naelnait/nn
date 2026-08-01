@@ -35,7 +35,7 @@ export default function News() {
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-md border border-navy-200 px-3 py-1.5 text-sm font-medium text-navy-600 disabled:opacity-40"
+                  className="border-2 border-navy-950 px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-navy-950 hover:bg-cta-500 disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   Précédent
                 </button>
@@ -46,7 +46,7 @@ export default function News() {
                   type="button"
                   disabled={page >= data.totalPages}
                   onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                  className="rounded-md border border-navy-200 px-3 py-1.5 text-sm font-medium text-navy-600 disabled:opacity-40"
+                  className="border-2 border-navy-950 px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-navy-950 hover:bg-cta-500 disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   Suivant
                 </button>

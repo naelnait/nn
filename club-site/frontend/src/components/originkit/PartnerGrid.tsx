@@ -82,8 +82,8 @@ export function PartnerGrid({ partners }: { partners: Partner[] }) {
             ? "scale(1.04) translateY(-3px) translateZ(8px)"
             : "none";
 
-        const tile = `flex h-20 items-center justify-center rounded-lg border bg-white px-3 text-center transition-all duration-200 ${
-          isBig ? "border-accent-500 shadow-lg" : "border-navy-100 shadow-sm"
+        const tile = `flex h-20 items-center justify-center border-2 bg-white px-3 text-center transition-all duration-200 ${
+          isBig ? "border-cta-500 shadow-hard-cta" : "border-navy-950 shadow-hard-sm"
         }`;
         const style = { transform, zIndex: isBig ? 10 : 1 };
         const hasSite = Boolean(partner.url) && partner.url !== "#";
@@ -106,7 +106,7 @@ export function PartnerGrid({ partners }: { partners: Partner[] }) {
             rel="noreferrer noopener"
             onPointerEnter={() => onEnter(i)}
             title={`${partner.name} — ouvrir le site`}
-            className={`${tile} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500`}
+            className={`${tile} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-500`}
             style={style}
           >
             <PartnerMark partner={partner} />

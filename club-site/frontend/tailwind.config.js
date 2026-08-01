@@ -42,7 +42,24 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["'Barlow Condensed'", "system-ui", "sans-serif"],
+        display: ["'Space Grotesk'", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        none: "0px",
+        DEFAULT: "0px",
+        sm: "0px",
+        md: "0px",
+        lg: "0px",
+        xl: "0px",
+        "2xl": "0px",
+        full: "9999px",
+      },
+      boxShadow: {
+        // Solid offset "hard shadow" — no blur — replaces soft drop shadows
+        // as the site's one depth cue.
+        hard: "6px 6px 0 0 #070f26",
+        "hard-sm": "4px 4px 0 0 #070f26",
+        "hard-cta": "6px 6px 0 0 #0284c7",
       },
     },
   },

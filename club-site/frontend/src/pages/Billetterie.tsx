@@ -30,7 +30,7 @@ export default function Billetterie() {
       <section className="bg-navy-950 py-16 text-white">
         <div className="container-page">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cta-400">Billetterie</p>
-          <h1 className="mt-2 font-display text-4xl font-black uppercase italic leading-none sm:text-5xl">
+          <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-tight sm:text-5xl">
             Vivez chaque match du Colisée
           </h1>
           <p className="mt-4 max-w-2xl text-white/70">
@@ -41,7 +41,7 @@ export default function Billetterie() {
           {isLoading && <Skeleton className="mt-8 h-24 max-w-md" />}
           {isError && <ErrorState />}
           {homeMatches[0] && (
-            <div className="mt-8 inline-flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-5">
+            <div className="mt-8 inline-flex flex-col gap-3 border-2 border-white/30 bg-white/5 p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-white/50">Prochain match à domicile</p>
               <p className="font-display text-xl font-bold">
                 {homeMatches[0].home} vs {homeMatches[0].away}
@@ -59,9 +59,9 @@ export default function Billetterie() {
       <Section eyebrow="Tarifs" title="Choisissez votre place">
         <div className="grid gap-6 sm:grid-cols-3">
           {TIERS.map((tier) => (
-            <div key={tier.name} className="rounded-xl border border-navy-100 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-navy-500">{tier.name}</p>
-              <p className="mt-2 font-display text-3xl font-black text-navy-950">{tier.price}</p>
+            <div key={tier.name} className="border-2 border-navy-950 bg-white p-6 shadow-hard">
+              <p className="text-sm font-bold uppercase tracking-wide text-cta-600">{tier.name}</p>
+              <p className="mt-2 font-display text-3xl font-bold text-navy-950">{tier.price}</p>
               <p className="mt-2 text-sm text-navy-500">{tier.desc}</p>
             </div>
           ))}
@@ -72,9 +72,9 @@ export default function Billetterie() {
         <Section eyebrow="Calendrier" title="Tous les matchs à domicile" tone="dark">
           <div className="grid gap-4 sm:grid-cols-2">
             {homeMatches.map((m) => (
-              <div key={m.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
+              <div key={m.id} className="flex items-center justify-between border-2 border-white/30 bg-white/5 p-4">
                 <div>
-                  <p className="font-display font-semibold text-white">{m.home} vs {m.away}</p>
+                  <p className="font-display font-bold uppercase text-white">{m.home} vs {m.away}</p>
                   <p className="text-sm text-white/50">{formatDate(m.date)}</p>
                 </div>
                 <MagneticLink to="/contact" variant="cta" className="!px-4 !py-2 text-xs">

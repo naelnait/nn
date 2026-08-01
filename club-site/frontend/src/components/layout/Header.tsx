@@ -18,7 +18,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-navy-950 text-white shadow-lg">
+    <header className="sticky top-0 z-50 border-b-4 border-cta-500 bg-navy-950 text-white">
       <div className="container-page flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-2 font-display text-xl font-bold uppercase tracking-wide" onClick={() => setOpen(false)}>
           <img
@@ -32,28 +32,28 @@ export function Header() {
           CCMB Chartres
         </NavLink>
 
-        <nav className="hidden lg:flex lg:items-center lg:gap-1">
+        <nav className="hidden lg:flex lg:items-center">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `relative rounded-full px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? "text-white" : "text-white/85 hover:text-white"
+                `relative whitespace-nowrap px-2.5 py-2 text-xs font-bold uppercase tracking-normal transition-colors xl:px-3 xl:text-sm xl:tracking-wide ${
+                  isActive ? "text-navy-950" : "text-white/85 hover:text-white"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* One shared "liquid glass" pill slides between sections;
-                      the layout spring's bounce makes it stretch through the
-                      move and settle, rather than sliding as a rigid block. */}
+                  {/* One shared solid block slides between sections — a hard
+                      cut, not a fade — matching the flood-invert press state
+                      used on buttons throughout. */}
                   {isActive && (
                     <motion.span
-                      layoutId="nav-glass"
-                      className="absolute inset-0 -z-10 rounded-full border border-white/25 bg-gradient-to-b from-white/25 via-white/10 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-6px_10px_rgba(255,255,255,0.06),0_4px_14px_rgba(0,0,0,0.3)] backdrop-blur-md"
-                      transition={{ type: "spring", bounce: 0.35, duration: 0.6 }}
+                      layoutId="nav-block"
+                      className="absolute inset-0 -z-10 bg-cta-500"
+                      transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
                     />
                   )}
                   <span className="relative z-10">{link.label}</span>
@@ -64,12 +64,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* Kept out of the rotating nav pill on purpose — the one
-              non-brand-blue color on the site stays meaningful only if it's
-              reserved for this single action. */}
+          {/* Kept out of the rotating nav on purpose — the one non-brand-blue
+              color on the site stays meaningful only if it's reserved for
+              this single action. */}
           <NavLink
             to="/billetterie"
-            className="hidden rounded-md bg-cta-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cta-500 sm:inline-block"
+            className="hidden border-2 border-cta-500 bg-cta-500 px-4 py-2 text-sm font-bold uppercase tracking-wide text-navy-950 transition-colors hover:bg-navy-950 hover:text-cta-400 sm:inline-block"
           >
             Billets
           </NavLink>
@@ -94,7 +94,7 @@ export function Header() {
             <NavLink
               to="/billetterie"
               onClick={() => setOpen(false)}
-              className="my-1 rounded-md bg-cta-600 px-3 py-3 text-center text-sm font-semibold text-white sm:hidden"
+              className="my-1 border-2 border-cta-500 bg-cta-500 px-3 py-3 text-center text-sm font-bold uppercase tracking-wide text-navy-950 sm:hidden"
             >
               Billets
             </NavLink>
@@ -105,7 +105,7 @@ export function Header() {
                 end={link.end}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-3 text-sm font-medium ${isActive ? "text-accent-400" : "text-white/85"}`
+                  `px-3 py-3 text-sm font-bold uppercase tracking-wide ${isActive ? "bg-cta-500 text-navy-950" : "text-white/85"}`
                 }
               >
                 {link.label}

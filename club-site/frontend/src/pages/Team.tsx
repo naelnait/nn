@@ -18,15 +18,15 @@ function PersonCard({ person, index, reduced }: { person: Player; index: number;
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: EASE_OUT, delay: reduced ? 0 : index * 0.04 }}
       tabIndex={0}
-      className="group overflow-hidden rounded-xl border border-navy-100 bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500"
+      className="group overflow-hidden border-2 border-navy-950 bg-white shadow-hard transition-transform duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-cta focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-500"
     >
       <PlayerPortrait player={person} />
-      <div className="flex items-baseline gap-2 p-3">
+      <div className="flex items-baseline gap-2 border-t-2 border-navy-950 p-3">
         {person.number != null && (
-          <span className="font-display text-sm font-bold tabular-nums text-accent-600">#{person.number}</span>
+          <span className="font-display text-sm font-bold tabular-nums text-cta-600">#{person.number}</span>
         )}
         <span className="min-w-0">
-          <span className="block truncate font-display text-base font-semibold text-navy-900">{person.name}</span>
+          <span className="block truncate font-display text-base font-bold uppercase text-navy-950">{person.name}</span>
           {(person.role || person.position) && (
             <span className="block text-xs uppercase tracking-wide text-navy-500">
               {person.role ?? person.position}

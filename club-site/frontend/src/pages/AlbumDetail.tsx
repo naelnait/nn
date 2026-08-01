@@ -43,7 +43,7 @@ export default function AlbumDetail() {
                 initial={reduced ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: EASE_OUT, delay: reduced ? 0 : i * 0.05 }}
-                className="overflow-hidden rounded-lg transition-shadow hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500"
+                className="overflow-hidden border-2 border-transparent transition-colors hover:border-cta-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-500"
               >
                 <MediaPlaceholder seed={photo} ratio="aspect-square" label={`#${i + 1}`} />
               </motion.button>

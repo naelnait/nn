@@ -13,10 +13,10 @@ export function Section({ title, eyebrow, action, className = "", tone = "light"
     <section className={`py-12 sm:py-16 ${tone === "dark" ? "bg-navy-950 text-white" : ""} ${className}`}>
       <div className="container-page">
         {(title || action) && (
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div className={`mb-8 flex flex-wrap items-end justify-between gap-4 border-b-4 pb-4 ${tone === "dark" ? "border-cta-500" : "border-navy-950"}`}>
             <div>
               {eyebrow && (
-                <p className={`mb-1 text-sm font-semibold uppercase tracking-wider ${tone === "dark" ? "text-accent-400" : "text-accent-700"}`}>
+                <p className={`mb-1 text-sm font-bold uppercase tracking-[0.15em] ${tone === "dark" ? "text-cta-400" : "text-cta-600"}`}>
                   {eyebrow}
                 </p>
               )}

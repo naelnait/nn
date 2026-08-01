@@ -76,7 +76,7 @@ function JerseyIllustration({ player }: { player: Player }) {
               x="150"
               y="278"
               textAnchor="middle"
-              fontFamily="'Barlow Condensed','Arial Narrow',sans-serif"
+              fontFamily="'Space Grotesk',Arial,sans-serif"
               fontSize="96"
               fontWeight="700"
               fill={ground.to}

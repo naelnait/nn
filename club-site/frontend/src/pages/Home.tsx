@@ -41,7 +41,7 @@ export default function Home() {
         />
         {/* Duotone: recolors the (naturally warm, floodlit) photo into the
             site's blue rather than fighting it with a color-clashing overlay. */}
-        <div className="absolute inset-0 bg-accent-600 mix-blend-color" />
+        <div className="absolute inset-0 bg-cta-600 mix-blend-color" />
         <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.95)_0%,rgba(7,16,34,.82)_34%,rgba(7,16,34,.45)_62%,rgba(7,16,34,.15)_82%)]" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-navy-950 to-transparent" />
         <a
@@ -60,12 +60,12 @@ export default function Home() {
             </svg>
             Le Colisée, Chartres
           </p>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cta-400">
             {club?.league ?? "Nationale Masculine 1"}
           </p>
           <StaggerHeadline
             text={club?.name ?? "CCMB Chartres"}
-            className="font-display text-[clamp(2.4rem,7vw,5.6rem)] font-black italic uppercase leading-[1.05] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+            className="font-display text-[clamp(2.4rem,7vw,5.6rem)] font-bold uppercase leading-[1.05] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           />
           <p className="max-w-xl text-white/70">
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}
@@ -113,7 +113,7 @@ export default function Home() {
       </Section>
 
       <Section eyebrow="NM1" title="Classement" tone="dark" action={
-        <Link to="/classement" className="text-sm font-semibold text-accent-400 hover:underline">
+        <Link to="/classement" className="text-sm font-semibold text-cta-400 hover:underline">
           Classement complet →
         </Link>
       }>
