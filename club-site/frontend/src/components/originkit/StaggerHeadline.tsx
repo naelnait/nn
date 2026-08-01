@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 /**
@@ -5,7 +6,10 @@ import { motion, useReducedMotion } from "framer-motion";
  * onto a real semantic heading tag with our own Tailwind classes.
  *
  * Characters are grouped per word so the line can only wrap between words —
- * a flat list of inline-block letters lets the browser break mid-word.
+ * a flat list of inline-block letters lets the browser break mid-word. The
+ * space between words is a sibling text node, not trailing content inside
+ * the inline-block wrapper: whitespace at the edge of an inline-block box
+ * collapses to nothing, which silently ran every word together.
  */
 export function StaggerHeadline({ text, className = "" }: { text: string; className?: string }) {
   const reduced = useReducedMotion();
@@ -21,7 +25,7 @@ export function StaggerHeadline({ text, className = "" }: { text: string; classN
     <motion.h1 className={className} aria-label={text}>
       {words.map((word, w) => {
         const chars = word.split("");
-        const node = (
+        const wordNode = (
           <span key={w} className="inline-block whitespace-nowrap" aria-hidden="true">
             {chars.map((char, c) => {
               const delay = charIndex * 0.02;
@@ -38,11 +42,15 @@ export function StaggerHeadline({ text, className = "" }: { text: string; classN
                 </motion.span>
               );
             })}
-            {w < words.length - 1 ? " " : null}
           </span>
         );
         charIndex += 1; // account for the space between words
-        return node;
+        return (
+          <Fragment key={w}>
+            {wordNode}
+            {w < words.length - 1 ? " " : null}
+          </Fragment>
+        );
       })}
     </motion.h1>
   );
