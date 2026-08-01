@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 241 56" role="img" aria-label="Feuillette">
+  <title>Feuillette</title>
+  <path d="M28 1 54 15 v26 L28 55 2 41 V15Z" fill="hsl(123 52% 33%)"/><path d="M28 13 42 21 v16 L28 45 14 37 v-16Z" fill="hsl(157 68% 74%)" opacity=".55"/>
+  <text x="68" y="37" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="23" font-weight="700" fill="#111f42">Feuillette</text>
+</svg>

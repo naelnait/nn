@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 56" role="img" aria-label="Chartres Sécurité Privée">
+  <title>Chartres Sécurité Privée</title>
+  <path d="M28 0 56 28 28 56 0 28Z" fill="hsl(329 52% 33%)"/><path d="M28 13 43 28 28 43 13 28Z" fill="hsl(3 68% 74%)" opacity=".6"/>
+  <text x="68" y="26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">Chartres Sécurité</text>
+  <text x="68" y="49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">Privée</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" role="img" aria-label="Selforme Formation">
+  <title>Selforme Formation</title>
+  <rect x="2" y="2" width="52" height="52" rx="13" fill="hsl(192 52% 33%)"/><path d="M2 42 L54 14 L54 41 A13 13 0 0 1 41 54 L15 54 A13 13 0 0 1 2 41Z" fill="hsl(226 68% 74%)" opacity=".55"/>
+  <text x="68" y="26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">Selforme</text>
+  <text x="68" y="49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">Formation</text>
+</svg>

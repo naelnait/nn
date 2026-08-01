@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 56" role="img" aria-label="Région Centre-Val de Loire">
+  <title>Région Centre-Val de Loire</title>
+  <circle cx="28" cy="28" r="26" fill="hsl(325 52% 33%)"/><circle cx="28" cy="28" r="15" fill="none" stroke="hsl(359 68% 74%)" stroke-width="7"/>
+  <text x="68" y="26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">Région Centre-Val</text>
+  <text x="68" y="49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="21" font-weight="700" fill="#111f42">de Loire</text>
+</svg>

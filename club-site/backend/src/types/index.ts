@@ -78,7 +78,7 @@ export interface GalleryAlbum {
 export interface Partner {
   id: string;
   name: string;
-  tier: "gold" | "silver" | "bronze";
+  tier: "institutionnel" | "majeur" | "officiel";
   logo: string;
   url: string;
 }

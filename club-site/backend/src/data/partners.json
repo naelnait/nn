@@ -1,14 +1,450 @@
 [
-  { "id": "pa1", "name": "Leclerc Chartres", "tier": "gold", "logo": "/partners/leclerc.svg", "url": "https://www.e-leclerc.com" },
-  { "id": "pa2", "name": "McDonald's Chartres", "tier": "gold", "logo": "/partners/mcdonalds.svg", "url": "https://www.mcdonalds.fr" },
-  { "id": "pa3", "name": "Chartres Métropole", "tier": "gold", "logo": "/partners/chartres-metropole.svg", "url": "https://www.chartres-metropole.fr" },
-  { "id": "pa4", "name": "Crédit Agricole", "tier": "silver", "logo": "/partners/credit-agricole.svg", "url": "https://www.credit-agricole.fr" },
-  { "id": "pa5", "name": "Groupe Vernet", "tier": "silver", "logo": "/partners/vernet.svg", "url": "#" },
-  { "id": "pa6", "name": "BTP Centre", "tier": "silver", "logo": "/partners/btp-centre.svg", "url": "#" },
-  { "id": "pa7", "name": "L'Écho Républicain", "tier": "bronze", "logo": "/partners/echo-republicain.svg", "url": "https://www.lechorepublicain.fr" },
-  { "id": "pa8", "name": "Intersport Chartres", "tier": "bronze", "logo": "/partners/intersport.svg", "url": "#" },
-  { "id": "pa9", "name": "Garage Dubreuil", "tier": "bronze", "logo": "/partners/dubreuil.svg", "url": "#" },
-  { "id": "pa10", "name": "Pharmacie du Centre", "tier": "bronze", "logo": "/partners/pharmacie-centre.svg", "url": "#" },
-  { "id": "pa11", "name": "Hotel Le Grand Monarque", "tier": "bronze", "logo": "/partners/grand-monarque.svg", "url": "#" },
-  { "id": "pa12", "name": "Boulangerie Ferrand", "tier": "bronze", "logo": "/partners/ferrand.svg", "url": "#" }
+  {
+    "id": "pa1",
+    "name": "Chartres Métropole",
+    "tier": "institutionnel",
+    "logo": "/partners/chartres-metropole.svg",
+    "url": "https://www.chartres-metropole.fr"
+  },
+  {
+    "id": "pa2",
+    "name": "Région Centre-Val de Loire",
+    "tier": "institutionnel",
+    "logo": "/partners/region-centre-val-de-loire.svg",
+    "url": "https://www.centre-valdeloire.fr/"
+  },
+  {
+    "id": "pa3",
+    "name": "Aqualter",
+    "tier": "majeur",
+    "logo": "/partners/aqualter.svg",
+    "url": "https://www.aqualter.com/"
+  },
+  {
+    "id": "pa4",
+    "name": "C'CIN",
+    "tier": "majeur",
+    "logo": "/partners/c-cin.svg",
+    "url": "http://www.cmin.fr/"
+  },
+  {
+    "id": "pa5",
+    "name": "Feuillette",
+    "tier": "majeur",
+    "logo": "/partners/feuillette.svg",
+    "url": "https://www.feuillette.fr/"
+  },
+  {
+    "id": "pa6",
+    "name": "Ford Store",
+    "tier": "majeur",
+    "logo": "/partners/ford-store.svg",
+    "url": "https://www.ford-parisbrest.fr/"
+  },
+  {
+    "id": "pa7",
+    "name": "Leclerc Chartres",
+    "tier": "majeur",
+    "logo": "/partners/leclerc-chartres.svg",
+    "url": "http://www.e-leclerc.com/magasin/luisant"
+  },
+  {
+    "id": "pa8",
+    "name": "Spalding",
+    "tier": "majeur",
+    "logo": "/partners/spalding.svg",
+    "url": "http://www.spalding.com"
+  },
+  {
+    "id": "pa9",
+    "name": "Synelva",
+    "tier": "majeur",
+    "logo": "/partners/synelva.svg",
+    "url": "http://www.synelva.fr"
+  },
+  {
+    "id": "pa10",
+    "name": "Adwork's",
+    "tier": "officiel",
+    "logo": "/partners/adwork-s.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa11",
+    "name": "Altaïs",
+    "tier": "officiel",
+    "logo": "/partners/altais.svg",
+    "url": "https://www.altais-tp.fr"
+  },
+  {
+    "id": "pa12",
+    "name": "Arthurimmo",
+    "tier": "officiel",
+    "logo": "/partners/arthurimmo.svg",
+    "url": "https://chartres.arthurimmo.com/"
+  },
+  {
+    "id": "pa13",
+    "name": "Atol",
+    "tier": "officiel",
+    "logo": "/partners/atol.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa14",
+    "name": "Auto Bilan Système",
+    "tier": "officiel",
+    "logo": "/partners/auto-bilan-systeme.svg",
+    "url": "https://www.autocontroletechnique-gellainville.fr"
+  },
+  {
+    "id": "pa15",
+    "name": "Avicenter",
+    "tier": "officiel",
+    "logo": "/partners/avicenter.svg",
+    "url": "https://www.avicenter.fr/"
+  },
+  {
+    "id": "pa16",
+    "name": "Baker Tilly",
+    "tier": "officiel",
+    "logo": "/partners/baker-tilly.svg",
+    "url": "https://www.bakertilly.fr/cabinets-d-expertise-comptable-en-france/expert-comptable-chartres"
+  },
+  {
+    "id": "pa17",
+    "name": "Campanile",
+    "tier": "officiel",
+    "logo": "/partners/campanile.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa18",
+    "name": "Captusite",
+    "tier": "officiel",
+    "logo": "/partners/captusite.svg",
+    "url": "https://www.captusite.fr/"
+  },
+  {
+    "id": "pa19",
+    "name": "CD Assur Conseil",
+    "tier": "officiel",
+    "logo": "/partners/cd-assur-conseil.svg",
+    "url": "https://agence.mma.fr/chartres-epars/"
+  },
+  {
+    "id": "pa20",
+    "name": "Chartres Enseigne",
+    "tier": "officiel",
+    "logo": "/partners/chartres-enseigne.svg",
+    "url": "http://www.chartresenseignes.com/"
+  },
+  {
+    "id": "pa21",
+    "name": "Chartres Équitation",
+    "tier": "officiel",
+    "logo": "/partners/chartres-equitation.svg",
+    "url": "https://www.chartresequitation.com/"
+  },
+  {
+    "id": "pa22",
+    "name": "Chartres Goodies",
+    "tier": "officiel",
+    "logo": "/partners/chartres-goodies.svg",
+    "url": "http://www.chartresgoodies.com/"
+  },
+  {
+    "id": "pa23",
+    "name": "Chartres Sécurité Privée",
+    "tier": "officiel",
+    "logo": "/partners/chartres-securite-privee.svg",
+    "url": "http://www.chartres-securiteprivee.fr"
+  },
+  {
+    "id": "pa24",
+    "name": "Chauveau",
+    "tier": "officiel",
+    "logo": "/partners/chauveau.svg",
+    "url": "http://www.imprimeriechauveau.fr/"
+  },
+  {
+    "id": "pa25",
+    "name": "Citeos",
+    "tier": "officiel",
+    "logo": "/partners/citeos.svg",
+    "url": "https://www.citeos.fr/"
+  },
+  {
+    "id": "pa26",
+    "name": "Cobalt",
+    "tier": "officiel",
+    "logo": "/partners/cobalt.svg",
+    "url": "https://www.cobalt-chartres.com/"
+  },
+  {
+    "id": "pa27",
+    "name": "Colas",
+    "tier": "officiel",
+    "logo": "/partners/colas.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa28",
+    "name": "Cuisinella",
+    "tier": "officiel",
+    "logo": "/partners/cuisinella.svg",
+    "url": "https://www.ma.cuisinella/fr-fr/magasins/eure-et-loir/chartres-barjouville"
+  },
+  {
+    "id": "pa29",
+    "name": "DAF 28",
+    "tier": "officiel",
+    "logo": "/partners/daf-28.svg",
+    "url": "https://www.daf28.fr/"
+  },
+  {
+    "id": "pa30",
+    "name": "Elec SAS",
+    "tier": "officiel",
+    "logo": "/partners/elec-sas.svg",
+    "url": "https://www.elec-sas.fr/"
+  },
+  {
+    "id": "pa31",
+    "name": "Euro PL Ouest",
+    "tier": "officiel",
+    "logo": "/partners/euro-pl-ouest.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa32",
+    "name": "Eurovia",
+    "tier": "officiel",
+    "logo": "/partners/eurovia.svg",
+    "url": "https://www.eurovia.fr/agences/4413-eurovia-centre-loire-dreux"
+  },
+  {
+    "id": "pa33",
+    "name": "Ferme Ste Suzanne",
+    "tier": "officiel",
+    "logo": "/partners/ferme-ste-suzanne.svg",
+    "url": "https://www.fermesaintesuzanne.fr/"
+  },
+  {
+    "id": "pa34",
+    "name": "Filibus",
+    "tier": "officiel",
+    "logo": "/partners/filibus.svg",
+    "url": "http://www.filibus.fr"
+  },
+  {
+    "id": "pa35",
+    "name": "Gaudron Paysage",
+    "tier": "officiel",
+    "logo": "/partners/gaudron-paysage.svg",
+    "url": "https://www.gaudronpaysage.fr/"
+  },
+  {
+    "id": "pa36",
+    "name": "Gauthier Traiteur",
+    "tier": "officiel",
+    "logo": "/partners/gauthier-traiteur.svg",
+    "url": "https://www.gauthier-traiteur.fr/"
+  },
+  {
+    "id": "pa37",
+    "name": "Gaz Dépannage",
+    "tier": "officiel",
+    "logo": "/partners/gaz-depannage.svg",
+    "url": "http://www.gazdepannage28.com/"
+  },
+  {
+    "id": "pa38",
+    "name": "Golf de Fontenay",
+    "tier": "officiel",
+    "logo": "/partners/golf-de-fontenay.svg",
+    "url": "https://www.golf-chartres.com/newsite/"
+  },
+  {
+    "id": "pa39",
+    "name": "Hamelin SARL",
+    "tier": "officiel",
+    "logo": "/partners/hamelin-sarl.svg",
+    "url": "http://www.hamelinsarl.fr"
+  },
+  {
+    "id": "pa40",
+    "name": "Heaux Solutions",
+    "tier": "officiel",
+    "logo": "/partners/heaux-solutions.svg",
+    "url": "https://www.heaux.fr/"
+  },
+  {
+    "id": "pa41",
+    "name": "Hydro Confort",
+    "tier": "officiel",
+    "logo": "/partners/hydro-confort.svg",
+    "url": "https://www.hydro-confort-28.fr/"
+  },
+  {
+    "id": "pa42",
+    "name": "Imagine Avocats",
+    "tier": "officiel",
+    "logo": "/partners/imagine-avocats.svg",
+    "url": "https://www.imagine-avocats.fr/"
+  },
+  {
+    "id": "pa43",
+    "name": "In Extenso",
+    "tier": "officiel",
+    "logo": "/partners/in-extenso.svg",
+    "url": "http://www.inextenso.fr/FicheAgence?ieq=239"
+  },
+  {
+    "id": "pa44",
+    "name": "JA Chartres",
+    "tier": "officiel",
+    "logo": "/partners/ja-chartres.svg",
+    "url": "http://ajachartres.fr"
+  },
+  {
+    "id": "pa45",
+    "name": "L'Écho Républicain",
+    "tier": "officiel",
+    "logo": "/partners/l-echo-republicain.svg",
+    "url": "https://www.lechorepublicain.fr/"
+  },
+  {
+    "id": "pa46",
+    "name": "L'Eurélienne",
+    "tier": "officiel",
+    "logo": "/partners/l-eurelienne.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa47",
+    "name": "Les 3S Sports",
+    "tier": "officiel",
+    "logo": "/partners/les-3s-sports.svg",
+    "url": "http://www.les3ssports.com/contact"
+  },
+  {
+    "id": "pa48",
+    "name": "Lichette",
+    "tier": "officiel",
+    "logo": "/partners/lichette.svg",
+    "url": "#"
+  },
+  {
+    "id": "pa49",
+    "name": "MC Media",
+    "tier": "officiel",
+    "logo": "/partners/mc-media.svg",
+    "url": "https://mcmedia.fr/"
+  },
+  {
+    "id": "pa50",
+    "name": "McDonald's",
+    "tier": "officiel",
+    "logo": "/partners/mcdonald-s.svg",
+    "url": "http://www.mcdonalds.fr/"
+  },
+  {
+    "id": "pa51",
+    "name": "Mon Marché Bio",
+    "tier": "officiel",
+    "logo": "/partners/mon-marche-bio.svg",
+    "url": "https://www.accord-bio.fr/mon-marche-bio/"
+  },
+  {
+    "id": "pa52",
+    "name": "Odyssée",
+    "tier": "officiel",
+    "logo": "/partners/odyssee.svg",
+    "url": "https://www.odyssee-chartres.fr/"
+  },
+  {
+    "id": "pa53",
+    "name": "Optic 2000",
+    "tier": "officiel",
+    "logo": "/partners/optic-2000.svg",
+    "url": "https://www.optic2000.com/magasins/l/chartres/9-place-du-cygne/c00300"
+  },
+  {
+    "id": "pa54",
+    "name": "Pompes Funèbres Perche",
+    "tier": "officiel",
+    "logo": "/partners/pompes-funebres-perche.svg",
+    "url": "https://www.stephaneperche.fr/P1200.aspx"
+  },
+  {
+    "id": "pa55",
+    "name": "Radio Intensité",
+    "tier": "officiel",
+    "logo": "/partners/radio-intensite.svg",
+    "url": "http://www.intensite.net/"
+  },
+  {
+    "id": "pa56",
+    "name": "SARL Localie",
+    "tier": "officiel",
+    "logo": "/partners/sarl-localie.svg",
+    "url": "http://localie.fr/"
+  },
+  {
+    "id": "pa57",
+    "name": "Schmidt",
+    "tier": "officiel",
+    "logo": "/partners/schmidt.svg",
+    "url": "https://www.home-design.schmidt/fr-fr/magasins/eure-et-loir/chartres-barjouville"
+  },
+  {
+    "id": "pa58",
+    "name": "Selforme Formation",
+    "tier": "officiel",
+    "logo": "/partners/selforme-formation.svg",
+    "url": "https://www.selforme.com/chartres-sport-formation/"
+  },
+  {
+    "id": "pa59",
+    "name": "Serge Blanco",
+    "tier": "officiel",
+    "logo": "/partners/serge-blanco.svg",
+    "url": "https://www.facebook.com/sergeblancochartres/"
+  },
+  {
+    "id": "pa60",
+    "name": "Sitrans",
+    "tier": "officiel",
+    "logo": "/partners/sitrans.svg",
+    "url": "https://www.sitrans.fr/"
+  },
+  {
+    "id": "pa61",
+    "name": "TTC",
+    "tier": "officiel",
+    "logo": "/partners/ttc.svg",
+    "url": "http://groupe-ttc.fr/index.php"
+  },
+  {
+    "id": "pa62",
+    "name": "Vent en Poupe",
+    "tier": "officiel",
+    "logo": "/partners/vent-en-poupe.svg",
+    "url": "https://www.vent-en-poupe.fr/"
+  },
+  {
+    "id": "pa63",
+    "name": "Vivapp",
+    "tier": "officiel",
+    "logo": "/partners/vivapp.svg",
+    "url": "https://www.vivapp.fr/"
+  },
+  {
+    "id": "pa64",
+    "name": "XL Sound",
+    "tier": "officiel",
+    "logo": "/partners/xl-sound.svg",
+    "url": "https://www.xl-sound.fr/"
+  }
 ]

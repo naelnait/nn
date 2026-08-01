@@ -6,6 +6,7 @@ import { MatchCard } from "../components/home/MatchCard";
 import { StandingsTable } from "../components/home/StandingsTable";
 import { NewsCard } from "../components/home/NewsCard";
 import { PartnersStrip } from "../components/home/PartnersStrip";
+import { AmbientFade } from "../components/originkit/AmbientFade";
 import { StaggerHeadline } from "../components/originkit/StaggerHeadline";
 import { MagneticLink } from "../components/originkit/MagneticLink";
 import { PlayerTicker } from "../components/originkit/PlayerTicker";
@@ -28,7 +29,7 @@ export default function Home() {
       />
 
       <section className="relative overflow-hidden bg-navy-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(63,101,196,0.28),_transparent_55%)]" />
+        <AmbientFade tone="dark" />
         <div className="container-page relative flex flex-col items-start gap-6 py-20 sm:py-28">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent-400">
             {club?.league ?? "Nationale Masculine 1"}

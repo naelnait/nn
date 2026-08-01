@@ -20,7 +20,7 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-navy-950 text-white shadow-lg">
       <div className="container-page flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-2 font-display text-xl font-bold uppercase tracking-wide" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-500 text-white">CB</span>
+          <img src="/logo/ccmb-logo.svg" alt="" width={41} height={36} className="h-9 w-auto" />
           CCMB Chartres
         </NavLink>
 

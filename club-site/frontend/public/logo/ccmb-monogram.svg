@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="CCMB Chartres">
+  <defs>
+    <linearGradient id="ccmbGround" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#12295c"/>
+      <stop offset="100%" stop-color="#0b1f4b"/>
+    </linearGradient>
+    <clipPath id="ccmbBall">
+      <circle cx="256" cy="238" r="126"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#ccmbGround)"/>
+
+  <!-- Cathedral spires: the two mismatched towers of Notre-Dame de Chartres -->
+  <g fill="#ffffff" opacity="0.16">
+    <polygon points="196,120 214,120 205,58"/>
+    <rect x="196" y="120" width="18" height="46"/>
+    <polygon points="298,120 316,120 307,38"/>
+    <rect x="298" y="120" width="18" height="46"/>
+  </g>
+
+  <!-- Basketball -->
+  <circle cx="256" cy="238" r="126" fill="#ffffff"/>
+  <g clip-path="url(#ccmbBall)" fill="none" stroke="#0b1f4b" stroke-width="13" stroke-linecap="round">
+    <line x1="256" y1="106" x2="256" y2="370"/>
+    <line x1="124" y1="238" x2="388" y2="238"/>
+    <path d="M154 140 a 190 190 0 0 1 0 196"/>
+    <path d="M358 140 a 190 190 0 0 0 0 196"/>
+  </g>
+  <circle cx="256" cy="238" r="126" fill="none" stroke="#3f65c4" stroke-width="12"/>
+
+  <text x="256" y="437" text-anchor="middle"
+        font-family="'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"
+        font-size="86" font-weight="700" letter-spacing="6" fill="#ffffff">CCMB</text>
+</svg>

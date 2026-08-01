@@ -7,15 +7,6 @@ function hashHue(seed: string): number {
   return Math.abs(hash) % 360;
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 export function PlayerAvatar({ name, number }: { name: string; number: number }) {
   const hue = hashHue(name);
   return (
@@ -58,16 +49,6 @@ export function MediaPlaceholder({
           {label}
         </span>
       )}
-    </div>
-  );
-}
-
-export function PartnerBadge({ name }: { name: string }) {
-  return (
-    <div className="flex h-20 items-center justify-center rounded-lg border border-navy-100 bg-white px-4 text-center transition-shadow hover:shadow-md">
-      <span className="font-display text-sm font-semibold uppercase tracking-wide text-navy-700">
-        {initials(name)} <span className="hidden text-navy-400 sm:inline">· {name}</span>
-      </span>
     </div>
   );
 }

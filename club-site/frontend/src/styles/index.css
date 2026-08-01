@@ -25,8 +25,63 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Ambient cross-fading veils */
+.ambient-veil {
+  position: absolute;
+  display: block;
+  border-radius: 9999px;
+  filter: blur(60px);
+  will-change: transform, opacity;
+}
+
+.ambient-veil-1 {
+  width: 70vw;
+  height: 70vw;
+  max-width: 900px;
+  max-height: 900px;
+  top: -22%;
+  right: -12%;
+  animation: veil-drift-a 22s ease-in-out infinite alternate;
+}
+
+.ambient-veil-2 {
+  width: 60vw;
+  height: 60vw;
+  max-width: 760px;
+  max-height: 760px;
+  bottom: -28%;
+  left: -10%;
+  animation: veil-drift-b 27s ease-in-out infinite alternate;
+}
+
+.ambient-veil-3 {
+  width: 46vw;
+  height: 46vw;
+  max-width: 580px;
+  max-height: 580px;
+  top: 22%;
+  left: 38%;
+  animation: veil-drift-c 19s ease-in-out infinite alternate;
+}
+
+@keyframes veil-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.75; }
+  to   { transform: translate3d(-7%, 9%, 0) scale(1.16); opacity: 1; }
+}
+
+@keyframes veil-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); opacity: 1; }
+  to   { transform: translate3d(9%, -8%, 0) scale(0.94); opacity: 0.7; }
+}
+
+@keyframes veil-drift-c {
+  from { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0.55; }
+  to   { transform: translate3d(-11%, -6%, 0) scale(1.22); opacity: 0.95; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-\[ticker_28s_linear_infinite\] {
+  .animate-\[ticker_28s_linear_infinite\],
+  .ambient-veil {
     animation: none;
   }
 }

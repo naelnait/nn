@@ -3,7 +3,7 @@ import { loadData } from "../utils/loadData.js";
 import { cacheControl } from "../middleware/cache.js";
 import type { Partner } from "../types/index.js";
 
-const tierOrder: Record<Partner["tier"], number> = { gold: 0, silver: 1, bronze: 2 };
+const tierOrder: Record<Partner["tier"], number> = { institutionnel: 0, majeur: 1, officiel: 2 };
 
 export const partnersRouter = Router();
 
