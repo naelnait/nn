@@ -28,7 +28,7 @@ export default function AlbumDetail() {
         <>
           <Seo title={album.title} />
           <h1 className="mt-6 font-display text-3xl font-bold text-navy-950">{album.title}</h1>
-          <p className="mt-2 text-sm text-navy-400">
+          <p className="mt-2 text-sm text-navy-500">
             {new Date(album.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
           </p>
 

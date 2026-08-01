@@ -34,7 +34,7 @@ export function PartnerMark({ partner }: { partner: Partner }) {
   return (
     <span className="font-display text-sm font-semibold uppercase tracking-wide text-navy-700">
       {initials(partner.name)}
-      <span className="hidden text-navy-400 sm:inline"> · {partner.name}</span>
+      <span className="hidden text-navy-500 sm:inline"> · {partner.name}</span>
     </span>
   );
 }

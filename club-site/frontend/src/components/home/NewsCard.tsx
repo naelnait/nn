@@ -10,7 +10,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
     >
       <MediaPlaceholder seed={item.id} label={item.category} />
       <div className="p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-navy-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-navy-500">
           {new Date(item.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
         </p>
         <h3 className="mt-1 font-display text-lg font-semibold text-navy-900 group-hover:text-navy-600">

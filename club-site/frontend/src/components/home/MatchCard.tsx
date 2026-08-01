@@ -16,7 +16,7 @@ export function MatchCard({ match }: { match: Match }) {
   const isPlayed = match.status === "played";
   return (
     <div className="rounded-xl border border-navy-100 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-navy-400">
+      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-navy-500">
         <span>{match.competition}{match.matchday ? ` · J${match.matchday}` : ""}</span>
         <span>{formatDate(match.date)}</span>
       </div>
@@ -35,7 +35,7 @@ export function MatchCard({ match }: { match: Match }) {
         <span className="flex-1 text-left font-display text-lg font-semibold text-navy-900">{match.away}</span>
       </div>
 
-      <p className="mt-3 text-center text-xs text-navy-400">{match.venue}</p>
+      <p className="mt-3 text-center text-xs text-navy-500">{match.venue}</p>
     </div>
   );
 }

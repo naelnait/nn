@@ -11,7 +11,14 @@ export function Footer() {
       <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <img src="/logo/ccmb-logo.svg" alt="" width={55} height={48} className="h-12 w-auto" />
+            <img
+              src="/logo/ccmb-logo.webp"
+              srcSet="/logo/ccmb-logo.webp 1x, /logo/ccmb-logo@2x.webp 2x"
+              alt=""
+              width={55}
+              height={48}
+              className="h-12 w-auto"
+            />
             <p className="font-display text-lg font-bold uppercase tracking-wide text-white">
               {club?.shortName ?? "CCMB Chartres"}
             </p>

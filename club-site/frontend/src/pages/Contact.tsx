@@ -114,15 +114,15 @@ export default function Contact() {
             <h3 className="font-display text-xl font-semibold text-navy-900">Coordonnées</h3>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
-                <dt className="font-semibold text-navy-400">Adresse</dt>
+                <dt className="font-semibold text-navy-500">Adresse</dt>
                 <dd className="text-navy-800">{club?.address}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-navy-400">Email</dt>
+                <dt className="font-semibold text-navy-500">Email</dt>
                 <dd className="text-navy-800">{club?.contactEmail}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-navy-400">Téléphone</dt>
+                <dt className="font-semibold text-navy-500">Téléphone</dt>
                 <dd className="text-navy-800">{club?.contactPhone}</dd>
               </div>
             </dl>

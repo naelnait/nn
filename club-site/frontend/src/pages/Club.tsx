@@ -23,19 +23,19 @@ export default function Club() {
             <div className="rounded-xl border border-navy-100 bg-navy-50/60 p-6">
               <dl className="space-y-4 text-sm">
                 <div>
-                  <dt className="font-semibold text-navy-400">Salle</dt>
+                  <dt className="font-semibold text-navy-500">Salle</dt>
                   <dd className="text-navy-900">{club.venue}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-navy-400">Ville</dt>
+                  <dt className="font-semibold text-navy-500">Ville</dt>
                   <dd className="text-navy-900">{club.city}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-navy-400">Championnat</dt>
+                  <dt className="font-semibold text-navy-500">Championnat</dt>
                   <dd className="text-navy-900">{club.league}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-navy-400">Fondation</dt>
+                  <dt className="font-semibold text-navy-500">Fondation</dt>
                   <dd className="text-navy-900">{club.founded}</dd>
                 </div>
               </dl>

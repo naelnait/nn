@@ -28,7 +28,7 @@ function PersonCard({ person, index, reduced }: { person: Player; index: number;
         <span className="min-w-0">
           <span className="block truncate font-display text-base font-semibold text-navy-900">{person.name}</span>
           {(person.role || person.position) && (
-            <span className="block text-xs uppercase tracking-wide text-navy-400">
+            <span className="block text-xs uppercase tracking-wide text-navy-500">
               {person.role ?? person.position}
               {details && <span className="tabular-nums"> · {details}</span>}
             </span>

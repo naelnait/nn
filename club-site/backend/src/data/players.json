@@ -5,7 +5,7 @@
     "name": "Loïs Gendrey",
     "position": "Meneur",
     "height": "1m71",
-    "photo": "/players/lois.png"
+    "photo": "/players/lois.webp"
   },
   {
     "id": "p2",
@@ -13,7 +13,7 @@
     "name": "Shérif Sebabe",
     "position": "Ailier",
     "height": "1m93",
-    "photo": "/players/sherif-sebabe.png"
+    "photo": "/players/sherif-sebabe.webp"
   },
   {
     "id": "p3",
@@ -21,7 +21,7 @@
     "name": "Théo Lefebvre",
     "position": "Meneur",
     "height": "1m80",
-    "photo": "/players/theo-lefebvre.png"
+    "photo": "/players/theo-lefebvre.webp"
   },
   {
     "id": "p4",
@@ -29,7 +29,7 @@
     "name": "Babacar Niasse",
     "position": "Arrière",
     "height": "1m93",
-    "photo": "/players/babacar-niasse.png"
+    "photo": "/players/babacar-niasse.webp"
   },
   {
     "id": "p5",
@@ -37,7 +37,7 @@
     "name": "Fallou Dieng",
     "position": "Pivot",
     "height": "2m04",
-    "photo": "/players/dieng-fallou.png"
+    "photo": "/players/dieng-fallou.webp"
   },
   {
     "id": "p6",
@@ -45,7 +45,7 @@
     "name": "Kévin Mondésir",
     "position": "Ailier fort",
     "height": "2m04",
-    "photo": "/players/kevin-mondesir.png"
+    "photo": "/players/kevin-mondesir.webp"
   },
   {
     "id": "p7",
@@ -53,7 +53,7 @@
     "name": "Yann Siegwarth",
     "position": "Arrière",
     "height": "1m85",
-    "photo": "/players/yann-siegwarth.png"
+    "photo": "/players/yann-siegwarth.webp"
   },
   {
     "id": "p8",
@@ -61,7 +61,7 @@
     "name": "Luc Loubaki",
     "position": "Arrière",
     "height": "1m91",
-    "photo": "/players/luc-loubaki.png"
+    "photo": "/players/luc-loubaki.webp"
   },
   {
     "id": "p9",
@@ -69,7 +69,7 @@
     "name": "Fabien Paschal",
     "position": "Pivot",
     "height": "2m08",
-    "photo": "/players/fabien-paschal.png"
+    "photo": "/players/fabien-paschal.webp"
   },
   {
     "id": "p10",
@@ -77,7 +77,7 @@
     "name": "Moussa Mayaki",
     "position": "Pivot",
     "height": "2m00",
-    "photo": "/players/moussa.png"
+    "photo": "/players/moussa.webp"
   },
   {
     "id": "p11",
@@ -85,7 +85,7 @@
     "name": "Phil Henry",
     "position": "Ailier fort",
     "height": "2m03",
-    "photo": "/players/phil.png"
+    "photo": "/players/phil.webp"
   },
   {
     "id": "p12",
@@ -93,41 +93,41 @@
     "name": "Gédéon Dimoké",
     "position": "Arrière",
     "height": "2m02",
-    "photo": "/players/gedeon-dimoke-osango.png"
+    "photo": "/players/gedeon-dimoke-osango.webp"
   },
   {
     "id": "s1",
     "name": "Abgue Barakaou",
     "role": "Coach",
     "staff": true,
-    "photo": "/players/abgue.png"
+    "photo": "/players/abgue.webp"
   },
   {
     "id": "s2",
     "name": "Théo Faure",
     "role": "Assistant",
     "staff": true,
-    "photo": "/players/theo-f.png"
+    "photo": "/players/theo-f.webp"
   },
   {
     "id": "s3",
     "name": "Yohann Meyniel",
     "role": "Assistant",
     "staff": true,
-    "photo": "/players/yohann.png"
+    "photo": "/players/yohann.webp"
   },
   {
     "id": "s4",
     "name": "Yves Paris",
     "role": "Président",
     "staff": true,
-    "photo": "/players/yves.png"
+    "photo": "/players/yves.webp"
   },
   {
     "id": "s5",
     "name": "Dejan Sencanski",
     "role": "Team Manager",
     "staff": true,
-    "photo": "/players/dejan.png"
+    "photo": "/players/dejan.webp"
   }
 ]

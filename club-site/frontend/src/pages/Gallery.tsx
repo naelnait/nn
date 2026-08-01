@@ -31,7 +31,7 @@ export default function Gallery() {
                 <MediaPlaceholder seed={album.id} label={`${album.photos.length} photos`} />
                 <div className="p-4">
                   <h3 className="font-display text-lg font-semibold text-navy-900 group-hover:text-navy-600">{album.title}</h3>
-                  <p className="mt-1 text-sm text-navy-400">
+                  <p className="mt-1 text-sm text-navy-500">
                     {new Date(album.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
                 </div>
