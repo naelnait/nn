@@ -24,6 +24,21 @@ export default {
           600: "#2748a0",
           700: "#1e3f8f",
         },
+        // Semantic conversion tokens, layered on top of the brand primitives
+        // above (see DESIGN_TOKENS.md). Used only for ticket/purchase calls
+        // to action and scarcity messaging — never for general UI — so the
+        // one non-brand color on the site stays meaningful when it appears.
+        cta: {
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+        },
+        soldout: {
+          400: "#f87171",
+          500: "#ef4444",
+          600: "#dc2626",
+        },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
