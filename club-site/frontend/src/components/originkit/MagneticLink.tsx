@@ -85,7 +85,7 @@ export function MagneticLink({ to, children, variant = "primary", className = ""
   const sweepColor = variant === "cta" ? "bg-cta-400" : variant === "primary" ? "bg-accent-400" : "bg-white/15";
   const surface =
     variant === "cta"
-      ? "bg-cta-600 text-white shadow-[0_6px_18px_-6px_rgba(22,163,74,0.7)]"
+      ? "bg-cta-600 text-white shadow-[0_6px_18px_-6px_rgba(2,132,199,0.7)]"
       : variant === "primary"
         ? "bg-accent-500 text-white"
         : "border border-white/30 text-white";

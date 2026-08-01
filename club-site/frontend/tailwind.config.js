@@ -29,10 +29,10 @@ export default {
         // to action and scarcity messaging — never for general UI — so the
         // one non-brand color on the site stays meaningful when it appears.
         cta: {
-          400: "#4ade80",
-          500: "#22c55e",
-          600: "#16a34a",
-          700: "#15803d",
+          400: "#38bdf8",
+          500: "#0ea5e9",
+          600: "#0284c7",
+          700: "#0369a1",
         },
         soldout: {
           400: "#f87171",
