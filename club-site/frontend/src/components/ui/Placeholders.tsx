@@ -30,7 +30,7 @@ export function MediaPlaceholder({
   const gradient = GRADIENTS[hashIndex(seed, GRADIENTS.length)];
   return (
     <div
-      className={`relative flex ${ratio} items-center justify-center overflow-hidden border-2 border-navy-950 ${className}`}
+      className={`relative flex ${ratio} items-center justify-center overflow-hidden ${className}`}
       style={{ background: gradient }}
       aria-hidden="true"
     >

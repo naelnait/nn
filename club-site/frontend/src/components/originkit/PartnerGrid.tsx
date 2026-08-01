@@ -82,8 +82,8 @@ export function PartnerGrid({ partners }: { partners: Partner[] }) {
             ? "scale(1.04) translateY(-3px) translateZ(8px)"
             : "none";
 
-        const tile = `flex h-20 items-center justify-center border-2 bg-white px-3 text-center transition-all duration-200 ${
-          isBig ? "border-cta-500 shadow-hard-cta" : "border-navy-950 shadow-hard-sm"
+        const tile = `flex h-20 items-center justify-center rounded-2xl border bg-white px-3 text-center transition-all duration-200 ${
+          isBig ? "border-cta-300 shadow-xl" : "border-navy-100 shadow-sm"
         }`;
         const style = { transform, zIndex: isBig ? 10 : 1 };
         const hasSite = Boolean(partner.url) && partner.url !== "#";

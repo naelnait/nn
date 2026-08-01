@@ -4,24 +4,24 @@ export function StandingsTable({ rows, compact = false }: { rows: StandingRow[];
   const visible = compact ? rows.slice(0, 6) : rows;
 
   return (
-    <div className="overflow-x-auto border-2 border-navy-950 bg-white">
+    <div className="overflow-x-auto rounded-3xl border border-navy-100 bg-white shadow-sm">
       <table className="w-full min-w-[520px] border-collapse text-sm">
         <thead>
           <tr className="bg-navy-950 text-left text-white">
-            <th className="px-3 py-3 font-bold uppercase tracking-wide">#</th>
-            <th className="px-3 py-3 font-bold uppercase tracking-wide">Équipe</th>
-            <th className="px-3 py-3 text-center font-bold uppercase tracking-wide">J</th>
-            <th className="px-3 py-3 text-center font-bold uppercase tracking-wide">G</th>
-            <th className="px-3 py-3 text-center font-bold uppercase tracking-wide">P</th>
-            {!compact && <th className="px-3 py-3 text-center font-bold uppercase tracking-wide">+/-</th>}
-            <th className="px-3 py-3 text-center font-bold uppercase tracking-wide">Pts</th>
+            <th className="px-4 py-3.5 font-medium uppercase tracking-wide text-white/70">#</th>
+            <th className="px-4 py-3.5 font-medium uppercase tracking-wide text-white/70">Équipe</th>
+            <th className="px-4 py-3.5 text-center font-medium uppercase tracking-wide text-white/70">J</th>
+            <th className="px-4 py-3.5 text-center font-medium uppercase tracking-wide text-white/70">G</th>
+            <th className="px-4 py-3.5 text-center font-medium uppercase tracking-wide text-white/70">P</th>
+            {!compact && <th className="px-4 py-3.5 text-center font-medium uppercase tracking-wide text-white/70">+/-</th>}
+            <th className="px-4 py-3.5 text-center font-medium uppercase tracking-wide text-white/70">Pts</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((row) => (
             <tr
               key={row.team}
-              className={`border-b-2 border-navy-950 last:border-0 ${row.isClub ? "bg-cta-500/15 font-bold" : "odd:bg-navy-50"}`}
+              className={`border-b border-navy-100 last:border-0 ${row.isClub ? "bg-cta-500/10 font-semibold" : ""}`}
             >
               <td className="px-3 py-2.5 text-navy-500">{row.rank}</td>
               <td className="px-3 py-2.5 text-navy-900">{row.team}</td>

@@ -4,9 +4,9 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 
 /**
  * Pointer-follow "magnetic" link, adapted from OriginKit's
- * magnetic-hover-button onto react-router's <Link>. The pointer-attraction
- * physics stay; the visual finish is a hard block that flips solid-white on
- * hover/press rather than a soft circular color sweep.
+ * magnetic-hover-button onto react-router's <Link> — a soft pill that leans
+ * toward the cursor, closer to Apple's understated hover physics than a
+ * loud visual effect.
  */
 const MotionLink = motion(Link);
 
@@ -66,11 +66,11 @@ export function MagneticLink({ to, children, variant = "primary", className = ""
   }, [x, y, sx, sy]);
 
   const base =
-    "relative inline-flex items-center gap-2 border-2 px-5 py-3 text-sm font-bold uppercase tracking-wide transition-colors duration-150";
+    "relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium transition-colors duration-200";
   const surface =
     variant === "ghost"
-      ? "border-white/40 text-white hover:border-white hover:bg-white hover:text-navy-950"
-      : "border-cta-500 bg-cta-500 text-navy-950 hover:border-white hover:bg-white";
+      ? "border border-white/25 text-white backdrop-blur-sm hover:border-white/50 hover:bg-white/10"
+      : "bg-cta-500 text-navy-950 shadow-[0_8px_24px_-8px_rgba(14,165,233,0.6)] hover:bg-cta-400";
 
   return (
     <MotionLink ref={ref} to={to} style={{ x: sx, y: sy }} className={`${base} ${surface} ${className}`}>

@@ -3,3 +3,5 @@ dist
 .env
 *.tsbuildinfo
 vite.config.js
+test-results
+playwright-report

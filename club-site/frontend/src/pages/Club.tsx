@@ -20,7 +20,7 @@ export default function Club() {
               <h3 className="mt-8 font-display text-2xl font-bold text-navy-900">Notre histoire</h3>
               <p className="mt-3 leading-relaxed text-navy-600">{club.history}</p>
             </div>
-            <div className="border-2 border-navy-950 bg-navy-50 p-6 shadow-hard">
+            <div className="rounded-3xl border border-navy-100 bg-navy-50 p-6">
               <dl className="space-y-4 text-sm">
                 <div>
                   <dt className="font-semibold text-navy-500">Salle</dt>
@@ -48,8 +48,8 @@ export default function Club() {
         <Section eyebrow="Notre ADN" title="Nos valeurs" tone="dark">
           <div className="grid gap-6 sm:grid-cols-3">
             {club.values.map((value) => (
-              <div key={value.title} className="border-2 border-white/30 bg-white/5 p-6">
-                <h3 className="font-display text-xl font-bold uppercase text-cta-400">{value.title}</h3>
+              <div key={value.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <h3 className="font-display text-xl font-semibold text-cta-400">{value.title}</h3>
                 <p className="mt-2 text-sm text-white/70">{value.description}</p>
               </div>
             ))}

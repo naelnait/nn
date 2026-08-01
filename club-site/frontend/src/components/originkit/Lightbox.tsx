@@ -68,7 +68,7 @@ export function Lightbox({ photos, index, title, onClose, onNavigate }: Lightbox
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center border-2 border-white/40 text-white transition-colors hover:border-cta-400 hover:bg-cta-500 hover:text-navy-950"
+            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:border-white/40 hover:bg-white/10"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 6l12 12M18 6L6 18" />
@@ -91,7 +91,7 @@ export function Lightbox({ photos, index, title, onClose, onNavigate }: Lightbox
               type="button"
               onClick={() => go(-1)}
               aria-label="Photo précédente"
-              className="flex h-11 w-11 items-center justify-center border-2 border-white/40 text-white transition-colors hover:border-cta-400 hover:bg-cta-500 hover:text-navy-950"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:border-white/40 hover:bg-white/10"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 5l-7 7 7 7" />
@@ -104,7 +104,7 @@ export function Lightbox({ photos, index, title, onClose, onNavigate }: Lightbox
               type="button"
               onClick={() => go(1)}
               aria-label="Photo suivante"
-              className="flex h-11 w-11 items-center justify-center border-2 border-white/40 text-white transition-colors hover:border-cta-400 hover:bg-cta-500 hover:text-navy-950"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-white transition-colors hover:border-white/40 hover:bg-white/10"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 5l7 7-7 7" />

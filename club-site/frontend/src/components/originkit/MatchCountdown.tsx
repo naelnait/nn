@@ -35,7 +35,7 @@ export function MatchCountdown({ date }: { date: string }) {
   return (
     <div className="flex items-center gap-3" aria-label={`Prochain match dans ${left.days} jours, ${left.hours} heures et ${left.minutes} minutes`}>
       {units.map((u) => (
-        <div key={u.label} className="flex flex-col items-center border-2 border-cta-500 px-3 py-1.5">
+        <div key={u.label} className="flex flex-col items-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm">
           <span className="font-display text-xl font-bold tabular-nums text-cta-400">
             {String(u.value).padStart(2, "0")}
           </span>

@@ -28,40 +28,40 @@ export default function Contact() {
         <div className="grid gap-10 lg:grid-cols-2">
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="name" className="block text-sm font-bold uppercase tracking-wide text-navy-950">Nom</label>
+              <label htmlFor="name" className="block text-sm font-medium text-navy-700">Nom</label>
               <input
                 id="name"
                 required
                 minLength={2}
                 value={form.name}
                 onChange={handleChange("name")}
-                className="mt-1 w-full border-2 border-navy-950 px-3 py-2 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/40"
+                className="mt-1.5 w-full rounded-xl border border-navy-200 px-4 py-2.5 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/30"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-bold uppercase tracking-wide text-navy-950">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-navy-700">Email</label>
               <input
                 id="email"
                 type="email"
                 required
                 value={form.email}
                 onChange={handleChange("email")}
-                className="mt-1 w-full border-2 border-navy-950 px-3 py-2 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/40"
+                className="mt-1.5 w-full rounded-xl border border-navy-200 px-4 py-2.5 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/30"
               />
             </div>
             <div>
-              <label htmlFor="subject" className="block text-sm font-bold uppercase tracking-wide text-navy-950">Sujet</label>
+              <label htmlFor="subject" className="block text-sm font-medium text-navy-700">Sujet</label>
               <input
                 id="subject"
                 required
                 minLength={2}
                 value={form.subject}
                 onChange={handleChange("subject")}
-                className="mt-1 w-full border-2 border-navy-950 px-3 py-2 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/40"
+                className="mt-1.5 w-full rounded-xl border border-navy-200 px-4 py-2.5 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/30"
               />
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-bold uppercase tracking-wide text-navy-950">Message</label>
+              <label htmlFor="message" className="block text-sm font-medium text-navy-700">Message</label>
               <textarea
                 id="message"
                 required
@@ -69,7 +69,7 @@ export default function Contact() {
                 rows={5}
                 value={form.message}
                 onChange={handleChange("message")}
-                className="mt-1 w-full border-2 border-navy-950 px-3 py-2 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/40"
+                className="mt-1.5 w-full rounded-xl border border-navy-200 px-4 py-2.5 text-sm focus:border-cta-500 focus:outline-none focus:ring-2 focus:ring-cta-500/30"
               />
             </div>
 
@@ -79,7 +79,7 @@ export default function Contact() {
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 420, damping: 26 }}
-              className="border-2 border-navy-950 bg-navy-950 px-5 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-hard transition-colors hover:bg-cta-500 hover:text-navy-950 disabled:opacity-50"
+              className="rounded-full bg-navy-950 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-500 hover:text-navy-950 disabled:opacity-50"
             >
               {sendContact.isPending ? "Envoi..." : "Envoyer le message"}
             </motion.button>
@@ -110,7 +110,7 @@ export default function Contact() {
             </AnimatePresence>
           </form>
 
-          <div className="border-2 border-navy-950 bg-navy-50 p-6">
+          <div className="rounded-3xl border border-navy-100 bg-navy-50 p-6">
             <h3 className="font-display text-xl font-semibold text-navy-900">Coordonnées</h3>
             <dl className="mt-4 space-y-3 text-sm">
               <div>

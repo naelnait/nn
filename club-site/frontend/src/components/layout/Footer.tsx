@@ -19,7 +19,7 @@ export function Footer() {
               height={48}
               className="h-12 w-auto"
             />
-            <p className="font-display text-lg font-bold uppercase tracking-wide text-white">
+            <p className="font-display text-lg font-semibold text-white">
               {club?.shortName ?? "CCMB Chartres"}
             </p>
           </div>

@@ -22,14 +22,14 @@ export default function Calendar() {
     <>
       <Seo title="Calendrier" description="Calendrier complet des matchs du CCMB Chartres : résultats et rencontres à venir." />
       <Section eyebrow="Saison" title="Calendrier & résultats" action={
-        <div className="inline-flex border-2 border-navy-950">
+        <div className="inline-flex rounded-full border border-navy-200 bg-white p-1">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setFilter(tab.key)}
-              className={`px-3 py-1.5 text-sm font-bold uppercase tracking-wide transition-colors ${
-                filter === tab.key ? "bg-cta-500 text-navy-950" : "text-navy-600 hover:bg-navy-50"
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                filter === tab.key ? "bg-navy-950 text-white" : "text-navy-600 hover:bg-navy-50"
               }`}
             >
               {tab.label}
