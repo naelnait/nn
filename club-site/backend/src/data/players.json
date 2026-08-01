@@ -1,12 +1,133 @@
 [
-  { "id": "p1", "number": 4, "name": "Lucas Moreau", "position": "Meneur", "height": "1m85", "birthYear": 1998, "nationality": "FRA", "photo": "/players/p1.jpg" },
-  { "id": "p2", "number": 6, "name": "Ethan Dubois", "position": "Arrière", "height": "1m92", "birthYear": 1999, "nationality": "FRA", "photo": "/players/p2.jpg" },
-  { "id": "p3", "number": 7, "name": "Malik Benali", "position": "Ailier", "height": "1m98", "birthYear": 1997, "nationality": "FRA", "photo": "/players/p3.jpg" },
-  { "id": "p4", "number": 9, "name": "Thomas Girard", "position": "Ailier fort", "height": "2m02", "birthYear": 1996, "nationality": "FRA", "photo": "/players/p4.jpg" },
-  { "id": "p5", "number": 11, "name": "Marcus Johnson", "position": "Pivot", "height": "2m08", "birthYear": 1995, "nationality": "USA", "photo": "/players/p5.jpg" },
-  { "id": "p6", "number": 13, "name": "Hugo Lefevre", "position": "Meneur", "height": "1m88", "birthYear": 2001, "nationality": "FRA", "photo": "/players/p6.jpg" },
-  { "id": "p7", "number": 15, "name": "Amine Cherif", "position": "Ailier", "height": "1m96", "birthYear": 2000, "nationality": "FRA", "photo": "/players/p7.jpg" },
-  { "id": "p8", "number": 21, "name": "Jordan Reed", "position": "Pivot", "height": "2m10", "birthYear": 1994, "nationality": "USA", "photo": "/players/p8.jpg" },
-  { "id": "p9", "number": 23, "name": "Nathan Petit", "position": "Arrière", "height": "1m90", "birthYear": 1999, "nationality": "FRA", "photo": "/players/p9.jpg" },
-  { "id": "p10", "number": 32, "name": "Karim Zeroual", "position": "Ailier fort", "height": "2m00", "birthYear": 1997, "nationality": "FRA", "photo": "/players/p10.jpg" }
+  {
+    "id": "p1",
+    "number": 3,
+    "name": "Loïs Gendrey",
+    "position": "Meneur",
+    "height": "1m71",
+    "photo": "/players/lois.png"
+  },
+  {
+    "id": "p2",
+    "number": 1,
+    "name": "Shérif Sebabe",
+    "position": "Ailier",
+    "height": "1m93",
+    "photo": "/players/sherif-sebabe.png"
+  },
+  {
+    "id": "p3",
+    "number": 4,
+    "name": "Théo Lefebvre",
+    "position": "Meneur",
+    "height": "1m80",
+    "photo": "/players/theo-lefebvre.png"
+  },
+  {
+    "id": "p4",
+    "number": 8,
+    "name": "Babacar Niasse",
+    "position": "Arrière",
+    "height": "1m93",
+    "photo": "/players/babacar-niasse.png"
+  },
+  {
+    "id": "p5",
+    "number": 11,
+    "name": "Fallou Dieng",
+    "position": "Pivot",
+    "height": "2m04",
+    "photo": "/players/dieng-fallou.png"
+  },
+  {
+    "id": "p6",
+    "number": 12,
+    "name": "Kévin Mondésir",
+    "position": "Ailier fort",
+    "height": "2m04",
+    "photo": "/players/kevin-mondesir.png"
+  },
+  {
+    "id": "p7",
+    "number": 13,
+    "name": "Yann Siegwarth",
+    "position": "Arrière",
+    "height": "1m85",
+    "photo": "/players/yann-siegwarth.png"
+  },
+  {
+    "id": "p8",
+    "number": 20,
+    "name": "Luc Loubaki",
+    "position": "Arrière",
+    "height": "1m91",
+    "photo": "/players/luc-loubaki.png"
+  },
+  {
+    "id": "p9",
+    "number": 26,
+    "name": "Fabien Paschal",
+    "position": "Pivot",
+    "height": "2m08",
+    "photo": "/players/fabien-paschal.png"
+  },
+  {
+    "id": "p10",
+    "number": 27,
+    "name": "Moussa Mayaki",
+    "position": "Pivot",
+    "height": "2m00",
+    "photo": "/players/moussa.png"
+  },
+  {
+    "id": "p11",
+    "number": 32,
+    "name": "Phil Henry",
+    "position": "Ailier fort",
+    "height": "2m03",
+    "photo": "/players/phil.png"
+  },
+  {
+    "id": "p12",
+    "number": 95,
+    "name": "Gédéon Dimoké",
+    "position": "Arrière",
+    "height": "2m02",
+    "photo": "/players/gedeon-dimoke-osango.png"
+  },
+  {
+    "id": "s1",
+    "name": "Abgue Barakaou",
+    "role": "Coach",
+    "staff": true,
+    "photo": "/players/abgue.png"
+  },
+  {
+    "id": "s2",
+    "name": "Théo Faure",
+    "role": "Assistant",
+    "staff": true,
+    "photo": "/players/theo-f.png"
+  },
+  {
+    "id": "s3",
+    "name": "Yohann Meyniel",
+    "role": "Assistant",
+    "staff": true,
+    "photo": "/players/yohann.png"
+  },
+  {
+    "id": "s4",
+    "name": "Yves Paris",
+    "role": "Président",
+    "staff": true,
+    "photo": "/players/yves.png"
+  },
+  {
+    "id": "s5",
+    "name": "Dejan Sencanski",
+    "role": "Team Manager",
+    "staff": true,
+    "photo": "/players/dejan.png"
+  }
 ]

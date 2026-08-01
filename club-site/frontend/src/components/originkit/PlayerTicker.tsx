@@ -35,15 +35,23 @@ function TickerRow({ players, reverse }: { players: Player[]; reverse?: boolean 
             className="flex w-56 shrink-0 items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3.5 py-3 backdrop-blur-sm"
           >
             <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md font-display text-lg font-bold text-white/90"
+              className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md font-display text-lg font-bold text-white/90"
               style={{ background: ground }}
               aria-hidden="true"
             >
-              {p.number}
+              {p.photo ? (
+                <img src={p.photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-top" />
+              ) : (
+                p.number
+              )}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-white">{p.name}</span>
-              <span className="block truncate text-[0.68rem] uppercase tracking-wide text-white/50">{p.position}</span>
+              {(p.role ?? p.position) && (
+                <span className="block truncate text-[0.68rem] uppercase tracking-wide text-white/50">
+                  {p.role ?? p.position}
+                </span>
+              )}
             </span>
           </div>
         );

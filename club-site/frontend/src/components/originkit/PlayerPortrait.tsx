@@ -34,7 +34,7 @@ function JerseyIllustration({ player }: { player: Player }) {
   const lean = (seed % 3) - 1;
 
   return (
-    <svg viewBox="0 0 300 360" className="h-full w-full" role="img" aria-label={`${player.name}, maillot ${player.number}`}>
+    <svg viewBox="0 0 300 360" className="h-full w-full" role="img" aria-label={player.name}>
       <defs>
         <linearGradient id={`g-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={ground.from} />
@@ -71,18 +71,19 @@ function JerseyIllustration({ player }: { player: Player }) {
           <path d="M192 178 c-14-16-26-22-42-24 v34 c18 2 30 6 42 14Z" fill={ground.from} fillOpacity="0.5" />
           {/* Head */}
           <circle cx="150" cy="106" r="42" fill="#ffffff" fillOpacity="0.93" />
-          {/* Jersey number */}
-          <text
-            x="150"
-            y="278"
-            textAnchor="middle"
-            fontFamily="'Barlow Condensed','Arial Narrow',sans-serif"
-            fontSize="96"
-            fontWeight="700"
-            fill={ground.to}
-          >
-            {player.number}
-          </text>
+          {player.number != null && (
+            <text
+              x="150"
+              y="278"
+              textAnchor="middle"
+              fontFamily="'Barlow Condensed','Arial Narrow',sans-serif"
+              fontSize="96"
+              fontWeight="700"
+              fill={ground.to}
+            >
+              {player.number}
+            </text>
+          )}
         </g>
 
         <rect y="230" width="300" height="130" fill={`url(#fade-${uid})`} />
@@ -115,9 +116,13 @@ export function PlayerPortrait({ player }: { player: Player }) {
       {/* Shimmer: a light band sweeps across the portrait on hover. */}
       <span className="player-shimmer pointer-events-none absolute inset-0" aria-hidden="true" />
 
-      <span className="pointer-events-none absolute left-2 top-2 rounded bg-navy-950/70 px-2 py-0.5 font-display text-xs font-bold tabular-nums text-white">
-        {player.number}
-      </span>
+      {/* The club's official cards already carry the number and name, so the
+          badge is only needed behind the drawn fallback. */}
+      {!hasPhoto && player.number != null && (
+        <span className="pointer-events-none absolute left-2 top-2 rounded bg-navy-950/70 px-2 py-0.5 font-display text-xs font-bold tabular-nums text-white">
+          {player.number}
+        </span>
+      )}
     </div>
   );
 }

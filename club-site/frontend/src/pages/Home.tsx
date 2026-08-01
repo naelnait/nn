@@ -20,6 +20,7 @@ export default function Home() {
   const standings = useStandings();
   const news = useNews(1, 3);
   const players = usePlayers();
+  const squad = players.data?.filter((p) => !p.staff) ?? [];
 
   return (
     <>
@@ -46,10 +47,10 @@ export default function Home() {
             <MagneticLink to="/effectif" variant="ghost">Découvrir l'effectif</MagneticLink>
           </div>
 
-          {players.data && players.data.length > 0 && (
+          {squad.length > 0 && (
             <div className="w-full">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Notre effectif</p>
-              <PlayerTicker players={players.data} />
+              <PlayerTicker players={squad} />
             </div>
           )}
         </div>

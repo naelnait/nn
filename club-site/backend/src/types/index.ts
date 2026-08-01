@@ -22,13 +22,17 @@ export interface Club {
 
 export interface Player {
   id: string;
-  number: number;
   name: string;
-  position: string;
-  height: string;
-  birthYear: number;
-  nationality: string;
   photo: string;
+  /** Staff members share the squad endpoint and carry a role instead of a position. */
+  staff?: boolean;
+  role?: string;
+  /** The club publishes name and portrait only; the rest is optional. */
+  number?: number;
+  position?: string;
+  height?: string;
+  birthYear?: number;
+  nationality?: string;
 }
 
 export interface Match {
