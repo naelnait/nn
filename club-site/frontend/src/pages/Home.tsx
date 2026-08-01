@@ -6,7 +6,11 @@ import { MatchCard } from "../components/home/MatchCard";
 import { StandingsTable } from "../components/home/StandingsTable";
 import { NewsCard } from "../components/home/NewsCard";
 import { PartnersStrip } from "../components/home/PartnersStrip";
-import { useClub, useLatestMatch, useNews, useNextMatch, useStandings } from "../hooks/useApi";
+import { StaggerHeadline } from "../components/originkit/StaggerHeadline";
+import { MagneticLink } from "../components/originkit/MagneticLink";
+import { PlayerTicker } from "../components/originkit/PlayerTicker";
+import { SupportersTicker } from "../components/originkit/SupportersTicker";
+import { useClub, useLatestMatch, useNews, useNextMatch, usePlayers, useStandings } from "../hooks/useApi";
 
 export default function Home() {
   const { data: club } = useClub();
@@ -14,6 +18,7 @@ export default function Home() {
   const latestMatch = useLatestMatch();
   const standings = useStandings();
   const news = useNews(1, 3);
+  const players = usePlayers();
 
   return (
     <>
@@ -28,22 +33,28 @@ export default function Home() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent-400">
             {club?.league ?? "Nationale Masculine 1"}
           </p>
-          <h1 className="font-display text-4xl font-bold uppercase leading-tight sm:text-6xl">
-            {club?.name ?? "CCMB Chartres"}
-          </h1>
+          <StaggerHeadline
+            text={club?.name ?? "CCMB Chartres"}
+            className="font-display text-4xl font-bold uppercase leading-tight sm:text-6xl"
+          />
           <p className="max-w-xl text-white/70">
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link to="/calendrier" className="rounded-md bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-400">
-              Voir le calendrier
-            </Link>
-            <Link to="/effectif" className="rounded-md border border-white/30 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
-              Découvrir l'effectif
-            </Link>
+            <MagneticLink to="/calendrier" variant="primary">Voir le calendrier</MagneticLink>
+            <MagneticLink to="/effectif" variant="ghost">Découvrir l'effectif</MagneticLink>
           </div>
+
+          {players.data && players.data.length > 0 && (
+            <div className="w-full">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Notre effectif</p>
+              <PlayerTicker players={players.data} />
+            </div>
+          )}
         </div>
       </section>
+
+      <SupportersTicker />
 
       <Section eyebrow="Match" title="Dernier résultat & prochain rendez-vous">
         <div className="grid gap-6 sm:grid-cols-2">
