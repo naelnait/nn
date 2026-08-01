@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const links = [
   { to: "/", label: "Accueil", end: true },
@@ -31,12 +32,25 @@ export function Header() {
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? "bg-white/10 text-accent-400" : "text-white/85 hover:bg-white/5 hover:text-white"
+                `relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive ? "text-accent-400" : "text-white/85 hover:text-white"
                 }`
               }
             >
-              {link.label}
+              {({ isActive }) => (
+                <>
+                  {link.label}
+                  {/* One shared underline slides between sections instead of
+                      each link fading its own in and out. */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute inset-x-2 -bottom-0.5 h-0.5 rounded-full bg-accent-400"
+                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

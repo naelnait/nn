@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Seo } from "../components/ui/Seo";
 import { Section } from "../components/ui/Section";
 import { useClub, useSendContact } from "../hooks/useApi";
@@ -72,20 +73,41 @@ export default function Contact() {
               />
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={sendContact.isPending}
-              className="rounded-md bg-navy-950 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-800 disabled:opacity-50"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 420, damping: 26 }}
+              className="rounded-md bg-navy-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-600 hover:shadow-lg disabled:opacity-50"
             >
               {sendContact.isPending ? "Envoi..." : "Envoyer le message"}
-            </button>
+            </motion.button>
 
-            {sendContact.isSuccess && (
-              <p className="text-sm font-medium text-green-700">Merci, votre message a bien été envoyé.</p>
-            )}
-            {sendContact.isError && (
-              <p className="text-sm font-medium text-red-700">{sendContact.error.message}</p>
-            )}
+            <AnimatePresence mode="wait">
+              {sendContact.isSuccess && (
+                <motion.p
+                  key="ok"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-sm font-medium text-green-700"
+                >
+                  Merci, votre message a bien été envoyé.
+                </motion.p>
+              )}
+              {sendContact.isError && (
+                <motion.p
+                  key="err"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-sm font-medium text-red-700"
+                >
+                  {sendContact.error.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </form>
 
           <div className="rounded-xl border border-navy-100 bg-navy-50/60 p-6">
