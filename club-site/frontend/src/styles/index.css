@@ -79,9 +79,40 @@ body {
   to   { transform: translate3d(-11%, -6%, 0) scale(1.22); opacity: 0.95; }
 }
 
+/* Hover shimmer on player portraits */
+.player-shimmer {
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.28) 48%,
+    rgba(255, 255, 255, 0.42) 52%,
+    transparent 62%
+  );
+  transform: translateX(-120%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.group:hover .player-shimmer,
+.group:focus-visible .player-shimmer {
+  opacity: 1;
+  animation: shimmer-sweep 0.9s ease-out;
+}
+
+@keyframes shimmer-sweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-\[ticker_28s_linear_infinite\],
   .ambient-veil {
     animation: none;
+  }
+
+  .group:hover .player-shimmer,
+  .group:focus-visible .player-shimmer {
+    animation: none;
+    opacity: 0;
   }
 }

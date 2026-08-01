@@ -7,19 +7,6 @@ function hashHue(seed: string): number {
   return Math.abs(hash) % 360;
 }
 
-export function PlayerAvatar({ name, number }: { name: string; number: number }) {
-  const hue = hashHue(name);
-  return (
-    <div
-      className="flex aspect-square w-full items-center justify-center rounded-xl text-white"
-      style={{ background: `linear-gradient(145deg, hsl(${hue} 55% 22%), hsl(${hue} 55% 12%))` }}
-      aria-hidden="true"
-    >
-      <span className="font-display text-5xl font-bold text-white/90">{number}</span>
-    </div>
-  );
-}
-
 export function MediaPlaceholder({
   seed,
   label,

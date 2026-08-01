@@ -6,21 +6,29 @@ import type { Player } from "../../types";
  * generated jersey-number cards since no real player photos exist.
  * Pure CSS animation — respects prefers-reduced-motion globally.
  */
-function hashHue(seed: string): number {
+function seedOf(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash << 5) - hash + seed.charCodeAt(i);
     hash |= 0;
   }
-  return Math.abs(hash) % 360;
+  return Math.abs(hash);
 }
+
+// Same blue grounds as the roster portraits, so the two views agree.
+const GROUNDS = [
+  "linear-gradient(150deg, #2f54a8, #16305e)",
+  "linear-gradient(150deg, #1f3d84, #111f42)",
+  "linear-gradient(150deg, #16305e, #0b1f4b)",
+  "linear-gradient(150deg, #4f74c4, #1f3d84)",
+];
 
 function TickerRow({ players, reverse }: { players: Player[]; reverse?: boolean }) {
   const loop = [...players, ...players];
   return (
     <div className="flex w-max animate-[ticker_28s_linear_infinite] gap-4" style={reverse ? { animationDirection: "reverse" } : undefined}>
       {loop.map((p, i) => {
-        const hue = hashHue(p.name);
+        const ground = GROUNDS[seedOf(p.name) % GROUNDS.length];
         return (
           <div
             key={`${p.id}-${i}`}
@@ -28,7 +36,7 @@ function TickerRow({ players, reverse }: { players: Player[]; reverse?: boolean 
           >
             <span
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md font-display text-lg font-bold text-white/90"
-              style={{ background: `linear-gradient(150deg, hsl(${hue} 60% 32%), hsl(${hue} 60% 18%))` }}
+              style={{ background: ground }}
               aria-hidden="true"
             >
               {p.number}
