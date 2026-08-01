@@ -37,18 +37,20 @@ export function createApp() {
   });
   app.use("/api", apiLimiter);
 
+  // Health check stays unversioned — infra (load balancers, uptime probes)
+  // shouldn't need to track API version bumps just to ping liveness.
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  app.use("/api/club", clubRouter);
-  app.use("/api/players", playersRouter);
-  app.use("/api/matches", matchesRouter);
-  app.use("/api/standings", standingsRouter);
-  app.use("/api/news", newsRouter);
-  app.use("/api/gallery", galleryRouter);
-  app.use("/api/partners", partnersRouter);
-  app.use("/api/contact", contactRouter);
+  app.use("/api/v1/club", clubRouter);
+  app.use("/api/v1/players", playersRouter);
+  app.use("/api/v1/matches", matchesRouter);
+  app.use("/api/v1/standings", standingsRouter);
+  app.use("/api/v1/news", newsRouter);
+  app.use("/api/v1/gallery", galleryRouter);
+  app.use("/api/v1/partners", partnersRouter);
+  app.use("/api/v1/contact", contactRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

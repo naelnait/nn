@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
+import { z } from "zod";
 import { ApiError } from "../middleware/errorHandler.js";
-import type { ContactPayload } from "../types/index.js";
 
 export const contactRouter = Router();
 
@@ -13,34 +13,28 @@ const contactLimiter = rateLimit({
   message: { error: "Trop de messages envoyés, réessayez plus tard." },
 });
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function isContactPayload(body: unknown): body is ContactPayload {
-  if (!body || typeof body !== "object") return false;
-  const b = body as Record<string, unknown>;
-  return (
-    typeof b.name === "string" &&
-    b.name.trim().length > 1 &&
-    typeof b.email === "string" &&
-    emailRegex.test(b.email) &&
-    typeof b.subject === "string" &&
-    b.subject.trim().length > 1 &&
-    typeof b.message === "string" &&
-    b.message.trim().length > 9
-  );
-}
+// Upper bounds are defense-in-depth against oversized payloads, not just UX —
+// express.json({ limit: "50kb" }) caps the whole body, but a single 49kb
+// field is still wasteful to store/log.
+const ContactSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(200),
+  subject: z.string().trim().min(2).max(200),
+  message: z.string().trim().min(10).max(5000),
+});
 
 contactRouter.post("/", contactLimiter, (req, res, next) => {
   try {
-    if (!isContactPayload(req.body)) {
+    const parsed = ContactSchema.safeParse(req.body);
+    if (!parsed.success) {
       throw new ApiError(400, "Merci de compléter correctement tous les champs du formulaire.");
     }
 
     // In a real deployment this would enqueue an email / CRM lead.
     console.log("New contact message:", {
-      name: req.body.name,
-      email: req.body.email,
-      subject: req.body.subject,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      subject: parsed.data.subject,
     });
 
     res.status(201).json({ success: true });
