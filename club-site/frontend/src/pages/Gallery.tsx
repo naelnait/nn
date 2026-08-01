@@ -10,7 +10,7 @@ export default function Gallery() {
 
   return (
     <>
-      <Seo title="Galerie" description="Albums photos des matchs du CCMB Chartres à la Halle Jean Cochet." />
+      <Seo title="Galerie" description="Albums photos des matchs du CCMB Chartres au Colisée de Chartres." />
       <Section eyebrow="Ambiance" title="Galerie photos">
         {isLoading && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

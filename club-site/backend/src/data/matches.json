@@ -1,9 +1,9 @@
 [
-  { "id": "m1", "competition": "NM1", "matchday": 12, "date": "2026-07-15T20:00:00+02:00", "home": "CCMB Chartres", "away": "Lyon-So Basket", "homeScore": 91, "awayScore": 98, "venue": "Halle Jean Cochet", "status": "played" },
+  { "id": "m1", "competition": "NM1", "matchday": 12, "date": "2026-07-15T20:00:00+02:00", "home": "CCMB Chartres", "away": "Lyon-So Basket", "homeScore": 91, "awayScore": 98, "venue": "Colisée de Chartres", "status": "played" },
   { "id": "m2", "competition": "NM1", "matchday": 11, "date": "2026-07-08T20:30:00+02:00", "home": "Poitiers Basket 86", "away": "CCMB Chartres", "homeScore": 74, "awayScore": 81, "venue": "Salle Léo Lagrange", "status": "played" },
-  { "id": "m3", "competition": "NM1", "matchday": 10, "date": "2026-07-01T20:00:00+02:00", "home": "CCMB Chartres", "away": "Aix Maurienne Savoie Basket", "homeScore": 88, "awayScore": 79, "venue": "Halle Jean Cochet", "status": "played" },
+  { "id": "m3", "competition": "NM1", "matchday": 10, "date": "2026-07-01T20:00:00+02:00", "home": "CCMB Chartres", "away": "Aix Maurienne Savoie Basket", "homeScore": 88, "awayScore": 79, "venue": "Colisée de Chartres", "status": "played" },
   { "id": "m4", "competition": "NM1", "matchday": 9, "date": "2026-06-24T20:00:00+02:00", "home": "Denain Voltaire", "away": "CCMB Chartres", "homeScore": 85, "awayScore": 90, "venue": "Salle Pierre Duforest", "status": "played" },
-  { "id": "m5", "competition": "NM1", "matchday": 13, "date": "2026-08-05T20:00:00+02:00", "home": "CCMB Chartres", "away": "ESSM Le Portel", "venue": "Halle Jean Cochet", "status": "upcoming" },
+  { "id": "m5", "competition": "NM1", "matchday": 13, "date": "2026-08-05T20:00:00+02:00", "home": "CCMB Chartres", "away": "ESSM Le Portel", "venue": "Colisée de Chartres", "status": "upcoming" },
   { "id": "m6", "competition": "NM1", "matchday": 14, "date": "2026-08-12T20:30:00+02:00", "home": "Saint-Chamond Basket", "away": "CCMB Chartres", "venue": "Halle des Sports Saint-Chamond", "status": "upcoming" },
-  { "id": "m7", "competition": "Coupe de France", "matchday": null, "date": "2026-08-19T20:00:00+02:00", "home": "CCMB Chartres", "away": "ALM Évreux Basket", "venue": "Halle Jean Cochet", "status": "upcoming" }
+  { "id": "m7", "competition": "Coupe de France", "matchday": null, "date": "2026-08-19T20:00:00+02:00", "home": "CCMB Chartres", "away": "ALM Évreux Basket", "venue": "Colisée de Chartres", "status": "upcoming" }
 ]

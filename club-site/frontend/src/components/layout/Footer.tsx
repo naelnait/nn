@@ -13,7 +13,7 @@ export function Footer() {
             {club?.shortName ?? "CCMB Chartres"}
           </p>
           <p className="mt-3 text-sm leading-relaxed">
-            {club?.venue ?? "Halle Jean Cochet"} · {club?.city ?? "Chartres"}
+            {club?.venue ?? "Colisée de Chartres"} · {club?.city ?? "Chartres"}
           </p>
           <p className="mt-1 text-sm">{club?.league ?? "Nationale Masculine 1"}</p>
         </div>
