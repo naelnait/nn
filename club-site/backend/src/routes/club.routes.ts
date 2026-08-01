@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { loadData } from "../utils/loadData.js";
+import { getDb } from "../db/index.js";
+import { rowToClub } from "../db/mappers.js";
 import { cacheControl } from "../middleware/cache.js";
-import type { Club } from "../types/index.js";
 
 export const clubRouter = Router();
 
-clubRouter.get("/", cacheControl(300), async (_req, res, next) => {
+clubRouter.get("/", cacheControl(300), (_req, res, next) => {
   try {
-    const club = await loadData<Club>("club.json");
-    res.json(club);
+    const row = getDb().prepare("SELECT * FROM club WHERE id = 1").get() as Record<string, unknown>;
+    res.json(rowToClub(row));
   } catch (err) {
     next(err);
   }

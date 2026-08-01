@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { loadData } from "../utils/loadData.js";
+import { getDb } from "../db/index.js";
+import { rowToStanding } from "../db/mappers.js";
 import { cacheControl } from "../middleware/cache.js";
-import type { StandingRow } from "../types/index.js";
 
 export const standingsRouter = Router();
 
-standingsRouter.get("/", cacheControl(300), async (_req, res, next) => {
+standingsRouter.get("/", cacheControl(300), (_req, res, next) => {
   try {
-    const standings = await loadData<StandingRow[]>("standings.json");
-    res.json([...standings].sort((a, b) => a.rank - b.rank));
+    const rows = getDb().prepare("SELECT * FROM standings ORDER BY rank ASC").all();
+    res.json((rows as Record<string, unknown>[]).map(rowToStanding));
   } catch (err) {
     next(err);
   }

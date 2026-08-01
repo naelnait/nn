@@ -1,3 +1,7 @@
 node_modules
 dist
 .env
+
+# generated at runtime by `npm run db:migrate` / first boot — rebuild from
+# src/data/*.json + src/db/migrations, never hand-edited
+data/*.sqlite*

@@ -1,16 +1,19 @@
 import { Router } from "express";
-import { loadData } from "../utils/loadData.js";
+import { getDb } from "../db/index.js";
+import { rowToPartner } from "../db/mappers.js";
 import { cacheControl } from "../middleware/cache.js";
-import type { Partner } from "../types/index.js";
-
-const tierOrder: Record<Partner["tier"], number> = { institutionnel: 0, majeur: 1, officiel: 2 };
 
 export const partnersRouter = Router();
 
-partnersRouter.get("/", cacheControl(600), async (_req, res, next) => {
+partnersRouter.get("/", cacheControl(600), (_req, res, next) => {
   try {
-    const partners = await loadData<Partner[]>("partners.json");
-    res.json([...partners].sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier]));
+    const rows = getDb()
+      .prepare(
+        `SELECT * FROM partners
+         ORDER BY CASE tier WHEN 'institutionnel' THEN 0 WHEN 'majeur' THEN 1 ELSE 2 END`
+      )
+      .all();
+    res.json((rows as Record<string, unknown>[]).map(rowToPartner));
   } catch (err) {
     next(err);
   }

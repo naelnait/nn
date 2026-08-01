@@ -1,50 +1,52 @@
 import { Router } from "express";
-import { loadData } from "../utils/loadData.js";
+import { z } from "zod";
+import { getDb } from "../db/index.js";
+import { rowToMatch } from "../db/mappers.js";
 import { cacheControl } from "../middleware/cache.js";
-import type { Match } from "../types/index.js";
+import { ApiError } from "../middleware/errorHandler.js";
 
 export const matchesRouter = Router();
 
-matchesRouter.get("/", cacheControl(60), async (req, res, next) => {
+const StatusQuerySchema = z.object({ status: z.enum(["played", "upcoming"]).optional() });
+
+matchesRouter.get("/", cacheControl(60), (req, res, next) => {
   try {
-    const matches = await loadData<Match[]>("matches.json");
-    const { status } = req.query;
+    const parsed = StatusQuerySchema.safeParse(req.query);
+    if (!parsed.success) throw new ApiError(400, "Invalid status filter");
+    const { status } = parsed.data;
 
-    const sorted = [...matches].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const db = getDb();
+    const rows = status
+      ? db.prepare("SELECT * FROM matches WHERE status = ? ORDER BY date ASC").all(status)
+      : db.prepare("SELECT * FROM matches ORDER BY date ASC").all();
 
-    if (status === "played" || status === "upcoming") {
-      res.json(sorted.filter((m) => m.status === status));
-      return;
-    }
-
-    res.json(sorted);
+    res.json((rows as Record<string, unknown>[]).map(rowToMatch));
   } catch (err) {
     next(err);
   }
 });
 
-matchesRouter.get("/next", cacheControl(60), async (_req, res, next) => {
+matchesRouter.get("/next", cacheControl(60), (_req, res, next) => {
   try {
-    const matches = await loadData<Match[]>("matches.json");
-    const now = Date.now();
-    const next5 = matches
-      .filter((m) => m.status === "upcoming" && new Date(m.date).getTime() >= now)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    res.json(next5[0] ?? null);
+    const row = getDb()
+      .prepare(
+        `SELECT * FROM matches
+         WHERE status = 'upcoming' AND datetime(date) >= datetime('now')
+         ORDER BY date ASC LIMIT 1`
+      )
+      .get() as Record<string, unknown> | undefined;
+    res.json(row ? rowToMatch(row) : null);
   } catch (err) {
     next(err);
   }
 });
 
-matchesRouter.get("/latest", cacheControl(60), async (_req, res, next) => {
+matchesRouter.get("/latest", cacheControl(60), (_req, res, next) => {
   try {
-    const matches = await loadData<Match[]>("matches.json");
-    const played = matches
-      .filter((m) => m.status === "played")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    res.json(played[0] ?? null);
+    const row = getDb()
+      .prepare(`SELECT * FROM matches WHERE status = 'played' ORDER BY date DESC LIMIT 1`)
+      .get() as Record<string, unknown> | undefined;
+    res.json(row ? rowToMatch(row) : null);
   } catch (err) {
     next(err);
   }

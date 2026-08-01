@@ -1,41 +1,48 @@
 import { Router } from "express";
-import { loadData } from "../utils/loadData.js";
+import { z } from "zod";
+import { getDb } from "../db/index.js";
+import { rowToNews } from "../db/mappers.js";
 import { cacheControl } from "../middleware/cache.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import type { NewsItem } from "../types/index.js";
 
 export const newsRouter = Router();
 
-newsRouter.get("/", cacheControl(120), async (req, res, next) => {
-  try {
-    const news = await loadData<NewsItem[]>("news.json");
-    const sorted = [...news].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+const PageQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(24).default(6),
+});
 
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const pageSize = Math.min(24, Math.max(1, Number(req.query.pageSize) || 6));
-    const start = (page - 1) * pageSize;
-    const items = sorted.slice(start, start + pageSize);
+newsRouter.get("/", cacheControl(120), (req, res, next) => {
+  try {
+    const parsed = PageQuerySchema.safeParse(req.query);
+    if (!parsed.success) throw new ApiError(400, "Invalid pagination parameters");
+    const { page, pageSize } = parsed.data;
+
+    const db = getDb();
+    const total = (db.prepare("SELECT COUNT(*) AS n FROM news").get() as { n: number }).n;
+    const rows = db
+      .prepare("SELECT * FROM news ORDER BY date DESC LIMIT ? OFFSET ?")
+      .all(pageSize, (page - 1) * pageSize);
 
     res.json({
-      items,
+      items: (rows as Record<string, unknown>[]).map(rowToNews),
       page,
       pageSize,
-      total: sorted.length,
-      totalPages: Math.ceil(sorted.length / pageSize),
+      total,
+      totalPages: Math.ceil(total / pageSize),
     });
   } catch (err) {
     next(err);
   }
 });
 
-newsRouter.get("/:slug", cacheControl(300), async (req, res, next) => {
+newsRouter.get("/:slug", cacheControl(300), (req, res, next) => {
   try {
-    const news = await loadData<NewsItem[]>("news.json");
-    const item = news.find((n) => n.slug === req.params.slug || n.id === req.params.slug);
-    if (!item) throw new ApiError(404, "Article not found");
-    res.json(item);
+    const row = getDb()
+      .prepare("SELECT * FROM news WHERE slug = ? OR id = ?")
+      .get(req.params.slug, req.params.slug) as Record<string, unknown> | undefined;
+    if (!row) throw new ApiError(404, "Article not found");
+    res.json(rowToNews(row));
   } catch (err) {
     next(err);
   }

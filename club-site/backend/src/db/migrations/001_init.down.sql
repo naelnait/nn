@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS contact_messages;
+DROP TABLE IF EXISTS partners;
+DROP TABLE IF EXISTS gallery_photos;
+DROP TABLE IF EXISTS gallery_albums;
+DROP TABLE IF EXISTS news;
+DROP TABLE IF EXISTS standings;
+DROP TABLE IF EXISTS matches;
+DROP TABLE IF EXISTS players;
+DROP TABLE IF EXISTS club;
