@@ -65,7 +65,7 @@ export default function Home() {
           </p>
           <StaggerHeadline
             text={club?.name ?? "CCMB Chartres"}
-            className="font-display text-[clamp(2.4rem,7vw,5.6rem)] font-black italic uppercase leading-[0.9] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+            className="font-display text-[clamp(2.4rem,7vw,5.6rem)] font-black italic uppercase leading-[1.05] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           />
           <p className="max-w-xl text-white/70">
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}
