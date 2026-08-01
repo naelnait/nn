@@ -15,7 +15,7 @@ const PULL = 0.35;
 interface MagneticLinkProps {
   to: string;
   children: React.ReactNode;
-  variant?: "primary" | "ghost";
+  variant?: "primary" | "ghost" | "cta";
   className?: string;
 }
 
@@ -82,11 +82,13 @@ export function MagneticLink({ to, children, variant = "primary", className = ""
   }, [x, y, sx, sy]);
 
   const base = "relative inline-flex items-center gap-2 overflow-hidden rounded-md px-5 py-2.5 text-sm font-semibold";
-  const sweepColor = variant === "primary" ? "bg-accent-400" : "bg-white/15";
+  const sweepColor = variant === "cta" ? "bg-cta-400" : variant === "primary" ? "bg-accent-400" : "bg-white/15";
   const surface =
-    variant === "primary"
-      ? "bg-accent-500 text-white"
-      : "border border-white/30 text-white";
+    variant === "cta"
+      ? "bg-cta-600 text-white shadow-[0_6px_18px_-6px_rgba(22,163,74,0.7)]"
+      : variant === "primary"
+        ? "bg-accent-500 text-white"
+        : "border border-white/30 text-white";
 
   return (
     <MotionLink

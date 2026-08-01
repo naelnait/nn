@@ -15,6 +15,7 @@ const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const AlbumDetail = lazy(() => import("./pages/AlbumDetail"));
 const Partners = lazy(() => import("./pages/Partners"));
+const Billetterie = lazy(() => import("./pages/Billetterie"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/galerie" element={<Gallery />} />
               <Route path="/galerie/:id" element={<AlbumDetail />} />
               <Route path="/partenaires" element={<Partners />} />
+              <Route path="/billetterie" element={<Billetterie />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

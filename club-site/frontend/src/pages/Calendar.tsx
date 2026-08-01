@@ -3,13 +3,14 @@ import { Seo } from "../components/ui/Seo";
 import { Section } from "../components/ui/Section";
 import { Skeleton, ErrorState } from "../components/ui/Skeleton";
 import { MatchCard } from "../components/home/MatchCard";
-import { useMatches } from "../hooks/useApi";
+import { useClub, useMatches } from "../hooks/useApi";
 
 type Filter = "all" | "played" | "upcoming";
 
 export default function Calendar() {
   const [filter, setFilter] = useState<Filter>("all");
   const { data: matches, isLoading, isError } = useMatches(filter === "all" ? undefined : filter);
+  const { data: club } = useClub();
 
   const tabs: { key: Filter; label: string }[] = [
     { key: "all", label: "Tous" },
@@ -48,7 +49,7 @@ export default function Calendar() {
         {matches && matches.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2">
             {matches.map((match) => (
-              <MatchCard key={match.id} match={match} />
+              <MatchCard key={match.id} match={match} showTicketCta={match.venue === club?.venue} />
             ))}
           </div>
         )}

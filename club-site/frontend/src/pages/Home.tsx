@@ -8,6 +8,7 @@ import { NewsCard } from "../components/home/NewsCard";
 import { PartnersStrip } from "../components/home/PartnersStrip";
 import { StaggerHeadline } from "../components/originkit/StaggerHeadline";
 import { MagneticLink } from "../components/originkit/MagneticLink";
+import { MatchCountdown } from "../components/originkit/MatchCountdown";
 import { PlayerTicker } from "../components/originkit/PlayerTicker";
 import { SupportersTicker } from "../components/originkit/SupportersTicker";
 import { useClub, useLatestMatch, useNews, useNextMatch, usePlayers, useStandings } from "../hooks/useApi";
@@ -20,6 +21,7 @@ export default function Home() {
   const news = useNews(1, 3);
   const players = usePlayers();
   const squad = players.data?.filter((p) => !p.staff) ?? [];
+  const nextIsHomeGame = Boolean(nextMatch.data && club && nextMatch.data.venue === club.venue);
 
   return (
     <>
@@ -68,8 +70,20 @@ export default function Home() {
           <p className="max-w-xl text-white/70">
             {club?.description ?? "Le club de basketball de Chartres, tourné vers la performance et la formation."}
           </p>
+
+          {nextIsHomeGame && nextMatch.data && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cta-400">Prochain match à domicile</p>
+              <MatchCountdown date={nextMatch.data.date} />
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-3">
-            <MagneticLink to="/calendrier" variant="primary">Voir le calendrier</MagneticLink>
+            {nextIsHomeGame ? (
+              <MagneticLink to="/billetterie" variant="cta">Réserver ma place</MagneticLink>
+            ) : (
+              <MagneticLink to="/calendrier" variant="primary">Voir le calendrier</MagneticLink>
+            )}
             <MagneticLink to="/effectif" variant="ghost">Découvrir l'effectif</MagneticLink>
           </div>
 
@@ -92,7 +106,9 @@ export default function Home() {
 
           {nextMatch.isLoading && <Skeleton className="h-40" />}
           {nextMatch.isError && <ErrorState />}
-          {nextMatch.data && <MatchCard match={nextMatch.data} />}
+          {nextMatch.data && (
+            <MatchCard match={nextMatch.data} showTicketCta={nextMatch.data.venue === club?.venue} />
+          )}
         </div>
       </Section>
 
