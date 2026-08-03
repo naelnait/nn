@@ -20,26 +20,26 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-navy-950/70 text-white backdrop-blur-lg">
       <div className="container-page flex h-14 items-center justify-between">
-        <NavLink to="/" end className="flex items-center gap-2 font-display text-[15px] font-semibold tracking-tight" onClick={() => setOpen(false)}>
+        <NavLink to="/" end className="flex shrink-0 items-center gap-2 whitespace-nowrap font-display text-[15px] font-semibold tracking-tight" onClick={() => setOpen(false)}>
           <img
             src="/logo/ccmb-logo.webp"
             srcSet="/logo/ccmb-logo.webp 1x, /logo/ccmb-logo@2x.webp 2x"
             alt=""
             width={41}
             height={36}
-            className="h-7 w-auto"
+            className="h-7 w-auto shrink-0"
           />
           <span className="hidden sm:inline">CCMB Chartres</span>
         </NavLink>
 
-        <nav className="hidden lg:flex lg:items-center lg:gap-1">
+        <nav className="hidden lg:flex lg:items-center lg:gap-0.5 xl:gap-1">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `relative whitespace-nowrap px-3 py-2 text-[13px] font-medium transition-colors ${
+                `relative whitespace-nowrap px-2 py-2 text-[13px] font-medium transition-colors xl:px-3 ${
                   isActive ? "text-white" : "text-white/60 hover:text-white"
                 }`
               }
@@ -52,7 +52,7 @@ export function Header() {
                   {isActive && (
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute inset-x-3 -bottom-[1px] h-px bg-cta-400"
+                      className="absolute inset-x-2 -bottom-[1px] h-px bg-cta-400 xl:inset-x-3"
                       transition={{ type: "spring", stiffness: 420, damping: 38 }}
                     />
                   )}
