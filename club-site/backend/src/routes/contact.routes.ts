@@ -1,6 +1,8 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
+import { getDb } from "../db/index.js";
+import { insertContactMessage } from "../db/contactMessages.js";
 import { ApiError } from "../middleware/errorHandler.js";
 
 export const contactRouter = Router();
@@ -30,12 +32,9 @@ contactRouter.post("/", contactLimiter, (req, res, next) => {
       throw new ApiError(400, "Merci de compléter correctement tous les champs du formulaire.");
     }
 
-    // In a real deployment this would enqueue an email / CRM lead.
-    console.log("New contact message:", {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      subject: parsed.data.subject,
-    });
+    // Persisted so the club can actually read submissions later. A real
+    // deployment would also enqueue an email / CRM lead from here.
+    insertContactMessage(getDb(), parsed.data);
 
     res.status(201).json({ success: true });
   } catch (err) {

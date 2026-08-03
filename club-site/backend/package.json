@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/db/cli.ts migrate",
     "db:seed": "tsx src/db/cli.ts seed",
-    "db:rollback": "tsx src/db/cli.ts rollback"
+    "db:rollback": "tsx src/db/cli.ts rollback",
+    "test": "node --import tsx --test src/**/__tests__/*.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.2",
