@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["club-site/**", ".github/workflows/ci.yml"]
+  pull_request:
+    paths: ["club-site/**", ".github/workflows/ci.yml"]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: club-site/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: club-site/backend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: club-site/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: club-site/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    defaults:
+      run:
+        working-directory: club-site/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: club-site/frontend/package-lock.json
+      - run: npm ci
+      - name: Install backend deps (for Playwright's webServer)
+        run: npm ci
+        working-directory: club-site/backend
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t ccmb-backend:ci ./club-site/backend
+      - name: Build frontend image
+        run: docker build -t ccmb-frontend:ci ./club-site/frontend
