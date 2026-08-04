@@ -31,7 +31,7 @@ Ce qui reste :
 
 ## Exception assumée : le hero de l'accueil, façon Razer
 
-Sur demande explicite, le hero (uniquement) reprend des codes plus "premium gaming/sport" inspirés de razer.com : fond assombri dominant, halos "néon" flous et animés (en réutilisant le bleu `cta-*` du site, pas une couleur nouvelle), typographie du titre massive/majuscule avec une légère lueur, découpe diagonale à la transition vers le bloc suivant. Cette exception est cantonnée au hero — le reste du site suit la direction Apple ci-dessus.
+Sur demande explicite, le hero (uniquement) reprend des codes plus "premium gaming/sport" inspirés de razer.com : fond assombri dominant, un halo "néon" animé et réactif au curseur (shader WebGL `ShaderBackground`, `frontend/src/components/ui/blue-noise.tsx`, palette déjà réglée sur le bleu/cyan/blanc du site — remplace l'ancienne version en CSS pur à deux blobs flous statiques), typographie du titre massive/majuscule avec une légère lueur, découpe diagonale à la transition vers le bloc suivant. Le shader se fond en mode `screen` au-dessus du fond sombre (jamais en dessous du texte) et se désactive intégralement avec `prefers-reduced-motion`, comme le reste des animations du site. Cette exception est cantonnée au hero — le reste du site suit la direction Apple ci-dessus.
 
 ## Contenu
 

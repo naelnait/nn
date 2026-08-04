@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Seo } from "../components/ui/Seo";
 import { Section } from "../components/ui/Section";
+import { ShaderBackground } from "../components/ui/blue-noise";
 import { Skeleton, ErrorState } from "../components/ui/Skeleton";
 import { MatchCard } from "../components/home/MatchCard";
 import { StandingsTable } from "../components/home/StandingsTable";
@@ -63,14 +64,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-navy-950/60" />
         <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,16,34,.92)_0%,rgba(7,16,34,.78)_38%,rgba(7,16,34,.5)_66%,rgba(7,16,34,.25)_88%)]" />
 
-        {/* Neon glow orbs — the "mesh gradient" hero-background treatment,
-            reusing the site's own accent blue as the glow color rather than
-            introducing a new neon hue that would clash with the rest of the
-            site's blue/navy identity. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="hero-orb-a absolute -left-24 top-1/4 h-[28rem] w-[28rem] rounded-full bg-cta-500/50 blur-[100px]" />
-          <div className="hero-orb-b absolute -right-32 bottom-0 h-[24rem] w-[24rem] rounded-full bg-cta-400/40 blur-[110px]" />
-        </div>
+        {/* Neon glow — the "mesh gradient" hero-background treatment. A WebGL
+            shader (already tuned to the site's own blue/cyan/white palette)
+            replaces the earlier static blurred-orb divs with organic,
+            cursor-reactive motion. screen-blend keeps it additive-only over
+            the dark wash so it never dulls the photo or the headline
+            contrast, and it's skipped entirely under reduced motion. */}
+        {!reduced && (
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden opacity-70 mix-blend-screen">
+            <ShaderBackground className="h-full w-full" />
+          </div>
+        )}
 
         {/* Diagonal cut into the next (navy) block, instead of a plain fade. */}
         <div className="absolute inset-x-0 bottom-0 h-28 bg-navy-950 [clip-path:polygon(0_100%,100%_45%,100%_100%)] sm:h-36" />

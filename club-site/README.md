@@ -28,7 +28,7 @@ Le site n'est pas qu'une vitrine : une page `/billetterie` met en avant le proch
 
 ## Direction artistique
 
-Après plusieurs itérations, la direction retenue est détaillée dans [BRAND.md](BRAND.md) : une base élégante façon pages produit Apple (coins arrondis, ombres douces, animations de scroll `whileInView`, parallaxe), avec une exception assumée sur le hero de l'accueil qui reprend des codes plus "premium sport" façon razer.com (halos néon animés, typographie massive, découpe diagonale) — en réutilisant l'accent bleu du site plutôt qu'une couleur néon supplémentaire.
+Après plusieurs itérations, la direction retenue est détaillée dans [BRAND.md](BRAND.md) : une base élégante façon pages produit Apple (coins arrondis, ombres douces, animations de scroll `whileInView`, parallaxe), avec une exception assumée sur le hero de l'accueil qui reprend des codes plus "premium sport" façon razer.com (halo néon en shader WebGL réactif au curseur, typographie massive, découpe diagonale) — en réutilisant l'accent bleu du site plutôt qu'une couleur néon supplémentaire.
 
 Composants animés adaptés depuis [OriginKit](https://originkit.com) :
 
@@ -40,7 +40,7 @@ Composants animés adaptés depuis [OriginKit](https://originkit.com) :
 | Ticker supporters | `sync-scroll` | Vitesse et sens pilotés par le scroll |
 | Mur de partenaires | `interactive-grid` | Soulèvement 3D de la carte survolée et de ses voisines |
 
-Ajouts propres au projet : transition entre rubriques, visionneuse photo plein écran, soulignement de nav qui glisse d'une rubrique à l'autre, shimmer au survol des portraits, compte à rebours du prochain match, parallaxe + halos animés du hero.
+Ajouts propres au projet : transition entre rubriques, visionneuse photo plein écran, soulignement de nav qui glisse d'une rubrique à l'autre, shimmer au survol des portraits, compte à rebours du prochain match, parallaxe + halo shader animé du hero.
 
 **Toutes les animations se désactivent avec `prefers-reduced-motion`.**
 
