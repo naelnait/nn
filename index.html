@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Entraînement">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Entraînement — Tests d'entrée Mermoz</title>
+<style>
+  :root{
+    --bg-top:#0B1117; --bg-bot:#131B23;
+    --paper:#FBF9F4; --paper-head:#F5F2E9;
+    --ink:#1C2530; --muted:#6B7580;
+    --rule:#E3DECF;
+    --good:#1E8F63; --good-bg:#E4F5EC;
+    --bad:#D14B3D; --bad-bg:#FBEAE7;
+    --calc:#8A5A19; --calc-bg:#F3E7D2;
+    --mental:#1E5F7A; --mental-bg:#E1EFF4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:
+      radial-gradient(1100px 500px at 15% -5%, #1B2836 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #16222C 0%, transparent 55%),
+      linear-gradient(180deg,var(--bg-top),var(--bg-bot));
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:20px 12px 50px;
+  }
+  .toolbar{width:100%; max-width:800px; display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; gap:10px;}
+  .toolbar h1{font-size:17px; font-weight:700; color:#F3F5F7; margin:0; letter-spacing:.1px;}
+  .toolbar .sub{font-size:12px; color:#8B95A1; margin-top:3px;}
+  .stats{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .offline-state{display:inline-block; margin-left:8px; font-weight:700; color:#6FD3A8;}
+  .offline-state.wait{color:#8B95A1; font-weight:600;}
+  .streak{font-size:13px; font-weight:700; color:#FFB258; opacity:0; transform:scale(.7); transition:opacity .2s, transform .2s; white-space:nowrap;}
+  .streak.show{opacity:1; transform:scale(1);}
+  .score-ring{position:relative; width:52px; height:52px; border-radius:50%; cursor:pointer; flex-shrink:0;}
+  .score-ring svg{transform:rotate(-90deg);}
+  .score-ring .pct{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:ui-monospace,Menlo,monospace; color:#EDEFF2;}
+
+  .tabs{width:100%; max-width:800px; display:flex; gap:5px; flex-wrap:wrap; margin-bottom:0; position:relative; z-index:2;}
+  .tab{
+    display:flex; align-items:center; gap:6px;
+    background:#161F28; color:#9AA5B1; border:1px solid #263140; border-bottom:none;
+    padding:9px 13px 11px; border-radius:10px 10px 0 0; font-size:12.5px; font-weight:600; cursor:pointer;
+    transition:transform .12s, background .15s, color .15s; transform:translateY(4px);
+  }
+  .tab .ic{font-size:14px;}
+  .tab:hover{transform:translateY(1px); color:#D5DBE2;}
+  .tab.active{transform:translateY(0); color:#1C2530; background:var(--tabcolor,#0B4F6C);}
+
+  .card{width:100%; max-width:800px; background:var(--paper); border-radius:0 12px 12px 12px; box-shadow:0 24px 60px rgba(0,0,0,.4); overflow:hidden; position:relative; border-top:5px solid var(--tabcolor,#0B4F6C);}
+  .card-head{padding:15px 22px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--paper-head); flex-wrap:wrap;}
+  .card-head .left{display:flex; align-items:center; gap:11px; flex-wrap:wrap;}
+  .cat-icon{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; background:var(--tabcolor,#0B4F6C); flex-shrink:0;}
+  .card-head .qtitle{font-size:14.5px; font-weight:700; color:var(--ink);}
+  .card-head .qnum{font-size:12px; color:var(--muted); font-family:ui-monospace,Menlo,monospace;}
+  .badge{font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap;}
+  .badge.calc{color:var(--calc); background:var(--calc-bg);}
+  .badge.mental{color:var(--mental); background:var(--mental-bg);}
+
+  .card-body{padding:22px; animation:fadeIn .28s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .statement p{font-size:15.5px; line-height:1.6; margin:0 0 10px;}
+  .statement p:last-child{margin-bottom:0;}
+  .diagram{margin:8px 0 18px; display:flex; justify-content:center;}
+  .diagram svg{max-width:100%; height:auto;}
+
+  .feedback-banner{display:none; align-items:center; gap:10px; margin:14px 0 0; padding:11px 15px; border-radius:9px; font-size:14px; font-weight:700;}
+  .feedback-banner.show{display:flex; animation:popIn .25s ease;}
+  .feedback-banner.good{background:var(--good-bg); color:var(--good);}
+  .feedback-banner.bad{background:var(--bad-bg); color:var(--bad);}
+  @keyframes popIn{from{transform:scale(.9); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  .options{margin-top:16px; display:flex; flex-direction:column; gap:8px;}
+  .option{
+    display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:10px; cursor:pointer;
+    font-size:14.5px; line-height:1.4; border:1.5px solid var(--rule); background:#fff;
+    transition:border-color .12s, background .12s, transform .08s;
+  }
+  .option:hover:not(.disabled){border-color:#0B4F6C; transform:translateX(2px);}
+  .option:active:not(.disabled){transform:scale(.99);}
+  .letter{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; background:#EFECE3; color:#6B7580; border:1.5px solid var(--rule);
+  }
+  .opt-text{flex:1;}
+  .mark{font-size:15px; flex-shrink:0; width:18px; text-align:center;}
+  .option.correct{background:var(--good-bg); border-color:var(--good);}
+  .option.correct .letter{background:var(--good); color:#fff; border-color:var(--good);}
+  .option.wrong{background:var(--bad-bg); border-color:var(--bad);}
+  .option.wrong .letter{background:var(--bad); color:#fff; border-color:var(--bad);}
+  .option.disabled{cursor:default;}
+  .option.disabled:hover{transform:none;}
+
+  .explanation{display:none; margin:14px 0 0; padding:13px 15px; background:#F1EDE1; border-left:3px solid var(--tabcolor,#0B4F6C); font-size:13.5px; line-height:1.55; color:#33404B; border-radius:0 8px 8px 0;}
+  .explanation.show{display:block; animation:fadeIn .25s ease;}
+
+  .footer-row{display:flex; justify-content:flex-end; align-items:center; padding:16px 22px; border-top:1px solid var(--rule); background:var(--paper-head);}
+  button.next{
+    background:var(--tabcolor,#0B4F6C); color:#fff; border:none; padding:12px 22px; border-radius:9px;
+    font-size:14px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:8px;
+    transition:filter .12s, transform .08s; width:100%; justify-content:center;
+  }
+  button.next:hover{filter:brightness(1.12);}
+  button.next:active{transform:scale(.98);}
+
+  .sparkle{position:fixed; font-size:22px; pointer-events:none; animation:sparkleUp 1s ease-out forwards; z-index:50;}
+  @keyframes sparkleUp{
+    0%{transform:translate(0,0) scale(.6) rotate(0deg); opacity:1;}
+    100%{transform:translate(var(--dx),-90px) scale(1.1) rotate(var(--rot)); opacity:0;}
+  }
+
+  @media (max-width:480px){
+    .card-body{padding:16px;}
+    .statement p{font-size:14.5px;}
+    .card-head{padding:12px 16px;}
+    .footer-row{padding:12px 16px;}
+    .tab{padding:8px 10px 10px; font-size:11.5px;}
+    .toolbar h1{font-size:15px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <h1>Entraînement — Tests d'entrée Mermoz</h1>
+    <div class="sub">Ton cahier de révision, matière par matière</div>
+  </div>
+  <div class="stats">
+    <div class="streak" id="streak">🔥 x0</div>
+    <div class="score-ring" id="scoreBox" title="Cliquer pour réinitialiser">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="#26313C" stroke-width="5"/>
+        <circle id="ringProgress" cx="26" cy="26" r="22" fill="none" stroke="#3FBF8F" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="138"/>
+      </svg>
+      <div class="pct" id="scorePct">0/0</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="card" id="card">
+  <div class="card-head">
+    <div class="left">
+      <div class="cat-icon" id="catIcon">🧭</div>
+      <div>
+        <div class="qtitle" id="qtitle">—</div>
+        <div class="qnum" id="qnum">Question 0</div>
+      </div>
+    </div>
+    <span class="badge" id="calcBadge"></span>
+  </div>
+  <div class="card-body" id="cardBody">
+    <div class="statement" id="statement"></div>
+    <div class="diagram" id="diagram"></div>
+    <div class="feedback-banner" id="feedbackBanner"></div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+  <div class="footer-row">
+    <button class="next" id="nextBtn">Question suivante →</button>
+  </div>
+</div>
+
+<script>
+// ===== Helpers =====
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[randInt(0, arr.length - 1)]; }
+function round(x, d) { d = d || 1; const f = Math.pow(10, d); return Math.round((x + Number.EPSILON) * f) / f; }
+function fmt(x, d) { d = d || 1; return round(x, d).toFixed(d).replace('.', ','); }
+function fmtTrim(x, d) { d = d || 2; return fmt(x, d).replace(/,0+$/, ''); }
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i);[a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; }
+
+function buildOptions(correctStr, distractors) {
+  const set = [correctStr];
+  for (const d of distractors) { if (!set.includes(d)) set.push(d); }
+  let guard = 0;
+  while (set.length < 4 && guard < 20) {
+    const base = distractors[guard % distractors.length];
+    const numMatch = base.match(/-?\d+(?:,\d+)?/);
+    if (numMatch) {
+      const val = parseFloat(numMatch[0].replace(',', '.')) + (guard + 1) * 0.3;
+      const alt = base.replace(numMatch[0], val.toFixed(1).replace('.', ','));
+      if (!set.includes(alt)) set.push(alt);
+    } else {
+      set.push(base + ' ');
+    }
+    guard++;
+  }
+  return { options: shuffle(set.slice(0, 4)), correct: correctStr };
+}
+
+// ============================================================
+// GÉNÉRALITÉS
+// ============================================================
+function genUnites() {
+  const table = [
+    ['la force', 'newton (N)'], ['la masse', 'kilogramme (kg)'], ['la longueur', 'mètre (m)'],
+    ['le temps', 'seconde (s)'], ["l'énergie / le travail", 'joule (J)'], ['la puissance', 'watt (W)'],
+    ['un angle', 'radian (rad)'], ['la pression', 'pascal (Pa)']
+  ];
+  const [name, unit] = randChoice(table);
+  const others = table.filter(t => t[1] !== unit).map(t => t[1]);
+  const distractors = shuffle(others).slice(0, 3);
+  const { options } = buildOptions(unit, distractors);
+  return {
+    cat: 'gen', title: 'Unités du Système International', calc: false,
+    statement: [`Quelle est l'unité du Système International (SI) pour ${name} ?`],
+    correct: unit, options,
+    explanation: `L'unité SI de ${name} est le ${unit}.`
+  };
+}
+
+// ============================================================
+// ARITHMÉTIQUE
+// ============================================================
+function genPuissancesRacines() {
+  const mode = Math.random() < 0.5 ? 'power' : 'root';
+  if (mode === 'power') {
+    const base = randInt(2, 6);
+    const exp = randInt(2, 3);
+    const val = Math.pow(base, exp);
+    const correct = String(val);
+    const distractors = [String(val + base), String(base * exp), String(Math.pow(base, exp === 2 ? 3 : 2))];
+    const { options } = buildOptions(correct, distractors);
+    return {
+      cat: 'ari', title: 'Puissances', calc: false,
+      statement: [`Calculez : ${base}${exp === 2 ? '²' : '³'} = ?`],
+      correct, options,
+      explanation: `${base}${exp === 2 ? '²' : '³'} = ${Array(exp).fill(base).join(' × ')} = ${val}.`
+    };
+  } else {
+    const squares = [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196];
+    const n = randChoice(squares);
+    const r = Math.round(Math.sqrt(n));
+    const correct = String(r);
+    const distractors = [String(r + 1), String(r - 1), String(Math.round(n / 2))];
+    const { options } = buildOptions(correct, distractors);
+    return {
+      cat: 'ari', title: 'Racines carrées', calc: false,
+      statement: [`Calculez : √${n} = ?`],
+      correct, options,
+      explanation: `${r} × ${r} = ${n}, donc √${n} = ${r}.`
+    };
+  }
+}
+
+function genFractions() {
+  const op = Math.random() < 0.5 ? 'add' : 'mul';
+  const b = randChoice([2, 3, 4, 5, 6]);
+  let d = randChoice([2, 3, 4, 5, 6]);
+  const a = randInt(1, b - 1);
+  const c = randInt(1, d - 1);
+  let num, den, opSym;
+  if (op === 'add') {
+    num = a * d + c * b; den = b * d; opSym = '+';
+  } else {
+    num = a * c; den = b * d; opSym = '×';
+  }
+  const g = gcd(num, den);
+  const rn = num / g, rd = den / g;
+  const correct = rd === 1 ? `${rn}` : `${rn}/${rd}`;
+  const wrongSum = op === 'add' ? `${a + c}/${b + d}` : `${a + c}/${b * d}`;
+  const unreduced = rd === 1 ? `${num}/${den}` : (g === 1 ? `${rn}/${rd + 2}` : `${num}/${den}`);
+  const distractors = [wrongSum, unreduced, rd === 1 ? `${rn + 1}` : `${rn + 1}/${rd}`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'ari', title: 'Fractions', calc: false,
+    statement: [`Calculez et simplifiez : ${a}/${b} ${opSym} ${c}/${d} = ?`],
+    correct, options,
+    explanation: op === 'add'
+      ? `${a}/${b} + ${c}/${d} = (${a}×${d} + ${c}×${b})/(${b}×${d}) = ${num}/${den} = ${correct}.`
+      : `${a}/${b} × ${c}/${d} = (${a}×${c})/(${b}×${d}) = ${num}/${den} = ${correct}.`
+  };
+}
+
+function genPourcentages() {
+  const base = randInt(2, 20) * 20;
+  const p = randChoice([5, 10, 20, 25, 50]);
+  const val = base * p / 100;
+  const correct = `${val}`;
+  const distractors = [`${Math.round(base * (p + 5) / 100)}`, `${Math.round(base / p)}`, `${val + base / 10}`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'ari', title: 'Pourcentages', calc: false,
+    statement: [`Combien font ${p}% de ${base} ?`],
+    correct, options,
+    explanation: `${p}% de ${base} = ${base} × ${p}/100 = ${val}.`
+  };
+}
+
+function genRegleDeTrois() {
+  const a = randInt(2, 6);
+  const unitPrice = randInt(2, 10);
+  const p = a * unitPrice;
+  const k = randInt(2, 5);
+  const b = a * k;
+  const correct = `${p * k} €`;
+  const distractors = [`${p + b} €`, `${Math.round(p * k * 1.2)} €`, `${p * (k - 1)} €`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'ari', title: 'Règle de trois', calc: false,
+    statement: [`Si ${a} kg de matériel coûtent ${p} €, combien coûtent ${b} kg de ce même matériel ?`],
+    correct, options,
+    explanation: `Prix pour 1 kg = ${p}/${a} = ${unitPrice} €. Prix pour ${b} kg = ${unitPrice} × ${b} = ${p * k} €.`
+  };
+}
+
+function genEchelles() {
+  const scales = [[100000, 1], [50000, 0.5], [200000, 2], [25000, 0.25]];
+  const [scale, factor] = randChoice(scales);
+  const d = randChoice([2, 4, 5, 6, 8, 10]);
+  const km = round(d * factor, 2);
+  const correct = `${fmtTrim(km, 2)} km`;
+  const distractors = [`${fmtTrim(d * factor * 10, 2)} km`, `${fmtTrim(d / factor, 2)} km`, `${fmtTrim(km + d * 0.1, 2)} km`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'ari', title: 'Échelles', calc: false,
+    statement: [`Sur une carte à l'échelle 1/${scale.toLocaleString('fr-FR')}, une distance de ${d} cm correspond à quelle distance réelle ?`],
+    correct, options,
+    explanation: `Distance réelle = ${d} cm × ${scale.toLocaleString('fr-FR')} = ${d * scale} cm = ${fmtTrim(km, 2)} km.`
+  };
+}
+
+// ============================================================
+// ALGÈBRE
+// ============================================================
+function genAlgebreSignes() {
+  const a = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1);
+  const b = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1);
+  const c = randInt(2, 9) * (Math.random() < 0.5 ? -1 : 1);
+  const val = a + b * c;
+  const correct = String(val);
+  const distractors = [String((a + b) * c), String(a - b * c), String(val + 2)];
+  const { options } = buildOptions(correct, distractors);
+  const fp = (n) => n < 0 ? `(${n})` : `${n}`;
+  return {
+    cat: 'alg', title: 'Opérations sur les nombres relatifs', calc: false,
+    statement: [`Calculez : ${fp(a)} + ${fp(b)} × ${fp(c)} = ?`],
+    correct, options,
+    explanation: `On effectue d'abord la multiplication : ${fp(b)} × ${fp(c)} = ${b * c}. Puis l'addition : ${fp(a)} + (${b * c}) = ${val}.`
+  };
+}
+
+function genEquation() {
+  const a = randChoice([2, 3, 4, 5, 6]);
+  const x = randInt(-8, 8);
+  const b = randInt(-15, 15);
+  const c = a * x + b;
+  const correct = String(x);
+  const distractors = [String(-x), String(x + 1), String(Math.round((c + b) / a))];
+  const { options } = buildOptions(correct, distractors);
+  const fb = b < 0 ? `− ${Math.abs(b)}` : `+ ${b}`;
+  return {
+    cat: 'alg', title: 'Équation du premier degré', calc: false,
+    statement: [`Résolvez : ${a}x ${fb} = ${c}`],
+    correct, options,
+    explanation: `${a}x = ${c} ${b < 0 ? '+' : '−'} ${Math.abs(b)} = ${c - b}. Donc x = ${c - b}/${a} = ${x}.`
+  };
+}
+
+// ============================================================
+// GÉOMÉTRIE
+// ============================================================
+function genThales() {
+  const AB = randInt(6, 12);
+  const BD = randInt(3, 9);
+  const AD = AB + BD;
+  const k = AD / AB;
+  const AC = randInt(8, 14);
+  const CE = round(AC * (k - 1), 1);
+  const BC = randInt(4, 9);
+  const DE = round(BC * k, 1);
+  const correct = fmt(DE, 1) + ' cm';
+  const distractors = [
+    fmt(BC + BD, 1) + ' cm',
+    fmt(BC * (AB / AD), 1) + ' cm',
+    fmt(DE * 1.15, 1) + ' cm'
+  ];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'geo', title: 'Théorème de Thalès', calc: true,
+    statement: [
+      `Soit le triangle ABC suivant, avec D sur (AB), E sur (AC), et (BC) parallèle à (DE) :`,
+      `AB = ${AB} cm ; BD = ${BD} cm ; AC = ${AC} cm ; CE = ${fmt(CE, 1)} cm ; BC = ${BC} cm.`,
+      `Quelle est la longueur du côté DE ?`
+    ],
+    diagram: 'thales',
+    diagramData: { AB, BD, AC, CE: fmt(CE, 1), BC },
+    correct, options,
+    explanation: `AD = AB + BD = ${AB} + ${BD} = ${AD} cm. Le rapport de Thalès est k = AD/AB = ${fmt(k, 2)}. Comme (DE) ∥ (BC), on a DE = BC × k = ${BC} × ${fmt(k, 2)} = ${fmt(DE, 1)} cm.`
+  };
+}
+
+const TRIPLES = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [7, 24, 25], [9, 12, 15], [12, 16, 20], [10, 24, 26], [20, 21, 29]];
+function genPythagore() {
+  const [p, q, h] = randChoice(TRIPLES);
+  const scale = randChoice([1, 1, 2]);
+  const a = p * scale, b = q * scale, hyp = h * scale;
+  const askHyp = Math.random() < 0.6;
+  let correct, statement, explanation;
+  if (askHyp) {
+    correct = `${hyp} cm`;
+    statement = [`Un triangle rectangle a deux côtés de l'angle droit mesurant ${a} cm et ${b} cm.`, `Quelle est la longueur de l'hypoténuse ?`];
+    explanation = `D'après le théorème de Pythagore : hyp² = ${a}² + ${b}² = ${a * a} + ${b * b} = ${a * a + b * b}. hyp = √${a * a + b * b} = ${hyp} cm.`;
+  } else {
+    correct = `${a} cm`;
+    statement = [`Un triangle rectangle a une hypoténuse de ${hyp} cm et un côté de l'angle droit de ${b} cm.`, `Quelle est la longueur de l'autre côté de l'angle droit ?`];
+    explanation = `D'après le théorème de Pythagore : côté² = hyp² − ${b}² = ${hyp * hyp} − ${b * b} = ${hyp * hyp - b * b}. côté = √${hyp * hyp - b * b} = ${a} cm.`;
+  }
+  const baseVal = askHyp ? hyp : a;
+  const distractors = [`${baseVal + 1} cm`, `${a + b} cm`, `${Math.round(baseVal * 0.8)} cm`];
+  const { options } = buildOptions(correct, distractors);
+  return { cat: 'geo', title: 'Théorème de Pythagore', calc: false, statement, correct, options, explanation };
+}
+
+function genVecteurs() {
+  const x1 = randInt(-8, 8), y1 = randInt(-8, 8);
+  const x2 = randInt(-8, 8), y2 = randInt(-8, 8);
+  const sx = x1 + x2, sy = y1 + y2;
+  const correct = `( ${sx} ; ${sy} )`;
+  const distractors = [`( ${x1 - x2} ; ${y1 - y2} )`, `( ${sx + 1} ; ${sy} )`, `( ${sx} ; ${sy + 1} )`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'geo', title: 'Somme de vecteurs', calc: false,
+    statement: [`Soient les vecteurs u( ${x1} ; ${y1} ) et v( ${x2} ; ${y2} ).`, `Quelles sont les coordonnées du vecteur somme u + v ?`],
+    correct, options,
+    explanation: `On additionne les coordonnées terme à terme : (u+v)x = ${x1} + ${x2} = ${sx} ; (u+v)y = ${y1} + ${y2} = ${sy}. Soit ( ${sx} ; ${sy} ).`
+  };
+}
+
+// ============================================================
+// TRIGONOMÉTRIE
+// ============================================================
+const DEG_RAD = [[30, 'π/6'], [45, 'π/4'], [60, 'π/3'], [90, 'π/2'], [120, '2π/3'], [135, '3π/4'], [150, '5π/6'], [180, 'π'], [270, '3π/2'], [360, '2π']];
+function genDegresRadians() {
+  const [deg, rad] = randChoice(DEG_RAD);
+  const toRad = Math.random() < 0.5;
+  const correct = toRad ? rad : `${deg}°`;
+  const others = DEG_RAD.filter(p => p[0] !== deg).map(p => toRad ? p[1] : `${p[0]}°`);
+  const distractors = shuffle(others).slice(0, 3);
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'trig', title: 'Conversion degrés / radians', calc: false,
+    statement: toRad ? [`Convertissez ${deg}° en radians.`] : [`Convertissez ${rad} rad en degrés.`],
+    correct, options,
+    explanation: `${deg}° équivaut à ${rad} rad (car 180° = π rad).`
+  };
+}
+
+const TRIG_TABLE = [
+  { angle: 0, sin: '0', cos: '1', tan: '0' },
+  { angle: 30, sin: '1/2', cos: '√3/2', tan: '√3/3' },
+  { angle: 45, sin: '√2/2', cos: '√2/2', tan: '1' },
+  { angle: 60, sin: '√3/2', cos: '1/2', tan: '√3' },
+  { angle: 90, sin: '1', cos: '0', tan: 'indéfini' }
+];
+function genTrigValeurs() {
+  const fn = randChoice(['sin', 'cos', 'tan']);
+  const rows = TRIG_TABLE.filter(r => !(fn === 'tan' && r.angle === 90));
+  const row = randChoice(rows);
+  const correct = row[fn];
+  const others = rows.filter(r => r.angle !== row.angle).map(r => r[fn]);
+  const distractors = shuffle([...new Set(others)]).filter(v => v !== correct).slice(0, 3);
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'trig', title: 'Valeurs trigonométriques', calc: false,
+    statement: [`Quelle est la valeur de ${fn}(${row.angle}°) ?`],
+    correct, options,
+    explanation: `${fn}(${row.angle}°) = ${correct}. (Valeurs à connaître par cœur : angles 0°, 30°, 45°, 60°, 90°.)`
+  };
+}
+
+function genTrigCotes() {
+  const angle = randChoice([30, 60]);
+  const H = randChoice([2, 4, 6, 8, 10, 12]) * 2; // multiple of 2 so H/2 is clean
+  const val = H / 2;
+  const askEasy = Math.random() < 0.7;
+  let correct, statement, explanation, calc, distractors;
+  if (askEasy) {
+    const sideName = angle === 30 ? 'opposé' : 'adjacent';
+    correct = `${val} cm`;
+    statement = [`Dans un triangle rectangle, l'hypoténuse mesure ${H} cm et un angle mesure ${angle}°.`, `Quelle est la longueur du côté ${sideName} à cet angle (celui pour lequel le rapport avec l'hypoténuse vaut 1/2) ?`];
+    explanation = angle === 30
+      ? `Côté opposé = H × sin(30°) = ${H} × 1/2 = ${val} cm.`
+      : `Côté adjacent = H × cos(60°) = ${H} × 1/2 = ${val} cm.`;
+    calc = false;
+    distractors = [`${val + 1} cm`, `${H} cm`, `${fmt(val * 1.73, 1)} cm`];
+  } else {
+    const other = round(H * 0.866, 1);
+    const sideName = angle === 30 ? 'adjacent' : 'opposé';
+    correct = `${fmt(other, 1)} cm`;
+    statement = [`Dans un triangle rectangle, l'hypoténuse mesure ${H} cm et un angle mesure ${angle}°.`, `Quelle est la longueur (approchée) du côté ${sideName} à cet angle ?`];
+    explanation = angle === 30
+      ? `Côté adjacent = H × cos(30°) = ${H} × 0,866 ≈ ${fmt(other, 1)} cm.`
+      : `Côté opposé = H × sin(60°) = ${H} × 0,866 ≈ ${fmt(other, 1)} cm.`;
+    calc = true;
+    distractors = [`${val} cm`, `${fmt(other + 1, 1)} cm`, `${H} cm`];
+  }
+  const { options } = buildOptions(correct, distractors);
+  return { cat: 'trig', title: 'Côtés d\'un triangle rectangle', calc, statement, correct, options, explanation };
+}
+
+// ============================================================
+// MÉCANIQUE
+// ============================================================
+const TRIG_ANG = { 15: [0.259, 0.966], 20: [0.342, 0.940], 25: [0.423, 0.906], 30: [0.5, 0.866], 35: [0.574, 0.819], 40: [0.643, 0.766] };
+function genIncline() {
+  const angle = randChoice(Object.keys(TRIG_ANG).map(Number));
+  const [s, c] = TRIG_ANG[angle];
+  const P = randInt(5, 30) * 10;
+  const askB = Math.random() < 0.5;
+  const bVal = round(P * c, 1);
+  const aVal = round(P * s, 1);
+  const correctVal = askB ? bVal : aVal;
+  const otherVal = askB ? aVal : bVal;
+  const label = askB ? 'normale (perpendiculaire) à la paroi (b)' : 'parallèle à la paroi (a)';
+  const correct = fmt(correctVal, 1) + ' N';
+  const distractors = [fmt(otherVal, 1) + ' N', fmt(P, 1) + ' N', fmt(P / 2, 1) + ' N'];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: 'Plan incliné', calc: true,
+    statement: [
+      `Un solide de poids P = ${P} N repose sans frottement sur un plan incliné à ${angle}°.`,
+      `(R) est la réaction du support, décomposée en (a) parallèle à la paroi et (b) normale à la paroi.`,
+      `Quelle est la valeur de la réaction ${label} ?`
+    ],
+    diagram: 'incline', diagramData: { angle },
+    correct, options,
+    explanation: `À l'équilibre : composante normale (b) = P × cos(${angle}°) = ${P} × ${c} = ${fmt(bVal, 1)} N ; composante parallèle (a) = P × sin(${angle}°) = ${P} × ${s} = ${fmt(aVal, 1)} N.`
+  };
+}
+
+function genCG() {
+  const OA = randInt(1, 5);
+  const AB = randInt(4, 15);
+  const OB = OA + AB;
+  const FA = randInt(5, 30) * 10;
+  let FB = randInt(5, 30) * 10;
+  while (FB === FA) FB = randInt(5, 30) * 10;
+  const x = round((FA * OA + FB * OB) / (FA + FB), 1);
+  const correct = fmt(x, 1) + ' mètres du point O';
+  const distractors = [
+    fmt((FA * OB + FB * OA) / (FA + FB), 1) + ' mètres du point O',
+    fmt((OA + OB) / 2, 1) + ' mètres du point O',
+    fmt(x * 2, 1) + ' mètres du point O'
+  ];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: 'Centre de gravité', calc: true,
+    statement: [
+      `Déterminez la position du centre de gravité de l'ensemble suivant, sachant que :`,
+      `Distance OA : ${OA} mètres ; Distance AB : ${AB} mètres.`,
+      `Une force de ${FA} N s'exerce au point A et une force de ${FB} N s'exerce au point B (B, A et O étant alignés, dans cet ordre).`
+    ],
+    diagram: 'cg', diagramData: { OA, AB, FA, FB },
+    correct, options,
+    explanation: `OB = OA + AB = ${OA} + ${AB} = ${OB} m. Le centre de gravité vérifie : x = (FA×OA + FB×OB) / (FA+FB) = (${FA}×${OA} + ${FB}×${OB}) / (${FA}+${FB}) = ${fmt(x, 1)} m du point O.`
+  };
+}
+
+function genEnergieVol() {
+  const down = Math.random() < 0.5;
+  const desc = down
+    ? `son altitude diminue légèrement et, par conséquent, sa vitesse augmente légèrement`
+    : `son altitude augmente légèrement et, par conséquent, sa vitesse diminue légèrement`;
+  const correct = down
+    ? `L'énergie cinétique augmente, l'énergie totale est constante`
+    : `L'énergie cinétique diminue, l'énergie totale est constante`;
+  const options = down
+    ? shuffle([`Les énergies cinétique et totale augmentent`, correct, `Les énergies potentielle et cinétique augmentent`, `L'énergie totale augmente, et les énergies potentielle et cinétique diminuent`])
+    : shuffle([`Les énergies cinétique et totale diminuent`, correct, `Les énergies potentielle et cinétique diminuent`, `L'énergie totale diminue, et les énergies potentielle et cinétique augmentent`]);
+  return {
+    cat: 'meca', title: 'Énergie mécanique en vol', calc: false,
+    statement: [`Un avion est en vol de croisière, en atmosphère calme. À position manette constante, ${desc}.`, `Que peut-on dire des énergies cinétique, potentielle et totale ?`],
+    correct, options,
+    explanation: `En atmosphère calme et à poussée constante, l'énergie mécanique totale (potentielle + cinétique) reste globalement constante : ce que l'avion échange en altitude se retrouve en vitesse, et inversement.`
+  };
+}
+
+function fmtThousands(n) {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function genEnergieCinetique() {
+  const m = randChoice([2, 4, 6, 8, 10]);
+  const v = randChoice([2, 4, 6, 10]);
+  const Ec = 0.5 * m * v * v;
+  const correct = `${Ec} J`;
+  const distractors = [`${m * v * v} J`, `${Ec + m} J`, `${0.5 * m * v} J`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: 'Énergie cinétique', calc: false,
+    statement: [`Un objet de masse ${m} kg se déplace à ${v} m/s.`, `Quelle est son énergie cinétique ? (Ec = ½ × m × v²)`],
+    correct, options,
+    explanation: `Ec = ½ × m × v² = 0,5 × ${m} × ${v}² = 0,5 × ${m} × ${v * v} = ${Ec} J.`
+  };
+}
+
+function genEnergieCinetiqueAvion() {
+  const vKmh = randChoice([200, 220, 250, 280, 300, 320, 350, 380, 400, 420, 450]);
+  const m = randChoice([800, 1000, 1200, 1500, 1800, 2000, 2200, 2500, 2800, 3000]);
+  const vMs = vKmh / 3.6;
+  const EcJ = 0.5 * m * vMs * vMs;
+  const EcKJ = EcJ / 1000;
+  const correct = `${fmtThousands(EcKJ)} kJ`;
+  const d1 = `${fmtThousands(EcKJ * 2)} kJ`;
+  const d2 = `${fmtThousands(0.5 * m * vKmh * vKmh / 1000)} kJ`;
+  const d3 = `${fmtThousands(m * vKmh * vKmh / 1000)} kJ`;
+  const { options } = buildOptions(correct, [d1, d2, d3]);
+  return {
+    cat: 'meca', title: 'Énergie cinétique (avion)', calc: true,
+    statement: [`Un avion vole à ${vKmh} km/h et pèse ${fmtThousands(m)} kg.`, `Quelle est son énergie cinétique ? (Ec = ½ × m × v², vitesse en m/s)`],
+    correct, options,
+    explanation: `On convertit d'abord la vitesse en m/s : v = ${vKmh} / 3,6 ≈ ${fmt(vMs, 2)} m/s. Puis Ec = ½ × m × v² = 0,5 × ${fmtThousands(m)} × ${fmt(vMs, 2)}² ≈ ${fmtThousands(EcJ)} J = ${fmtThousands(EcKJ)} kJ. Attention : la vitesse doit être convertie en m/s (÷ 3,6) avant le calcul, sinon le résultat est faux.`
+  };
+}
+
+function genEnergiePotentielle() {
+  const m = randChoice([2, 5, 10, 20]);
+  const h = randChoice([2, 5, 10, 20]);
+  const Ep = m * 10 * h;
+  const correct = `${Ep} J`;
+  const distractors = [`${m * h} J`, `${Ep / 2} J`, `${Ep + 10} J`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: 'Énergie potentielle', calc: false,
+    statement: [`Un objet de masse ${m} kg se trouve à une hauteur de ${h} m.`, `Quelle est son énergie potentielle ? (Ep = m × g × h, avec g ≈ 10 N/kg)`],
+    correct, options,
+    explanation: `Ep = m × g × h = ${m} × 10 × ${h} = ${Ep} J.`
+  };
+}
+
+function genPuissanceMeca() {
+  const F = randChoice([10, 20, 50, 100, 200]);
+  const v = randChoice([2, 3, 4, 5, 10]);
+  const P = F * v;
+  const correct = `${P} W`;
+  const distractors = [`${F + v} W`, `${P / 2} W`, `${Math.round(P * 1.2)} W`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: 'Puissance mécanique', calc: false,
+    statement: [`Une force de ${F} N déplace un objet à une vitesse constante de ${v} m/s.`, `Quelle est la puissance développée ? (P = F × v)`],
+    correct, options,
+    explanation: `P = F × v = ${F} × ${v} = ${P} W.`
+  };
+}
+
+function genNewton1() {
+  const cases = [
+    { desc: 'un solide immobile', concl: `La somme des forces (résultante) qui s'exercent sur lui est nulle.` },
+    { desc: 'un solide en mouvement rectiligne uniforme', concl: `La somme des forces (résultante) qui s'exercent sur lui est nulle.` }
+  ];
+  const c = randChoice(cases);
+  const correct = c.concl;
+  const distractors = shuffle([
+    `La somme des forces est dans le sens du mouvement.`,
+    `La somme des forces est proportionnelle à sa vitesse.`,
+    `Il n'est soumis à aucune force.`
+  ]);
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'meca', title: '1ère loi de Newton (principe d\'inertie)', calc: false,
+    statement: [`On considère ${c.desc}.`, `Que peut-on dire des forces qui s'exercent sur lui ?`],
+    correct, options,
+    explanation: `D'après le principe d'inertie (1ère loi de Newton), un solide immobile ou en mouvement rectiligne uniforme est en équilibre : la résultante des forces qui s'exercent sur lui est nulle.`
+  };
+}
+
+// ============================================================
+// ÉLECTRICITÉ
+// ============================================================
+function genOhm() {
+  const R = randInt(2, 20);
+  const I = randInt(1, 10);
+  const U = R * I;
+  const ask = randChoice(['U', 'R', 'I']);
+  let correct, statement;
+  if (ask === 'U') {
+    correct = `${U} V`;
+    statement = [`Une résistance de ${R} Ω est parcourue par un courant de ${I} A.`, `Quelle est la tension à ses bornes ? (U = R × I)`];
+  } else if (ask === 'R') {
+    correct = `${R} Ω`;
+    statement = [`Une résistance est soumise à une tension de ${U} V et parcourue par un courant de ${I} A.`, `Quelle est la valeur de cette résistance ? (R = U / I)`];
+  } else {
+    correct = `${I} A`;
+    statement = [`Une résistance de ${R} Ω est soumise à une tension de ${U} V.`, `Quelle est l'intensité du courant qui la traverse ? (I = U / R)`];
+  }
+  const baseVal = parseFloat(correct);
+  const unit = correct.split(' ')[1];
+  const distractors = [`${baseVal + 1} ${unit}`, `${Math.round(baseVal * 1.5)} ${unit}`, `${Math.max(1, baseVal - 2)} ${unit}`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'elec', title: "Loi d'Ohm", calc: false,
+    statement, correct, options,
+    explanation: `Loi d'Ohm : U = R × I, soit R = U/I et I = U/R. Ici U = ${U} V, R = ${R} Ω, I = ${I} A.`
+  };
+}
+
+function genPuissanceElec() {
+  const U = randChoice([6, 9, 12, 24, 220, 230]);
+  const I = randInt(1, 10);
+  const P = U * I;
+  const correct = `${P} W`;
+  const distractors = [`${U + I} W`, `${Math.round(P / 2)} W`, `${P + U} W`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'elec', title: 'Puissance électrique', calc: false,
+    statement: [`Un appareil est alimenté sous une tension de ${U} V et parcouru par un courant de ${I} A.`, `Quelle est la puissance électrique consommée ? (P = U × I)`],
+    correct, options,
+    explanation: `P = U × I = ${U} × ${I} = ${P} W.`
+  };
+}
+
+const FT_PAIRS = [[0.01, 100], [0.02, 50], [0.05, 20], [0.1, 10], [0.2, 5], [0.5, 2], [1, 1], [2, 0.5]];
+function genFrequence() {
+  const [T, f] = randChoice(FT_PAIRS);
+  const toF = Math.random() < 0.5;
+  const correct = toF ? `${fmtTrim(f, 2)} Hz` : `${fmtTrim(T, 2)} s`;
+  const others = FT_PAIRS.filter(p => p[0] !== T).map(p => toF ? `${fmtTrim(p[1], 2)} Hz` : `${fmtTrim(p[0], 2)} s`);
+  const distractors = shuffle(others).slice(0, 3);
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'elec', title: 'Période et fréquence', calc: false,
+    statement: toF ? [`Un signal alternatif a une période T = ${fmtTrim(T, 2)} s.`, `Quelle est sa fréquence ? (f = 1/T)`] : [`Un signal alternatif a une fréquence f = ${fmtTrim(f, 2)} Hz.`, `Quelle est sa période ? (T = 1/f)`],
+    correct, options,
+    explanation: `f = 1/T et T = 1/f. Ici T = ${fmtTrim(T, 2)} s et f = ${fmtTrim(f, 2)} Hz.`
+  };
+}
+
+function genCircuit() {
+  const R1 = randInt(2, 10) * 5;
+  let R2 = randInt(2, 12) * 5;
+  while (R2 === R1) R2 = randInt(2, 12) * 5;
+  const V = randChoice([6, 9, 12, 24, 28]);
+  const Req = round((R1 * R2) / (R1 + R2), 2);
+  const I1 = round(V / R1, 2);
+  const I2 = round(V / R2, 2);
+  const Itot = round(I1 + I2, 2);
+  const correct = `Réq = ${fmt(Req, 2)} Ω ; I₁ = ${fmt(I1, 2)} A ; I₂ = ${fmt(I2, 2)} A ; Itotal = ${fmt(Itot, 2)} A`;
+  const d1 = `Réq = ${fmt(Req, 2)} Ω ; I₁ = ${fmt(I2, 2)} A ; I₂ = ${fmt(I1, 2)} A ; Itotal = ${fmt(Itot, 2)} A`;
+  const ReqWrong = round(R1 + R2, 2);
+  const ItotWrong = round(V / ReqWrong, 2);
+  const d2 = `Réq = ${fmt(ReqWrong, 2)} Ω ; I₁ = ${fmt(I1, 2)} A ; I₂ = ${fmt(I2, 2)} A ; Itotal = ${fmt(ItotWrong, 2)} A`;
+  const d3 = `Réq = ${fmt(Req, 2)} Ω ; I₁ = ${fmt(I1, 2)} A ; I₂ = ${fmt(I2, 2)} A ; Itotal = ${fmt(I1, 2)} A`;
+  const { options } = buildOptions(correct, [d1, d2, d3]);
+  return {
+    cat: 'elec', title: 'Circuit en parallèle', calc: true,
+    statement: [
+      `Soit un circuit en parallèle possédant deux résistances R1 et R2. La tension du générateur est de ${V} V, les valeurs des résistances sont respectivement de ${R1} Ω et ${R2} Ω.`,
+      `I. Quelle est la résistance équivalente ? II. Quelles sont les intensités dans chaque résistance ? III. Quelle est l'intensité totale délivrée par le générateur ?`
+    ],
+    correct, options,
+    explanation: `Réq = (R1×R2)/(R1+R2) = (${R1}×${R2})/(${R1}+${R2}) = ${fmt(Req, 2)} Ω. I₁ = V/R1 = ${V}/${R1} = ${fmt(I1, 2)} A ; I₂ = V/R2 = ${V}/${R2} = ${fmt(I2, 2)} A. Itotal = I₁ + I₂ = ${fmt(Itot, 2)} A.`
+  };
+}
+
+// ============================================================
+// MÉCANIQUE DES FLUIDES
+// ============================================================
+function genMasseVolumique() {
+  const V = randChoice([1, 2, 4, 5, 10]);
+  const rho = randInt(2, 50) * 10;
+  const m = rho * V;
+  const askRho = Math.random() < 0.5;
+  let correct, statement;
+  if (askRho) {
+    correct = `${rho} kg/m³`;
+    statement = [`Un objet de masse ${m} kg occupe un volume de ${V} m³.`, `Quelle est sa masse volumique ? (ρ = m / V)`];
+  } else {
+    correct = `${m} kg`;
+    statement = [`Un objet a une masse volumique de ${rho} kg/m³ et occupe un volume de ${V} m³.`, `Quelle est sa masse ? (m = ρ × V)`];
+  }
+  const val = parseFloat(correct);
+  const unit = correct.includes('kg/m') ? 'kg/m³' : 'kg';
+  const distractors = [`${val + V} ${unit}`, `${Math.round(val * 2)} ${unit}`, `${Math.round(val / 2)} ${unit}`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'fluid', title: 'Masse volumique', calc: false,
+    statement, correct, options,
+    explanation: `ρ = m / V, donc m = ρ × V. Ici m = ${m} kg, V = ${V} m³, ρ = ${rho} kg/m³.`
+  };
+}
+
+function genDensite() {
+  const rho = randChoice([800, 900, 1000, 1200, 1500, 2000, 2500]);
+  const d = round(rho / 1000, 2);
+  const correct = fmtTrim(d, 2);
+  const distractors = [fmtTrim(d + 0.5, 2), fmtTrim(rho / 100, 2), fmtTrim(d - 0.3, 2)];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'fluid', title: 'Densité', calc: false,
+    statement: [`Un liquide a une masse volumique de ${rho} kg/m³.`, `Quelle est sa densité par rapport à l'eau ? (masse volumique de l'eau = 1000 kg/m³)`],
+    correct, options,
+    explanation: `Densité = ρ(liquide) / ρ(eau) = ${rho} / 1000 = ${correct}.`
+  };
+}
+
+function genPressionGaz() {
+  const P1 = randChoice([1, 2, 3, 4]);
+  const V1 = randChoice([4, 6, 8, 10, 12]);
+  const V2 = randChoice([2, 3, 4, 6]);
+  const P2 = round(P1 * V1 / V2, 2);
+  const correct = `${fmtTrim(P2, 2)} bar`;
+  const distractors = [`${fmtTrim(P1 * V2 / V1, 2)} bar`, `${fmtTrim(P2 + 1, 2)} bar`, `${fmtTrim(P1 + (V1 - V2), 2)} bar`];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'fluid', title: "Pression d'un gaz (loi de Boyle-Mariotte)", calc: true,
+    statement: [`Un gaz occupe un volume de ${V1} L sous une pression de ${P1} bar.`, `On le comprime à volume constant de ${V2} L, à température constante. Quelle est la nouvelle pression ? (P1×V1 = P2×V2)`],
+    correct, options,
+    explanation: `P1×V1 = P2×V2, donc P2 = P1×V1/V2 = ${P1}×${V1}/${V2} = ${fmtTrim(P2, 2)} bar.`
+  };
+}
+
+// ============================================================
+// NAVIGATION / BONUS (exemples réels du test)
+// ============================================================
+function genCatchup() {
+  const D = randInt(10, 30) * 10;
+  const V1 = randInt(18, 28) * 10;
+  const V2 = randInt(10, 17) * 10;
+  const diff = V1 - V2;
+  const tHours = D / diff;
+  const startH = randInt(6, 20);
+  const startM = randChoice([0, 15, 30, 45]);
+  const startTotal = startH * 60 + startM;
+  const arrivalTotal = Math.round(startTotal + tHours * 60);
+  const arrH = Math.floor(arrivalTotal / 60) % 24;
+  const arrM = arrivalTotal % 60;
+  const correct = `${pad(arrH)}h${pad(arrM)}`;
+  const t2 = D / (V1 + V2);
+  const arr2 = Math.round(startTotal + t2 * 60);
+  const t3 = D / V1;
+  const arr3 = Math.round(startTotal + t3 * 60);
+  const arr4 = arrivalTotal + (Math.random() < 0.5 ? 25 : -20);
+  const fmtT = (m) => `${pad(Math.floor(m / 60) % 24)}h${pad(((m % 60) + 60) % 60)}`;
+  const distractors = [fmtT(arr2), fmtT(arr3), fmtT(arr4)];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'nav', title: 'Rattrapage en vol', calc: true,
+    statement: [
+      `À ${pad(startH)}h${pad(startM)}, deux avions partent de deux aérodromes A et B distants de ${D} Nm. Ils volent dans le même sens, sur une route dans le prolongement de l'axe AB.`,
+      `L'avion partant de A vole à ${V1} kt et celui partant de B à ${V2} kt.`,
+      `À quelle heure A va-t-il rattraper B ?`
+    ],
+    correct, options,
+    explanation: `Vitesse de rapprochement = V1 − V2 = ${V1} − ${V2} = ${diff} kt. t = D/(V1−V2) = ${D}/${diff} = ${round(tHours, 2)} h. Heure de rattrapage ≈ ${pad(startH)}h${pad(startM)} + ${round(tHours, 2)} h = ${correct}.`
+  };
+}
+
+function genPercent2() {
+  const pPercent = randChoice([5, 10, 15, 20]);
+  const p = pPercent / 100;
+  const v3 = randInt(60, 95) * 10;
+  const d3 = v3;
+  const d1 = d3 / Math.pow(1 + p, 2);
+  const d2 = d1 * (1 + p);
+  const total = Math.round(d1 + d2 + d3);
+  const correct = `${total} km`;
+  const distA = Math.round(d3 * 3);
+  const d1w = d3 * Math.pow(1 - p, 2);
+  const d2w = d3 * (1 - p);
+  const distB = Math.round(d1w + d2w + d3);
+  const d1lin = d3 - 2 * p * d3;
+  const d2lin = d3 - p * d3;
+  const distC = Math.round(d1lin + d2lin + d3);
+  const { options } = buildOptions(correct, [`${distA} km`, `${distB} km`, `${distC} km`]);
+  return {
+    cat: 'nav', title: 'Distance parcourue', calc: true,
+    statement: [
+      `Un avion de ligne parti d'Orly parcourt une distance ${pPercent}% plus longue pendant la 2ème heure que pendant la 1ère heure, et ${pPercent}% plus longue pendant la 3ème heure que pendant la 2ème.`,
+      `S'il vole à ${v3} km/h pendant la 3ème heure, à quelle distance d'Orly était-il à la fin de la 3ème heure ?`
+    ],
+    correct, options,
+    explanation: `d3 = ${v3} km. d2 = d3/(1+${pPercent}%) = ${round(d2, 1)} km. d1 = d2/(1+${pPercent}%) = ${round(d1, 1)} km. Total = d1+d2+d3 ≈ ${total} km.`
+  };
+}
+
+function genLift() {
+  const mChoices = [0.25, 0.5, 2, 4];
+  const m = randChoice(mChoices);
+  const vFactor = round(1 / Math.sqrt(m), 2);
+  const phraseMap = { 0.5: 'diminue de moitié', 0.25: 'est divisée par 4', 2: 'double', 4: 'est multipliée par 4' };
+  const correct = fmtTrim(vFactor, 2);
+  const distractors = [fmtTrim(m, 2), fmtTrim(Math.sqrt(m), 2), fmtTrim(1 / m, 2)];
+  const { options } = buildOptions(correct, distractors);
+  return {
+    cat: 'aero', title: 'Portance', calc: true,
+    statement: [
+      `On considère la formule de la portance : P = ½ × ρ × S × v² × Cz.`,
+      `Si la masse volumique ${phraseMap[m]}, par quel facteur doit-on multiplier la vitesse pour maintenir la portance constante ?`
+    ],
+    correct, options,
+    explanation: `P constant ⇒ ρ×v² constant. Si ρ est multipliée par ${fmtTrim(m, 2)}, alors v doit être multipliée par 1/√${fmtTrim(m, 2)} = ${correct} pour compenser.`
+  };
+}
+
+// ================= Diagrams =================
+function svgThales(d) {
+  return `<svg viewBox="0 0 300 240" width="280">
+    <polygon points="150,18 60,215 240,215" fill="none" stroke="#4B5560" stroke-width="1.5"/>
+    <line x1="103" y1="118" x2="197" y2="118" stroke="#4B5560" stroke-width="1.5"/>
+    <circle cx="150" cy="18" r="2.2" fill="#1C2530"/>
+    <circle cx="103" cy="118" r="2.2" fill="#1C2530"/>
+    <circle cx="197" cy="118" r="2.2" fill="#1C2530"/>
+    <circle cx="60" cy="215" r="2.2" fill="#1C2530"/>
+    <circle cx="240" cy="215" r="2.2" fill="#1C2530"/>
+    <text x="150" y="12" text-anchor="middle" font-size="13" fill="#1C2530">A</text>
+    <text x="92" y="122" text-anchor="end" font-size="13" fill="#1C2530">B</text>
+    <text x="208" y="122" text-anchor="start" font-size="13" fill="#1C2530">C</text>
+    <text x="48" y="228" text-anchor="middle" font-size="13" fill="#1C2530">D</text>
+    <text x="252" y="228" text-anchor="middle" font-size="13" fill="#1C2530">E</text>
+    <text x="118" y="62" font-size="11.5" fill="#4B5560">AB=${d.AB}</text>
+    <text x="168" y="62" font-size="11.5" fill="#4B5560">AC=${d.AC}</text>
+    <text x="65" y="168" font-size="11.5" fill="#4B5560">BD=${d.BD}</text>
+    <text x="205" y="168" font-size="11.5" fill="#4B5560">CE=${d.CE}</text>
+    <text x="140" y="112" font-size="11.5" fill="#4B5560">BC=${d.BC}</text>
+    <text x="135" y="232" font-size="11.5" fill="#0B4F6C" font-weight="600">DE=?</text>
+  </svg>`;
+}
+function svgIncline(d) {
+  const angleRad = d.angle * Math.PI / 180;
+  const baseX = 60, baseY = 195, len = 210;
+  const topX = baseX + len * Math.cos(angleRad);
+  const topY = baseY - len * Math.sin(angleRad);
+  const arcR = 34;
+  return `<svg viewBox="0 0 300 220" width="280">
+    <line x1="20" y1="195" x2="270" y2="195" stroke="#4B5560" stroke-width="1.5"/>
+    <line x1="${baseX}" y1="${baseY}" x2="${topX}" y2="${topY}" stroke="#4B5560" stroke-width="1.5"/>
+    <path d="M ${baseX + arcR} ${baseY} A ${arcR} ${arcR} 0 0 0 ${baseX + arcR * Math.cos(angleRad)} ${baseY - arcR * Math.sin(angleRad)}" fill="none" stroke="#4B5560" stroke-width="1"/>
+    <text x="${baseX + arcR + 6}" y="${baseY - 6}" font-size="12" fill="#1C2530">${d.angle}°</text>
+    <rect x="${baseX + 55 * Math.cos(angleRad) - 18}" y="${baseY - 55 * Math.sin(angleRad) - 18}" width="36" height="24" fill="#E7E3D6" stroke="#4B5560" stroke-width="1.3" transform="rotate(${-d.angle} ${baseX + 55 * Math.cos(angleRad)} ${baseY - 55 * Math.sin(angleRad)})"/>
+    <text x="${baseX + 55 * Math.cos(angleRad)}" y="${baseY - 55 * Math.sin(angleRad) + 4}" text-anchor="middle" font-size="11" fill="#1C2530">R</text>
+    <text x="230" y="185" font-size="11.5" fill="#4B5560">(P)</text>
+  </svg>`;
+}
+function svgCG(d) {
+  return `<svg viewBox="0 0 300 200" width="280">
+    <line x1="40" y1="40" x2="260" y2="40" stroke="#4B5560" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <line x1="40" y1="40" x2="150" y2="40" stroke="#4B5560" stroke-width="1.5" stroke-dasharray="0"/>
+    <line x1="150" y1="40" x2="150" y2="120" stroke="#4B5560" stroke-width="1.3"/>
+    <line x1="40" y1="40" x2="40" y2="95" stroke="#4B5560" stroke-width="1.3"/>
+    <circle cx="150" cy="145" r="24" fill="#E7E3D6" stroke="#4B5560" stroke-width="1.3"/>
+    <text x="150" y="149" text-anchor="middle" font-size="11" fill="#1C2530">${d.FA} N</text>
+    <circle cx="40" cy="120" r="24" fill="#E7E3D6" stroke="#4B5560" stroke-width="1.3"/>
+    <text x="40" y="124" text-anchor="middle" font-size="11" fill="#1C2530">${d.FB} N</text>
+    <text x="40" y="30" text-anchor="middle" font-size="13" fill="#1C2530">B</text>
+    <text x="150" y="30" text-anchor="middle" font-size="13" fill="#1C2530">A</text>
+    <text x="264" y="44" text-anchor="start" font-size="13" fill="#1C2530">O</text>
+    <text x="95" y="30" text-anchor="middle" font-size="11" fill="#4B5560">AB=${d.AB}</text>
+    <text x="205" y="30" text-anchor="middle" font-size="11" fill="#4B5560">OA=${d.OA}</text>
+  </svg>`;
+}
+const DIAGRAMS = { thales: svgThales, incline: svgIncline, cg: svgCG };
+
+// ================= Category metadata =================
+const CATS = [
+  { key: 'all', label: 'Tout', icon: '🎲', color: '#0B4F6C' },
+  { key: 'gen', label: 'Généralités', icon: '🧭', color: '#6B5CA5' },
+  { key: 'ari', label: 'Arithmétique', icon: '➗', color: '#1E8F63' },
+  { key: 'alg', label: 'Algèbre', icon: '✖️', color: '#B8860B' },
+  { key: 'geo', label: 'Géométrie', icon: '📐', color: '#0B4F6C' },
+  { key: 'trig', label: 'Trigonométrie', icon: '📏', color: '#2E86AB' },
+  { key: 'meca', label: 'Mécanique', icon: '⚙️', color: '#8A5A2E' },
+  { key: 'elec', label: 'Électricité', icon: '⚡', color: '#C9962E' },
+  { key: 'fluid', label: 'Fluides', icon: '💧', color: '#2892A8' },
+  { key: 'nav', label: 'Navigation', icon: '🛫', color: '#3C6E47' },
+  { key: 'aero', label: 'Aérodynamique', icon: '🪽', color: '#5B7FBE' }
+];
+const CAT_META = Object.fromEntries(CATS.map(c => [c.key, c]));
+
+const GEN_BY_CAT = {
+  gen: [genUnites],
+  ari: [genPuissancesRacines, genFractions, genPourcentages, genRegleDeTrois, genEchelles],
+  alg: [genAlgebreSignes, genEquation],
+  geo: [genThales, genPythagore, genVecteurs],
+  trig: [genDegresRadians, genTrigValeurs, genTrigCotes],
+  meca: [genIncline, genCG, genEnergieVol, genEnergieCinetique, genEnergieCinetiqueAvion, genEnergiePotentielle, genPuissanceMeca, genNewton1],
+  elec: [genOhm, genPuissanceElec, genFrequence, genCircuit],
+  fluid: [genMasseVolumique, genDensite, genPressionGaz],
+  nav: [genCatchup, genPercent2],
+  aero: [genLift]
+};
+GEN_BY_CAT.all = Object.values(GEN_BY_CAT).flat();
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+const GOOD_MSGS = ['Bien joué !', 'Exact !', 'Parfait !', "C'est ça !", 'Très bien !', 'Nickel !'];
+const BAD_MSGS = ['Pas tout à fait.', 'Presque !', 'Regarde la correction ci-dessous.', 'Pas cette fois-ci.'];
+
+const state = { cat: 'all', qCount: 0, score: 0, total: 0, streak: 0, current: null, answered: false };
+
+function pickGenerator() {
+  const pool = GEN_BY_CAT[state.cat];
+  return randChoice(pool);
+}
+
+function setAccentColor(color) {
+  document.documentElement.style.setProperty('--tabcolor', color);
+}
+
+function newQuestion() {
+  const gen = pickGenerator();
+  state.current = gen();
+  state.qCount++;
+  state.answered = false;
+  render();
+}
+
+function render() {
+  const q = state.current;
+  const meta = CAT_META[q.cat] || CAT_META.geo;
+  setAccentColor(meta.color);
+  document.getElementById('catIcon').textContent = meta.icon;
+  document.getElementById('qtitle').textContent = q.title;
+  document.getElementById('qnum').textContent = 'Question ' + state.qCount + ' · ' + meta.label;
+
+  const badge = document.getElementById('calcBadge');
+  if (q.calc) { badge.textContent = '\ud83e\uddee Calculatrice'; badge.className = 'badge calc'; }
+  else { badge.textContent = '\u270f\ufe0f Calcul mental'; badge.className = 'badge mental'; }
+
+  document.getElementById('statement').innerHTML = q.statement.map(l => `<p>${l}</p>`).join('');
+
+  const diagEl = document.getElementById('diagram');
+  diagEl.innerHTML = (q.diagram && DIAGRAMS[q.diagram]) ? DIAGRAMS[q.diagram](q.diagramData) : '';
+
+  const fb = document.getElementById('feedbackBanner');
+  fb.className = 'feedback-banner';
+  fb.textContent = '';
+
+  const optEl = document.getElementById('options');
+  optEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const row = document.createElement('div');
+    row.className = 'option';
+    row.innerHTML = `<span class="letter">${LETTERS[i]}</span><span class="opt-text">${opt}</span><span class="mark"></span>`;
+    row.addEventListener('click', () => selectOption(i, row));
+    optEl.appendChild(row);
+  });
+
+  const exp = document.getElementById('explanation');
+  exp.classList.remove('show');
+  exp.textContent = q.explanation;
+
+  document.getElementById('cardBody').style.animation = 'none';
+  void document.getElementById('cardBody').offsetWidth;
+  document.getElementById('cardBody').style.animation = '';
+
+  updateScoreDisplay();
+}
+
+function spawnSparkles(x, y) {
+  const emojis = ['✨', '⭐', '🎉'];
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = emojis[randInt(0, emojis.length - 1)];
+    s.style.left = x + 'px';
+    s.style.top = y + 'px';
+    s.style.setProperty('--dx', (randInt(-40, 40)) + 'px');
+    s.style.setProperty('--rot', (randInt(-60, 60)) + 'deg');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1000);
+  }
+}
+
+function selectOption(i, row) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = state.current;
+  const chosenText = q.options[i];
+  const isCorrect = chosenText === q.correct;
+  state.total++;
+  if (isCorrect) { state.score++; state.streak++; } else { state.streak = 0; }
+
+  const rows = document.querySelectorAll('#options .option');
+  rows.forEach(r => {
+    r.classList.add('disabled');
+    const text = r.querySelector('.opt-text').textContent;
+    const markEl = r.querySelector('.mark');
+    if (text === q.correct) { r.classList.add('correct'); markEl.textContent = '✓'; }
+  });
+  if (!isCorrect) {
+    row.classList.add('wrong');
+    row.querySelector('.mark').textContent = '✕';
+  } else {
+    const rect = row.getBoundingClientRect();
+    spawnSparkles(rect.left + 30, rect.top + rect.height / 2);
+  }
+
+  const fb = document.getElementById('feedbackBanner');
+  fb.classList.add('show', isCorrect ? 'good' : 'bad');
+  fb.textContent = (isCorrect ? '✅ ' : '❌ ') + randChoice(isCorrect ? GOOD_MSGS : BAD_MSGS);
+
+  document.getElementById('explanation').classList.add('show');
+  updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+  document.getElementById('scorePct').textContent = state.score + '/' + state.total;
+  const ring = document.getElementById('ringProgress');
+  const circumference = 138;
+  const frac = state.total ? state.score / state.total : 0;
+  ring.setAttribute('stroke-dashoffset', String(circumference * (1 - frac)));
+  ring.setAttribute('stroke', frac >= 0.7 ? '#3FBF8F' : frac >= 0.4 ? '#E8B84B' : '#D14B3D');
+
+  const streakEl = document.getElementById('streak');
+  if (state.streak >= 2) {
+    streakEl.textContent = '🔥 x' + state.streak;
+    streakEl.classList.add('show');
+  } else {
+    streakEl.classList.remove('show');
+  }
+}
+
+function buildTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  CATS.forEach(c => {
+    const b = document.createElement('div');
+    b.className = 'tab' + (c.key === state.cat ? ' active' : '');
+    if (c.key === state.cat) b.style.setProperty('--tabcolor', c.color);
+    b.innerHTML = `<span class="ic">${c.icon}</span><span>${c.label}</span>`;
+    b.addEventListener('click', () => {
+      state.cat = c.key;
+      buildTabs();
+      newQuestion();
+    });
+    tabsEl.appendChild(b);
+  });
+}
+
+document.getElementById('nextBtn').addEventListener('click', newQuestion);
+document.getElementById('scoreBox').addEventListener('click', () => {
+  state.score = 0; state.total = 0; state.streak = 0; updateScoreDisplay();
+});
+
+buildTabs();
+newQuestion();
+</script>
+<script>
+// Hors ligne : service worker (nécessite http(s) ; ignoré proprement en ouverture directe de fichier)
+(function () {
+  var sub = document.querySelector('.toolbar .sub');
+  var tag = null;
+  function show(text, ok) {
+    if (!sub) return;
+    if (!tag) { tag = document.createElement('span'); sub.appendChild(tag); }
+    tag.className = 'offline-state' + (ok ? '' : ' wait');
+    tag.textContent = text;
+  }
+  if (location.protocol === 'file:') { show('· fichier local : fonctionne déjà hors ligne', true); return; }
+  if (!('serviceWorker' in navigator)) { return; }
+  navigator.serviceWorker.register('sw.js').then(function () {
+    show('· préparation hors ligne…', false);
+    return navigator.serviceWorker.ready;
+  }).then(function () {
+    show('· ✓ disponible hors ligne', true);
+  }).catch(function () { /* silencieux : le site reste utilisable en ligne */ });
+})();
+</script>
+</body>
+</html>
