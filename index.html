@@ -105,7 +105,7 @@
   .explanation{display:none; margin:14px 0 0; padding:13px 15px; background:#F1EDE1; border-left:3px solid var(--tabcolor,#0B4F6C); font-size:13.5px; line-height:1.55; color:#33404B; border-radius:0 8px 8px 0;}
   .explanation.show{display:block; animation:fadeIn .25s ease;}
 
-  .footer-row{display:flex; justify-content:flex-end; align-items:center; padding:16px 22px; border-top:1px solid var(--rule); background:var(--paper-head);}
+  .footer-row{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:16px 22px; border-top:1px solid var(--rule); background:var(--paper-head);}
   button.next{
     background:var(--tabcolor,#0B4F6C); color:#fff; border:none; padding:12px 22px; border-radius:9px;
     font-size:14px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:8px;
@@ -113,6 +113,15 @@
   }
   button.next:hover{filter:brightness(1.12);}
   button.next:active{transform:scale(.98);}
+  button.prev{
+    background:transparent; color:var(--tabcolor,#0B4F6C); border:2px solid var(--tabcolor,#0B4F6C);
+    padding:10px 16px; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer;
+    white-space:nowrap; flex:0 0 auto; transition:opacity .12s, transform .08s;
+  }
+  button.prev:active{transform:scale(.98);}
+  button.prev:disabled{opacity:.35; cursor:default;}
+  .review-note{display:none; font-size:12.5px; font-weight:600; opacity:.75; margin:0 0 10px;}
+  .review-note.show{display:block;}
 
   .sparkle{position:fixed; font-size:22px; pointer-events:none; animation:sparkleUp 1s ease-out forwards; z-index:50;}
   @keyframes sparkleUp{
@@ -163,6 +172,7 @@
     <span class="badge" id="calcBadge"></span>
   </div>
   <div class="card-body" id="cardBody">
+    <div class="review-note" id="reviewNote">↩ Question déjà répondue — consultation seule</div>
     <div class="statement" id="statement"></div>
     <div class="diagram" id="diagram"></div>
     <div class="feedback-banner" id="feedbackBanner"></div>
@@ -170,6 +180,7 @@
     <div class="explanation" id="explanation"></div>
   </div>
   <div class="footer-row">
+    <button class="prev" id="prevBtn" disabled>← Précédente</button>
     <button class="next" id="nextBtn">Question suivante →</button>
   </div>
 </div>
@@ -1001,7 +1012,7 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 const GOOD_MSGS = ['Bien joué !', 'Exact !', 'Parfait !', "C'est ça !", 'Très bien !', 'Nickel !'];
 const BAD_MSGS = ['Pas tout à fait.', 'Presque !', 'Regarde la correction ci-dessous.', 'Pas cette fois-ci.'];
 
-const state = { cat: 'all', qCount: 0, score: 0, total: 0, streak: 0, current: null, answered: false };
+const state = { cat: 'all', qCount: 0, score: 0, total: 0, streak: 0, current: null, answered: false, history: [], pos: -1 };
 
 function pickGenerator() {
   const pool = GEN_BY_CAT[state.cat];
@@ -1017,7 +1028,26 @@ function newQuestion() {
   state.current = gen();
   state.qCount++;
   state.answered = false;
+  state.history.push({ q: state.current, num: state.qCount, chosen: null });
+  state.pos = state.history.length - 1;
   render();
+}
+
+function showEntry(pos) {
+  state.pos = pos;
+  const e = state.history[pos];
+  state.current = e.q;
+  state.answered = e.chosen !== null;
+  render();
+}
+
+function goPrev() {
+  if (state.pos > 0) showEntry(state.pos - 1);
+}
+
+function goNext() {
+  if (state.pos < state.history.length - 1) showEntry(state.pos + 1);
+  else newQuestion();
 }
 
 function render() {
@@ -1026,7 +1056,10 @@ function render() {
   setAccentColor(meta.color);
   document.getElementById('catIcon').textContent = meta.icon;
   document.getElementById('qtitle').textContent = q.title;
-  document.getElementById('qnum').textContent = 'Question ' + state.qCount + ' · ' + meta.label;
+  const entry = state.history[state.pos];
+  document.getElementById('qnum').textContent = 'Question ' + entry.num + ' · ' + meta.label;
+  document.getElementById('prevBtn').disabled = state.pos <= 0;
+  document.getElementById('reviewNote').classList.toggle('show', entry.chosen !== null);
 
   const badge = document.getElementById('calcBadge');
   if (q.calc) { badge.textContent = '\ud83e\uddee Calculatrice'; badge.className = 'badge calc'; }
@@ -1055,6 +1088,8 @@ function render() {
   exp.classList.remove('show');
   exp.textContent = q.explanation;
 
+  if (entry.chosen !== null) showAnswer(entry.chosen, false);
+
   document.getElementById('cardBody').style.animation = 'none';
   void document.getElementById('cardBody').offsetWidth;
   document.getElementById('cardBody').style.animation = '';
@@ -1080,11 +1115,19 @@ function spawnSparkles(x, y) {
 function selectOption(i, row) {
   if (state.answered) return;
   state.answered = true;
-  const q = state.current;
-  const chosenText = q.options[i];
-  const isCorrect = chosenText === q.correct;
+  state.history[state.pos].chosen = i;
+  const isCorrect = state.current.options[i] === state.current.correct;
   state.total++;
   if (isCorrect) { state.score++; state.streak++; } else { state.streak = 0; }
+  showAnswer(i, true);
+  updateScoreDisplay();
+}
+
+// Affiche la correction ; live=false lors d'un retour en arrière (pas d'animation ni de nouveau message aléatoire)
+function showAnswer(i, live) {
+  const q = state.current;
+  const row = document.querySelectorAll('#options .option')[i];
+  const isCorrect = q.options[i] === q.correct;
 
   const rows = document.querySelectorAll('#options .option');
   rows.forEach(r => {
@@ -1096,17 +1139,18 @@ function selectOption(i, row) {
   if (!isCorrect) {
     row.classList.add('wrong');
     row.querySelector('.mark').textContent = '✕';
-  } else {
+  } else if (live) {
     const rect = row.getBoundingClientRect();
     spawnSparkles(rect.left + 30, rect.top + rect.height / 2);
   }
 
   const fb = document.getElementById('feedbackBanner');
   fb.classList.add('show', isCorrect ? 'good' : 'bad');
-  fb.textContent = (isCorrect ? '✅ ' : '❌ ') + randChoice(isCorrect ? GOOD_MSGS : BAD_MSGS);
+  fb.textContent = live
+    ? (isCorrect ? '✅ ' : '❌ ') + randChoice(isCorrect ? GOOD_MSGS : BAD_MSGS)
+    : (isCorrect ? '✅ Tu avais trouvé la bonne réponse.' : '❌ Tu avais répondu ' + LETTERS[i] + '.');
 
   document.getElementById('explanation').classList.add('show');
-  updateScoreDisplay();
 }
 
 function updateScoreDisplay() {
@@ -1143,7 +1187,8 @@ function buildTabs() {
   });
 }
 
-document.getElementById('nextBtn').addEventListener('click', newQuestion);
+document.getElementById('nextBtn').addEventListener('click', goNext);
+document.getElementById('prevBtn').addEventListener('click', goPrev);
 document.getElementById('scoreBox').addEventListener('click', () => {
   state.score = 0; state.total = 0; state.streak = 0; updateScoreDisplay();
 });
