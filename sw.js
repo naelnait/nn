@@ -1,7 +1,7 @@
 // Service worker : tout le site est mis en cache à l'installation,
 // puis servi depuis le cache (et rafraîchi en arrière-plan si le réseau est là).
 // Pour forcer une mise à jour après modification du site : changer CACHE_VERSION.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE = 'mermoz-entrainement-' + CACHE_VERSION;
 const ASSETS = [
   './',

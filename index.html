@@ -105,6 +105,15 @@
   .explanation{display:none; margin:14px 0 0; padding:13px 15px; background:#F1EDE1; border-left:3px solid var(--tabcolor,#0B4F6C); font-size:13.5px; line-height:1.55; color:#33404B; border-radius:0 8px 8px 0;}
   .explanation.show{display:block; animation:fadeIn .25s ease;}
 
+
+  .explanation .exp-title{font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--tabcolor,#0B4F6C); margin:0 0 8px;}
+  .explanation ol{margin:0 0 0 20px; padding:0;}
+  .explanation li{margin:0 0 6px; padding-left:2px;}
+  .explanation .tip{margin-top:10px; padding:9px 11px; background:#FFF6D6; border-radius:8px; font-size:13px;}
+  .opt-note{display:none; flex-basis:100%; margin:6px 0 0 44px; font-size:12.5px; line-height:1.45; color:#4A5560;}
+  .option.disabled .opt-note{display:block;}
+  .option{flex-wrap:wrap;}
+
   .footer-row{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:16px 22px; border-top:1px solid var(--rule); background:var(--paper-head);}
   button.next{
     background:var(--tabcolor,#0B4F6C); color:#fff; border:none; padding:12px 22px; border-radius:9px;
@@ -920,6 +929,689 @@ function genLift() {
   };
 }
 
+// ============================================================
+// STATISTIQUES & PROBABILITÉS
+// ============================================================
+function frac(n, d) {
+  const g = gcd(n, d);
+  n = n / g; d = d / g;
+  return d === 1 ? String(n) : n + '/' + d;
+}
+// probabilité valide (strictement entre 0 et 1) sinon null
+function fp(n, d) { return (n <= 0 || n >= d) ? null : frac(n, d); }
+function nf(x) { return fmtTrim(x, 1); }
+function medianOf(sorted) {
+  const n = sorted.length;
+  return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+}
+// candidates : tableau de [texte, raison] ; fallback(k) : texte de secours
+function mkOpts(correct, correctWhy, candidates, fallback) {
+  const why = {};
+  why[correct] = correctWhy;
+  const ds = [];
+  for (const c of candidates) {
+    if (!c || c[0] == null || c[0] === correct || ds.includes(c[0])) continue;
+    ds.push(c[0]); why[c[0]] = c[1];
+    if (ds.length === 3) break;
+  }
+  for (let k = 1; ds.length < 3 && k < 80; k++) {
+    const t = fallback(k);
+    if (t == null || t === correct || ds.includes(t)) continue;
+    ds.push(t); why[t] = 'Valeur plausible mais qui ne découle d\'aucune étape correcte du calcul.';
+  }
+  return { options: shuffle([correct].concat(ds)), why };
+}
+function seriesWithIntMean(n, lo, hi) {
+  const q = Math.floor((hi - lo) / 4);
+  for (let t = 0; t < 2000; t++) {
+    const mean = randInt(lo + q, hi - q);
+    const vals = [];
+    for (let i = 0; i < n - 1; i++) vals.push(randInt(lo, hi));
+    const last = n * mean - vals.reduce((a, b) => a + b, 0);
+    if (last >= lo && last <= hi) { vals.push(last); return { vals: shuffle(vals), mean }; }
+  }
+  const m = Math.round((lo + hi) / 2);
+  return { vals: Array(n).fill(m), mean: m };
+}
+const STAT_CTX = [
+  { intro: 'Un élève a obtenu les notes suivantes (sur 20) :', unit: '', lo: 4, hi: 19 },
+  { intro: 'Un pilote a effectué des vols dont les durées (en minutes) sont :', unit: ' min', lo: 40, hi: 120 },
+  { intro: 'Un relevé de vitesses (en kt) donne :', unit: ' kt', lo: 90, hi: 130 }
+];
+
+function genMoyenne() {
+  const ctx = randChoice(STAT_CTX), u = ctx.unit;
+  const n = randChoice([4, 5, 6]);
+  const { vals, mean } = seriesWithIntMean(n, ctx.lo, ctx.hi);
+  const sum = mean * n;
+  const sorted = vals.slice().sort((a, b) => a - b);
+  const med = medianOf(sorted), mx = sorted[n - 1];
+  const correct = nf(mean) + u;
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${sum} ÷ ${n} = ${mean}.`,
+    [
+      [String(sum) + u, `C'est la somme des valeurs (${sum}) : tu as oublié de diviser par le nombre de valeurs (${n}).`],
+      [nf(med) + u, `C'est la médiane (valeur du milieu après tri), pas la moyenne.`],
+      [nf(mx) + u, `C'est la plus grande valeur de la série, pas la moyenne.`],
+      [nf(mean + 1) + u, `Proche, mais ${sum} ÷ ${n} donne exactement ${mean} : vérifie ta somme.`],
+      [nf(mean - 1) + u, `Proche, mais ${sum} ÷ ${n} donne exactement ${mean} : vérifie ta somme.`]
+    ], k => nf(mean + k + 1) + u);
+  return {
+    cat: 'stat', title: 'Moyenne', calc: false,
+    statement: [ctx.intro, vals.join(' ; '), `Quelle est la moyenne de cette série ?`],
+    correct, options, why,
+    steps: [
+      `Définition : moyenne = (somme des valeurs) ÷ (nombre de valeurs).`,
+      `Somme : ${vals.join(' + ')} = ${sum}.`,
+      `Nombre de valeurs : ${n}.`,
+      `Moyenne = ${sum} ÷ ${n} = ${mean}${u}.`
+    ],
+    tip: `Astuce mentale : choisis une valeur "pivot" proche de la moyenne, additionne seulement les écarts à ce pivot, puis divise par ${n}.`,
+    meta: { kind: 'mean', vals }
+  };
+}
+
+function genMediane() {
+  const ctx = randChoice(STAT_CTX), u = ctx.unit;
+  const n = randChoice([5, 6, 7, 8]);
+  const vals = [];
+  for (let i = 0; i < n; i++) vals.push(randInt(ctx.lo, ctx.hi));
+  const sorted = vals.slice().sort((a, b) => a - b);
+  const med = medianOf(sorted);
+  const mean = vals.reduce((a, b) => a + b, 0) / n;
+  const f = Math.floor(n / 2);
+  const correct = nf(med) + u;
+  const { options, why } = mkOpts(correct,
+    n % 2 ? `Bonne réponse : la valeur centrale du tableau trié.` : `Bonne réponse : la moyenne des deux valeurs centrales du tableau trié.`,
+    [
+      [nf(mean) + u, `C'est la moyenne de la série, pas la médiane.`],
+      [nf(vals[f]) + u, `Tu as pris la valeur du milieu de la liste non triée : il faut d'abord ranger les valeurs par ordre croissant.`],
+      [nf(sorted[f + 1]) + u, `Tu as décalé d'un rang vers le haut dans la liste triée.`],
+      [nf(sorted[f - 1]) + u, n % 2 ? `Tu as décalé d'un rang vers le bas dans la liste triée.` : `Tu n'as retenu que la valeur centrale basse : avec un nombre pair de valeurs, il faut faire la moyenne des deux valeurs centrales.`]
+    ], k => nf(med + k) + u);
+  const steps = [
+    `La médiane partage la série en deux groupes de même taille : on trie d'abord par ordre croissant.`,
+    `Série triée : ${sorted.join(' ; ')}.`,
+    `Il y a ${n} valeurs (${n % 2 ? 'nombre impair' : 'nombre pair'}).`
+  ];
+  steps.push(n % 2
+    ? `Avec un nombre impair, la médiane est la valeur de rang ${(n + 1) / 2} : ${med}${u}.`
+    : `Avec un nombre pair, la médiane est la moyenne des valeurs de rang ${n / 2} et ${n / 2 + 1} : (${sorted[n / 2 - 1]} + ${sorted[n / 2]}) ÷ 2 = ${nf(med)}${u}.`);
+  return {
+    cat: 'stat', title: 'Médiane', calc: false,
+    statement: [ctx.intro, vals.join(' ; '), `Quelle est la médiane de cette série ?`],
+    correct, options, why, steps,
+    tip: `Toujours trier avant de chercher la médiane. Impair : valeur centrale. Pair : moyenne des deux valeurs centrales.`,
+    meta: { kind: 'median', vals }
+  };
+}
+
+function genEtendue() {
+  const ctx = randChoice(STAT_CTX), u = ctx.unit;
+  const n = randChoice([5, 6, 7]);
+  const vals = [];
+  for (let i = 0; i < n; i++) vals.push(randInt(ctx.lo, ctx.hi));
+  const mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+  const range = mx - mn;
+  const mean = vals.reduce((a, b) => a + b, 0) / n;
+  const correct = String(range) + u;
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${mx} − ${mn} = ${range}.`,
+    [
+      [String(mx) + u, `C'est la valeur maximale, pas l'écart entre le maximum et le minimum.`],
+      [String(mn) + u, `C'est la valeur minimale, pas l'écart entre le maximum et le minimum.`],
+      [String(mx + mn) + u, `Tu as additionné le maximum et le minimum : l'étendue est leur différence.`],
+      [nf(mean) + u, `C'est la moyenne de la série, pas son étendue.`]
+    ], k => String(range + k) + u);
+  return {
+    cat: 'stat', title: 'Étendue', calc: false,
+    statement: [ctx.intro, vals.join(' ; '), `Quelle est l'étendue de cette série ?`],
+    correct, options, why,
+    steps: [
+      `L'étendue mesure la dispersion : étendue = valeur maximale − valeur minimale.`,
+      `Valeur maximale : ${mx}. Valeur minimale : ${mn}.`,
+      `Étendue = ${mx} − ${mn} = ${range}${u}.`
+    ],
+    tip: `Pas besoin de trier toute la série : repère seulement le plus grand et le plus petit.`,
+    meta: { kind: 'range', vals }
+  };
+}
+
+function genMode() {
+  const ctx = randChoice(STAT_CTX), u = ctx.unit;
+  const mode = randInt(ctx.lo, ctx.hi);
+  const t = randChoice([3, 3, 4]);
+  const pool = [];
+  for (let v = ctx.lo; v <= ctx.hi; v++) if (v !== mode) pool.push(v);
+  const others = shuffle(pool).slice(0, randInt(3, 5));
+  const list = Array(t).fill(mode).concat(others);
+  if (Math.random() < 0.5) list.push(others[0]);
+  const vals = shuffle(list);
+  const second = others[0];
+  const mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const correct = String(mode) + u;
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${mode} apparaît ${t} fois, plus souvent que toute autre valeur.`,
+    [
+      [String(second) + u, `Cette valeur apparaît ${list.filter(x => x === second).length} fois seulement : ${mode} apparaît ${t} fois.`],
+      [String(mx) + u, `C'est la plus grande valeur, pas la plus fréquente.`],
+      [String(mn) + u, `C'est la plus petite valeur, pas la plus fréquente.`],
+      [String(Math.round(mean)) + u, `C'est (à peu près) la moyenne, pas la valeur la plus fréquente.`]
+    ], k => String(mode + k) + u);
+  return {
+    cat: 'stat', title: 'Mode', calc: false,
+    statement: [ctx.intro, vals.join(' ; '), `Quel est le mode de cette série (la valeur qui apparaît le plus souvent) ?`],
+    correct, options, why,
+    steps: [
+      `Le mode est la valeur qui apparaît le plus grand nombre de fois (pas besoin de calcul).`,
+      `On compte les apparitions de chaque valeur : ${mode} apparaît ${t} fois, aucune autre valeur n'apparaît plus de 2 fois.`,
+      `Le mode est donc ${mode}${u}.`
+    ],
+    tip: `Mode = plus fréquent. Moyenne = on additionne puis on divise. Médiane = valeur du milieu. Ne pas confondre les trois.`,
+    meta: { kind: 'mode', vals }
+  };
+}
+
+function genMoyenneManquante() {
+  const ctx = randChoice(STAT_CTX), u = ctx.unit;
+  const n = randChoice([4, 5]);
+  const { vals, mean } = seriesWithIntMean(n, ctx.lo, ctx.hi);
+  const x = vals[n - 1];
+  const known = vals.slice(0, n - 1);
+  const ks = known.reduce((a, b) => a + b, 0);
+  const total = n * mean;
+  const correct = String(x) + u;
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${total} − ${ks} = ${x}.`,
+    [
+      [String(mean) + u, `C'est la moyenne visée, pas la valeur manquante.`],
+      [String(total) + u, `C'est la somme totale attendue (${n} × ${mean}) : il faut encore retirer la somme des valeurs connues (${ks}).`],
+      [nf(ks / (n - 1)) + u, `C'est la moyenne des ${n - 1} valeurs connues, pas la valeur manquante.`],
+      [String(x + 2) + u, `Erreur de calcul : ${total} − ${ks} donne exactement ${x}.`],
+      [String(x - 2) + u, `Erreur de calcul : ${total} − ${ks} donne exactement ${x}.`]
+    ], k => String(x + k + 2) + u);
+  return {
+    cat: 'stat', title: 'Valeur manquante (moyenne)', calc: false,
+    statement: [`La moyenne de ${n} valeurs est ${mean}${u}.`, `Les ${n - 1} premières valeurs sont : ${known.join(' ; ')}.`, `Quelle est la dernière valeur ?`],
+    correct, options, why,
+    steps: [
+      `Moyenne = somme ÷ nombre de valeurs, donc somme = moyenne × nombre de valeurs.`,
+      `Somme totale attendue : ${mean} × ${n} = ${total}.`,
+      `Somme des valeurs connues : ${known.join(' + ')} = ${ks}.`,
+      `Valeur manquante = ${total} − ${ks} = ${x}${u}.`
+    ],
+    tip: `Raisonne en sommes : la moyenne donne la somme totale, il suffit de retirer ce que l'on connaît déjà.`,
+    meta: { kind: 'missing', known, n, mean, x }
+  };
+}
+
+function genMoyennePonderee() {
+  const useEff = Math.random() < 0.5;
+  let terms = null, T = 0, S = 0;
+  for (let t = 0; t < 3000; t++) {
+    if (!useEff) {
+      const coefs = randChoice([[1, 2], [1, 3], [2, 3], [1, 1, 2], [1, 2, 3], [2, 3, 5], [1, 2, 2]]);
+      terms = coefs.map(c => [randInt(5, 19), c]);
+    } else {
+      const total = randChoice([4, 5, 8, 10]);
+      const e = [1, 1, 1];
+      for (let i = 0; i < total - 3; i++) e[randInt(0, 2)]++;
+      const vs = shuffle([8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]).slice(0, 3).sort((a, b) => a - b);
+      terms = vs.map((v, i) => [v, e[i]]);
+    }
+    T = terms.reduce((a, t2) => a + t2[1], 0);
+    S = terms.reduce((a, t2) => a + t2[0] * t2[1], 0);
+    if ((2 * S) % T === 0) break;
+    terms = null;
+  }
+  if (!terms) { terms = [[12, 1], [12, 2]]; T = 3; S = 36; }
+  const res = S / T;
+  const simple = terms.reduce((a, t2) => a + t2[0], 0) / terms.length;
+  const correct = nf(res);
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${S} ÷ ${T} = ${nf(res)}.`,
+    [
+      [nf(simple), `Moyenne simple des valeurs : elle ignore ${useEff ? 'les effectifs' : 'les coefficients'}, alors que chaque valeur pèse différemment.`],
+      [nf(S / terms.length), `Tu as divisé la somme pondérée (${S}) par le nombre de valeurs (${terms.length}) au lieu de la somme ${useEff ? 'des effectifs' : 'des coefficients'} (${T}).`],
+      [nf(res + 1), `Proche, mais ${S} ÷ ${T} donne exactement ${nf(res)}.`],
+      [nf(res - 1), `Proche, mais ${S} ÷ ${T} donne exactement ${nf(res)}.`]
+    ], k => nf(res + k + 1));
+  const prod = terms.map(t2 => `${t2[0]} × ${t2[1]}`).join(' + ');
+  const statement = useEff
+    ? [`Dans une classe de ${T} élèves, ${terms.map(t2 => `${t2[1]} élève${t2[1] > 1 ? 's ont' : ' a'} eu ${t2[0]}`).join(', ')}.`, `Quelle est la moyenne de la classe ?`]
+    : [`Un élève a obtenu : ${terms.map(t2 => `${t2[0]} (coefficient ${t2[1]})`).join(', ')}.`, `Quelle est sa moyenne pondérée ?`];
+  return {
+    cat: 'stat', title: 'Moyenne pondérée', calc: false,
+    statement, correct, options, why,
+    steps: [
+      `Chaque valeur compte autant de fois que son ${useEff ? 'effectif' : 'coefficient'} : on multiplie, on additionne, puis on divise par le total des ${useEff ? 'effectifs' : 'coefficients'}.`,
+      `Somme pondérée : ${prod} = ${S}.`,
+      `Total des ${useEff ? 'effectifs' : 'coefficients'} : ${terms.map(t2 => t2[1]).join(' + ')} = ${T}.`,
+      `Moyenne = ${S} ÷ ${T} = ${nf(res)}.`
+    ],
+    tip: `On divise par la somme des ${useEff ? 'effectifs' : 'coefficients'}, jamais par le nombre de lignes du tableau.`,
+    meta: { kind: 'weighted', terms }
+  };
+}
+
+function genPourcentageStat() {
+  const N = randChoice([20, 25, 40, 50, 80, 100, 200, 250]);
+  let k = 1;
+  for (let t = 0; t < 1000; t++) { k = randInt(1, N - 1); if ((100 * k) % N === 0) break; }
+  if ((100 * k) % N !== 0) k = N / 2;
+  const pct = (100 * k) / N;
+  const ctxs = [['vols observés', 'ont été retardés', 'vols retardés'], ['pièces contrôlées', 'sont défectueuses', 'pièces défectueuses'], ['élèves', 'ont réussi le test', 'élèves ayant réussi']];
+  const c = randChoice(ctxs);
+  const correct = pct + ' %';
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${k} ÷ ${N} × 100 = ${pct} %.`,
+    [
+      [(100 - pct) + ' %', `C'est le pourcentage du complémentaire (${N - k} sur ${N}), pas celui demandé.`],
+      [k + ' %', `Tu as repris l'effectif (${k}) comme pourcentage : il faut le rapporter au total (${N}) puis multiplier par 100.`],
+      [(pct * 2) + ' %', `Le résultat est le double de la bonne valeur : vérifie la division ${k} ÷ ${N}.`],
+      [Math.round(pct / 2) + ' %', `Le résultat est la moitié de la bonne valeur : vérifie la division ${k} ÷ ${N}.`]
+    ], j => (pct + 5 * j) + ' %');
+  return {
+    cat: 'stat', title: 'Fréquence et pourcentage', calc: false,
+    statement: [`Sur ${N} ${c[0]}, ${k} ${c[1]}.`, `Quel est le pourcentage de ${c[2]} ?`],
+    correct, options, why,
+    steps: [
+      `Pourcentage = (effectif concerné ÷ effectif total) × 100.`,
+      `Fréquence : ${k} ÷ ${N} = ${fmtTrim(k / N, 3)}.`,
+      `Pourcentage : ${fmtTrim(k / N, 3)} × 100 = ${pct} %.`
+    ],
+    tip: `Raccourci : ramène le total à 100 (ici ×${fmtTrim(100 / N, 3)}) et applique la même opération à l'effectif.`,
+    meta: { kind: 'pct', N, k }
+  };
+}
+
+// ---------------------------- PROBABILITÉS ----------------------------
+const URNE_COL = [['rouge', 'rouges'], ['bleue', 'bleues'], ['verte', 'vertes'], ['jaune', 'jaunes']];
+function genProbaUrne() {
+  const cols = shuffle(URNE_COL).slice(0, randChoice([2, 3]));
+  const counts = cols.map(() => randInt(1, 7));
+  const total = counts.reduce((a, b) => a + b, 0);
+  const idx = randInt(0, cols.length - 1);
+  const askNot = Math.random() < 0.3;
+  const fav = askNot ? total - counts[idx] : counts[idx];
+  const correct = frac(fav, total);
+  const comp = askNot ? counts[idx] : total - counts[idx];
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${fav} cas favorables sur ${total} cas possibles.`,
+    [
+      [fp(comp, total), `C'est la probabilité de l'événement contraire (${comp} boules sur ${total}).`],
+      [fp(fav, total - fav), `Tu as divisé par le nombre de boules défavorables (${total - fav}) au lieu du nombre total de boules (${total}).`],
+      [fp(1, cols.length), `Tu as supposé toutes les couleurs équiprobables : or il n'y a pas le même nombre de boules de chaque couleur.`],
+      [fp(fav + 1, total), `Proche, mais le nombre de cas favorables est ${fav}, pas ${fav + 1}.`]
+    ], k => frac(fav, total + k));
+  const desc = counts.map((c, i) => `${c} boule${c > 1 ? 's' : ''} ${c > 1 ? cols[i][1] : cols[i][0]}`);
+  const listed = desc.length === 2 ? desc.join(' et ') : desc.slice(0, -1).join(', ') + ' et ' + desc[desc.length - 1];
+  const steps = [
+    `Probabilité = (nombre de cas favorables) ÷ (nombre de cas possibles), toutes les boules ayant autant de chances d'être tirées.`,
+    `Nombre de cas possibles : ${counts.join(' + ')} = ${total} boules.`
+  ];
+  if (askNot) {
+    steps.push(`Cas favorables (boules qui ne sont pas ${cols[idx][1]}) : ${total} − ${counts[idx]} = ${fav}.`);
+  } else {
+    steps.push(`Cas favorables (boules ${cols[idx][1]}) : ${fav}.`);
+  }
+  steps.push(`Probabilité = ${fav}/${total}${correct !== fav + '/' + total ? ' = ' + correct + ' (fraction simplifiée)' : ''}.`);
+  return {
+    cat: 'proba', title: 'Probabilité : tirage dans une urne', calc: false,
+    statement: [`Une urne contient ${listed}, indiscernables au toucher. On tire une boule au hasard.`, `Quelle est la probabilité d'obtenir une boule ${askNot ? 'qui n\'est pas ' + cols[idx][0] : cols[idx][0]} ? (fraction irréductible)`],
+    correct, options, why, steps,
+    tip: `Une probabilité est toujours comprise entre 0 et 1, et on divise par le nombre TOTAL de cas, pas par les cas défavorables.`,
+    meta: { kind: 'urne', counts, idx, askNot }
+  };
+}
+
+const DE1 = [
+  { t: 'un nombre pair', f: x => x % 2 === 0, d: '2, 4, 6' },
+  { t: 'un nombre supérieur ou égal à 5', f: x => x >= 5, d: '5, 6' },
+  { t: 'un multiple de 3', f: x => x % 3 === 0, d: '3, 6' },
+  { t: 'un nombre premier', f: x => [2, 3, 5].includes(x), d: '2, 3, 5' },
+  { t: 'un nombre strictement inférieur à 3', f: x => x < 3, d: '1, 2' },
+  { t: 'un nombre différent de 6', f: x => x !== 6, d: '1, 2, 3, 4, 5' },
+  { t: 'un nombre impair supérieur à 1', f: x => x % 2 === 1 && x > 1, d: '3, 5' }
+];
+const DE2 = [
+  { t: 'une somme égale à 7', f: (a, b) => a + b === 7 },
+  { t: 'un double (deux faces identiques)', f: (a, b) => a === b },
+  { t: 'une somme égale à 2', f: (a, b) => a + b === 2 },
+  { t: 'une somme égale à 12', f: (a, b) => a + b === 12 },
+  { t: 'une somme égale à 6', f: (a, b) => a + b === 6 },
+  { t: 'une somme supérieure ou égale à 11', f: (a, b) => a + b >= 11 },
+  { t: 'une somme strictement inférieure à 4', f: (a, b) => a + b < 4 }
+];
+function genProbaDe() {
+  const two = Math.random() < 0.4;
+  const ev = randChoice(two ? DE2 : DE1);
+  let cnt = 0, total = 0, favs = [];
+  if (two) {
+    for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) { total++; if (ev.f(a, b)) { cnt++; favs.push('(' + a + ',' + b + ')'); } }
+  } else {
+    for (let a = 1; a <= 6; a++) { total++; if (ev.f(a)) cnt++; }
+  }
+  const correct = frac(cnt, total);
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${cnt} cas favorables sur ${total} cas possibles.`,
+    [
+      [fp(total - cnt, total), `C'est la probabilité de l'événement contraire.`],
+      [fp(cnt + 1, total), `Proche, mais il y a exactement ${cnt} cas favorables, pas ${cnt + 1}.`],
+      [fp(cnt, two ? 6 : 5), two ? `Tu as divisé par 6 (les faces d'un seul dé) au lieu de 36 (tous les couples possibles).` : `Tu as divisé par 5 au lieu de 6 : un dé a 6 faces.`],
+      [fp(cnt, total * 2), `Tu as divisé par un nombre de cas trop grand : il y a ${total} issues possibles.`],
+      [fp(cnt, two ? 11 : 12), two ? `Tu as compté 11 sommes possibles (de 2 à 12) : elles ne sont pas équiprobables, il faut compter les 36 couples.` : `Tu as divisé par 12 : un dé a 6 faces.`]
+    ], k => frac(cnt, total + k));
+  const steps = two ? [
+    `Avec deux dés, il y a 6 × 6 = 36 couples possibles, tous équiprobables.`,
+    `On cherche les couples donnant ${ev.t} : ${favs.join(' ')}.`,
+    `Cas favorables : ${cnt}.`,
+    `Probabilité = ${cnt}/36${correct !== cnt + '/36' ? ' = ' + correct : ''}.`
+  ] : [
+    `Un dé à six faces donne 6 issues équiprobables : 1, 2, 3, 4, 5, 6.`,
+    `Les issues qui donnent ${ev.t} sont : ${ev.d}, soit ${cnt} cas favorables.`,
+    `Probabilité = ${cnt}/6${correct !== cnt + '/6' ? ' = ' + correct : ''}.`
+  ];
+  return {
+    cat: 'proba', title: two ? 'Probabilité : deux dés' : 'Probabilité : un dé', calc: false,
+    statement: [two ? `On lance deux dés équilibrés à six faces.` : `On lance un dé équilibré à six faces.`, `Quelle est la probabilité d'obtenir ${ev.t} ? (fraction irréductible)`],
+    correct, options, why, steps,
+    tip: two ? `Avec deux dés, ne compte jamais les sommes comme des issues : liste les couples (36 au total).` : `Écris les 6 issues, entoure les favorables, divise.`,
+    meta: { kind: 'de', two, text: ev.t, cnt, total }
+  };
+}
+
+function genProbaComplement() {
+  const evs = [
+    ['un vol soit retardé', 'ne soit pas retardé'],
+    ['une pièce soit défectueuse', 'ne soit pas défectueuse'],
+    ['un candidat réussisse le test', 'ne le réussisse pas']
+  ];
+  const ev = randChoice(evs);
+  const mode = randChoice(['dec', 'pct', 'frac']);
+  let statement, correct, built, steps, meta;
+  if (mode === 'dec' || mode === 'pct') {
+    const p5 = randInt(1, 19) * 5;
+    const q5 = 100 - p5;
+    if (mode === 'dec') {
+      const d = x => fmt(x / 100, 2);
+      correct = d(q5);
+      built = mkOpts(correct, `Bonne réponse : 1 − ${d(p5)} = ${d(q5)}.`, [
+        [d(p5), `C'est la probabilité de l'événement lui-même, pas de son contraire.`],
+        [d(100 + p5), `Tu as ajouté au lieu de soustraire : une probabilité ne peut pas dépasser 1.`],
+        (q5 - 10 > 0) ? [d(q5 - 10), `Erreur de soustraction : 1 − ${d(p5)} = ${d(q5)}.`] : null,
+        (q5 + 10 < 100) ? [d(q5 + 10), `Erreur de soustraction : 1 − ${d(p5)} = ${d(q5)}.`] : null
+      ], k => d(q5 + 5 * k));
+      statement = [`La probabilité qu'${ev[0]} est de ${d(p5)}.`, `Quelle est la probabilité qu'il ou elle ${ev[1]} ?`];
+      steps = [
+        `Un événement et son contraire sont complémentaires : P(contraire) = 1 − P(événement).`,
+        `P(contraire) = 1 − ${d(p5)} = ${d(q5)}.`
+      ];
+      meta = { kind: 'compl', mode, p5 };
+    } else {
+      correct = q5 + ' %';
+      built = mkOpts(correct, `Bonne réponse : 100 % − ${p5} % = ${q5} %.`, [
+        [p5 + ' %', `C'est le pourcentage de l'événement lui-même, pas de son contraire.`],
+        [(100 + p5) + ' %', `Tu as ajouté au lieu de soustraire : un pourcentage de probabilité ne peut pas dépasser 100 %.`],
+        (q5 - 10 > 0) ? [(q5 - 10) + ' %', `Erreur de soustraction : 100 − ${p5} = ${q5}.`] : null,
+        (q5 + 10 < 100) ? [(q5 + 10) + ' %', `Erreur de soustraction : 100 − ${p5} = ${q5}.`] : null
+      ], k => (q5 + 5 * k) + ' %');
+      statement = [`La probabilité qu'${ev[0]} est de ${p5} %.`, `Quelle est la probabilité qu'il ou elle ${ev[1]} ?`];
+      steps = [
+        `Un événement et son contraire sont complémentaires : P(contraire) = 100 % − P(événement).`,
+        `P(contraire) = 100 % − ${p5} % = ${q5} %.`
+      ];
+      meta = { kind: 'compl', mode, p5 };
+    }
+  } else {
+    const [n, d] = randChoice([[1, 4], [1, 3], [2, 5], [3, 8], [1, 6], [5, 6], [3, 10], [7, 10], [2, 3], [3, 4], [1, 5], [4, 7]]);
+    correct = frac(d - n, d);
+    built = mkOpts(correct, `Bonne réponse : 1 − ${n}/${d} = ${d - n}/${d}.`, [
+      [fp(n, d), `C'est la probabilité de l'événement lui-même, pas de son contraire.`],
+      [fp(d - n, d + 1), `Tu as modifié le dénominateur : le contraire garde le même dénominateur ${d}.`],
+      [fp(1, d), `Tu as gardé seulement 1 au numérateur : le contraire a ${d - n} cas favorables sur ${d}.`],
+      [fp(d - n + 1, d), `Proche, mais ${d} − ${n} = ${d - n}.`]
+    ], k => frac(d - n, d + k));
+    statement = [`La probabilité qu'${ev[0]} est de ${n}/${d}.`, `Quelle est la probabilité qu'il ou elle ${ev[1]} ? (fraction irréductible)`];
+    steps = [
+      `Un événement et son contraire sont complémentaires : P(contraire) = 1 − P(événement).`,
+      `On écrit 1 = ${d}/${d}, puis on soustrait : ${d}/${d} − ${n}/${d} = ${d - n}/${d}.`,
+      correct !== (d - n) + '/' + d ? `On simplifie : ${d - n}/${d} = ${correct}.` : `La fraction est déjà irréductible.`
+    ];
+    meta = { kind: 'compl', mode, n, d };
+  }
+  return {
+    cat: 'proba', title: 'Événement contraire', calc: false,
+    statement, correct, options: built.options, why: built.why, steps,
+    tip: `"Au moins un", "ne … pas" : pense au contraire, c'est souvent le chemin le plus court.`,
+    meta
+  };
+}
+
+function genProbaEtOu() {
+  const dens = [2, 3, 4, 5, 6, 8, 10];
+  const op = randChoice(['et', 'ou']);
+  let a = 1, b = 4, c = 1, d = 4;
+  for (let t = 0; t < 1000; t++) {
+    b = randChoice(dens); d = randChoice(dens);
+    a = randInt(1, b - 1); c = randInt(1, d - 1);
+    if (op === 'ou' && a * d + c * b >= b * d) continue;
+    break;
+  }
+  if (op === 'ou' && a * d + c * b >= b * d) { a = 1; b = 4; c = 1; d = 4; }
+  const prodN = a * c, prodD = b * d, sumN = a * d + c * b, sumD = b * d;
+  const cN = op === 'et' ? prodN : sumN, cD = op === 'et' ? prodD : sumD;
+  const correct = frac(cN, cD);
+  const cands = op === 'et' ? [
+    [fp(sumN, sumD), `Tu as additionné les probabilités : pour "A et B" indépendants, on les multiplie.`],
+    [fp(a + c, b + d), `Tu as additionné numérateurs et dénominateurs, ce qui n'a pas de sens pour des fractions.`],
+    [fp(a * c, b + d), `Tu as multiplié les numérateurs mais additionné les dénominateurs : il faut multiplier les deux.`],
+    [fp(a + c, b * d), `Tu as additionné les numérateurs mais multiplié les dénominateurs : il faut multiplier les deux.`]
+  ] : [
+    [fp(prodN, prodD), `Tu as multiplié : pour "A ou B" avec des événements incompatibles, on additionne.`],
+    [fp(a + c, b + d), `Tu as additionné numérateurs et dénominateurs, ce qui n'a pas de sens pour des fractions.`],
+    [fp(a + c, b * d), `Tu as additionné les numérateurs sans mettre les fractions au même dénominateur.`],
+    [fp(sumN, b + d), `Tu as mis au même dénominateur mais additionné les dénominateurs au lieu de les multiplier.`]
+  ];
+  const { options, why } = mkOpts(correct,
+    op === 'et' ? `Bonne réponse : ${a}/${b} × ${c}/${d} = ${prodN}/${prodD}.` : `Bonne réponse : ${a}/${b} + ${c}/${d} = ${sumN}/${sumD}.`,
+    cands, k => frac(cN, cD + k));
+  const steps = op === 'et' ? [
+    `Événements indépendants : P(A et B) = P(A) × P(B).`,
+    `P(A et B) = ${a}/${b} × ${c}/${d} = (${a} × ${c}) / (${b} × ${d}) = ${prodN}/${prodD}.`,
+    correct !== prodN + '/' + prodD ? `On simplifie : ${prodN}/${prodD} = ${correct}.` : `La fraction est déjà irréductible.`
+  ] : [
+    `Événements incompatibles (jamais réalisés en même temps) : P(A ou B) = P(A) + P(B).`,
+    `On met au même dénominateur ${b * d} : ${a}/${b} = ${a * d}/${b * d} et ${c}/${d} = ${c * b}/${b * d}.`,
+    `P(A ou B) = (${a * d} + ${c * b}) / ${b * d} = ${sumN}/${sumD}.`,
+    correct !== sumN + '/' + sumD ? `On simplifie : ${sumN}/${sumD} = ${correct}.` : `La fraction est déjà irréductible.`
+  ];
+  return {
+    cat: 'proba', title: op === 'et' ? 'Événements indépendants (A et B)' : 'Événements incompatibles (A ou B)', calc: false,
+    statement: op === 'et'
+      ? [`A et B sont deux événements indépendants, avec P(A) = ${a}/${b} et P(B) = ${c}/${d}.`, `Quelle est la probabilité que A et B se réalisent tous les deux ? (fraction irréductible)`]
+      : [`A et B sont deux événements incompatibles (qui ne peuvent pas se produire en même temps), avec P(A) = ${a}/${b} et P(B) = ${c}/${d}.`, `Quelle est la probabilité P(A ou B) ? (fraction irréductible)`],
+    correct, options, why, steps,
+    tip: `"ET" (indépendants) → on multiplie. "OU" (incompatibles) → on additionne.`,
+    meta: { kind: 'etou', op, a, b, c, d }
+  };
+}
+
+function genTirage() {
+  const r = randInt(2, 5), b = randInt(2, 5), n = r + b;
+  const variant = randChoice(['sansRR', 'sansRB', 'avecRR']);
+  const all = {
+    sansRR: [r * (r - 1), n * (n - 1)], sansRB: [r * b, n * (n - 1)],
+    avecRR: [r * r, n * n], avecRB: [r * b, n * n]
+  };
+  const [cN, cD] = all[variant];
+  const correct = frac(cN, cD);
+  const reasons = {
+    sansRR: `Cette valeur correspond à "deux rouges, sans remise".`,
+    sansRB: `Cette valeur correspond à "une rouge puis une bleue, sans remise".`,
+    avecRR: `Cette valeur correspond à "deux rouges, avec remise" : la composition de l'urne ne change pas entre les deux tirages.`,
+    avecRB: `Cette valeur correspond à "une rouge puis une bleue, avec remise".`
+  };
+  const cands = ['sansRR', 'sansRB', 'avecRR', 'avecRB'].filter(k => k !== variant).map(k => [fp(all[k][0], all[k][1]), reasons[k] + ' Ce n\'est pas la situation de l\'énoncé.']);
+  cands.push([fp(r * (r - 1), n * n), `Tu as pris r×(r−1) au numérateur (sans remise) mais n×n au dénominateur (avec remise) : les deux tirages doivent suivre la même règle.`]);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${cN}/${cD}${correct !== cN + '/' + cD ? ' = ' + correct : ''}.`, cands, k => frac(cN, cD + k));
+  const sans = variant !== 'avecRR';
+  const target = variant === 'sansRB' ? `une boule rouge puis une boule bleue (dans cet ordre)` : `deux boules rouges`;
+  const steps = [];
+  if (variant === 'sansRR') {
+    steps.push(`1er tirage : ${r} rouges sur ${n} boules → ${r}/${n}.`);
+    steps.push(`Sans remise, il reste ${n - 1} boules dont ${r - 1} rouges → 2e tirage : ${r - 1}/${n - 1}.`);
+    steps.push(`On multiplie : ${r}/${n} × ${r - 1}/${n - 1} = ${cN}/${cD}.`);
+  } else if (variant === 'sansRB') {
+    steps.push(`1er tirage : ${r} rouges sur ${n} boules → ${r}/${n}.`);
+    steps.push(`Sans remise, il reste ${n - 1} boules dont ${b} bleues → 2e tirage : ${b}/${n - 1}.`);
+    steps.push(`On multiplie : ${r}/${n} × ${b}/${n - 1} = ${cN}/${cD}.`);
+  } else {
+    steps.push(`1er tirage : ${r} rouges sur ${n} boules → ${r}/${n}.`);
+    steps.push(`Avec remise, l'urne retrouve sa composition initiale → 2e tirage : ${r}/${n}.`);
+    steps.push(`On multiplie : ${r}/${n} × ${r}/${n} = ${cN}/${cD}.`);
+  }
+  if (correct !== cN + '/' + cD) steps.push(`On simplifie : ${cN}/${cD} = ${correct}.`);
+  return {
+    cat: 'proba', title: 'Tirages successifs', calc: false,
+    statement: [`Une urne contient ${r} boules rouges et ${b} boules bleues. On tire deux boules successivement, ${sans ? 'sans remise' : 'avec remise'}.`, `Quelle est la probabilité d'obtenir ${target} ? (fraction irréductible)`],
+    correct, options, why, steps,
+    tip: `Sans remise : le nombre de boules diminue à chaque tirage. Avec remise : l'urne ne change pas. On multiplie les probabilités de chaque tirage.`,
+    meta: { kind: 'tirage', r, b, variant }
+  };
+}
+
+function genPileFace() {
+  const n = randChoice([2, 3, 4]);
+  const variant = randChoice(['auMoins', 'exactement', 'aucun']);
+  const total = Math.pow(2, n);
+  const num = variant === 'auMoins' ? total - 1 : variant === 'exactement' ? n : 1;
+  const correct = frac(num, total);
+  const txt = variant === 'auMoins' ? 'au moins un pile' : variant === 'exactement' ? 'exactement un pile' : 'que des faces';
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${num} cas favorables sur ${total}.`,
+    [
+      [fp(1, total), variant === 'aucun' ? null : `C'est la probabilité de n'obtenir que des faces, un seul cas sur ${total}.`],
+      [fp(1, 2), `Tu as raisonné sur un seul lancer : ici il y en a ${n}, donc ${total} issues possibles.`],
+      [fp(n, total), variant === 'exactement' ? null : `C'est la probabilité d'obtenir exactement un pile (${n} cas sur ${total}).`],
+      [fp(total - 1, total), variant === 'auMoins' ? null : `C'est la probabilité d'obtenir au moins un pile.`],
+      [fp(1, n), `Tu as divisé par le nombre de lancers (${n}) au lieu du nombre d'issues (${total}).`]
+    ].map(c => (c[1] === null ? null : c)), k => frac(num, total + k));
+  const steps = [
+    `${n} lancers de pièce : chaque lancer a 2 résultats, donc 2${n === 2 ? '×2' : n === 3 ? '×2×2' : '×2×2×2'} = ${total} issues équiprobables.`
+  ];
+  if (variant === 'auMoins') {
+    steps.push(`Plus simple par le contraire : "aucun pile" = "que des faces" = 1 seule issue.`);
+    steps.push(`P(au moins un pile) = 1 − 1/${total} = ${total - 1}/${total}.`);
+  } else if (variant === 'exactement') {
+    steps.push(`Le pile peut être au 1er, 2e${n > 2 ? ', …' : ''} ou ${n}e lancer : ${n} issues favorables.`);
+    steps.push(`P = ${n}/${total}${correct !== n + '/' + total ? ' = ' + correct : ''}.`);
+  } else {
+    steps.push(`Il n'y a qu'une seule issue "face, face${n > 2 ? ', …' : ''}, face" : 1 cas favorable.`);
+    steps.push(`P = 1/${total}.`);
+  }
+  return {
+    cat: 'proba', title: 'Pile ou face', calc: false,
+    statement: [`On lance ${n} fois de suite une pièce équilibrée.`, `Quelle est la probabilité d'obtenir ${txt} ? (fraction irréductible)`],
+    correct, options, why, steps,
+    tip: `Pour "au moins un", calcule d'abord la probabilité qu'il n'y en ait aucun, puis passe au contraire.`,
+    meta: { kind: 'pileface', n, variant }
+  };
+}
+
+function genDenombrement() {
+  const kind = randChoice(['menu', 'paires', 'file', 'code']);
+  let statement, val, cands, steps, tip, title;
+  if (kind === 'menu') {
+    const a = randInt(2, 4), b = randInt(2, 4), c = randInt(2, 3);
+    val = a * b * c; title = 'Dénombrement : choix successifs';
+    statement = [`Un restaurant propose ${a} entrées, ${b} plats et ${c} desserts. Un menu comprend une entrée, un plat et un dessert.`, `Combien de menus différents peut-on composer ?`];
+    cands = [
+      [a + b + c, `Tu as additionné : les choix se combinent, donc on multiplie.`],
+      [a * b, `Tu as oublié le dessert dans le produit.`],
+      [(a + b) * c, `Tu as additionné entrées et plats : il faut multiplier les trois nombres de choix.`],
+      [a * b + c, `Tu as additionné le nombre de desserts : il faut tout multiplier.`]
+    ];
+    steps = [`Chaque choix est indépendant des autres : on multiplie le nombre de possibilités à chaque étape.`, `${a} entrées × ${b} plats × ${c} desserts = ${val} menus.`];
+    tip = `Choix successifs et indépendants → on multiplie ("principe multiplicatif").`;
+  } else if (kind === 'paires') {
+    const n = randInt(5, 10);
+    val = n * (n - 1) / 2; title = 'Dénombrement : paires';
+    statement = [`Dans un groupe de ${n} pilotes, on choisit 2 personnes pour former un équipage (l'ordre ne compte pas).`, `Combien d'équipages différents est-il possible de former ?`];
+    cands = [
+      [n * (n - 1), `Tu as compté chaque équipage deux fois (A-B et B-A) : l'ordre ne compte pas, il faut diviser par 2.`],
+      [n * n, `Tu as autorisé à choisir la même personne deux fois : le second choix se fait parmi ${n - 1} personnes.`],
+      [2 * n, `Tu as multiplié le nombre de pilotes par 2 : chaque pilote peut s'associer à ${n - 1} autres.`],
+      [val + n, `Tu as ajouté ${n} à la bonne valeur sans raison.`]
+    ];
+    steps = [`1er pilote : ${n} choix. 2e pilote : ${n - 1} choix restants. Cela fait ${n} × ${n - 1} = ${n * (n - 1)} couples ordonnés.`, `Chaque équipage est compté 2 fois (A-B et B-A) : on divise par 2.`, `${n * (n - 1)} ÷ 2 = ${val} équipages.`];
+    tip = `Quand l'ordre ne compte pas, on divise le nombre de choix ordonnés par le nombre d'ordres possibles.`;
+  } else if (kind === 'file') {
+    const n = randInt(3, 5);
+    let f = 1; for (let i = 2; i <= n; i++) f *= i;
+    val = f; title = 'Dénombrement : ordres possibles';
+    statement = [`${n} personnes se placent dans une file d'attente.`, `De combien de façons différentes peuvent-elles se ranger ?`];
+    cands = [
+      [n * n, `Tu as calculé ${n} × ${n} : à chaque place, le nombre de personnes disponibles diminue.`],
+      [2 * n, `Tu as doublé le nombre de personnes : le nombre d'ordres croît beaucoup plus vite.`],
+      [Math.pow(2, n), `Tu as calculé 2 puissance ${n} : ce n'est pas la bonne structure de choix.`],
+      [f + n, `Tu as ajouté ${n} à la bonne valeur sans raison.`]
+    ];
+    const chain = Array.from({ length: n }, (_, i) => n - i);
+    steps = [`1re place : ${n} choix, puis ${n - 1} pour la suivante, et ainsi de suite jusqu'à 1.`, `Total = ${chain.join(' × ')} = ${f}.`];
+    tip = `Ranger n éléments : n × (n−1) × … × 1 = n! (factorielle).`;
+  } else {
+    const opts = [
+      { t: `Un code est composé de 3 chiffres (de 0 à 9), les répétitions étant autorisées.`, v: 1000, s: [`Chaque chiffre a 10 possibilités, indépendamment des autres.`, `10 × 10 × 10 = 1000 codes.`], c: [[30, `Tu as additionné : les choix se multiplient.`], [720, `Tu as supposé les chiffres tous différents, alors que les répétitions sont autorisées.`], [300, `Tu as calculé 3 × 100 au lieu de 10 × 10 × 10.`], [100, `Tu as oublié un chiffre : il y en a 3.`]] },
+      { t: `Un code est composé de 2 chiffres différents (de 0 à 9).`, v: 90, s: [`1er chiffre : 10 choix. 2e chiffre : 9 choix (différent du premier).`, `10 × 9 = 90 codes.`], c: [[100, `Tu as autorisé les répétitions : ici les deux chiffres doivent être différents.`], [45, `Tu as divisé par 2, comme si l'ordre ne comptait pas : or "12" et "21" sont deux codes différents.`], [20, `Tu as additionné 10 + 10 : il faut multiplier les choix.`], [19, `Tu as additionné 10 + 9 : il faut multiplier les choix.`]] },
+      { t: `Un code est composé de 3 chiffres différents (de 0 à 9).`, v: 720, s: [`1er chiffre : 10 choix. 2e chiffre : 9 choix. 3e chiffre : 8 choix.`, `10 × 9 × 8 = 720 codes.`], c: [[1000, `Tu as autorisé les répétitions : ici les chiffres doivent être tous différents.`], [120, `Tu as divisé par 6, comme si l'ordre ne comptait pas : or l'ordre des chiffres change le code.`], [30, `Tu as additionné 10 + 9 + 8 : il faut multiplier.`], [504, `Tu as calculé 9 × 8 × 7 : le 1er chiffre a 10 choix, pas 9.`]] }
+    ];
+    const o = randChoice(opts);
+    val = o.v; title = 'Dénombrement : codes';
+    statement = [o.t, `Combien de codes différents sont possibles ?`];
+    cands = o.c; steps = o.s;
+    tip = `Avec répétition : on multiplie le même nombre de choix. Sans répétition : le nombre de choix diminue de 1 à chaque étape.`;
+  }
+  const correct = String(val);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${val}.`, cands.map(c => [String(c[0]), c[1]]), k => String(val + k * 2));
+  return {
+    cat: 'proba', title, calc: false,
+    statement, correct, options, why, steps, tip,
+    meta: { kind: 'denomb', sub: kind, statement0: statement[0], val }
+  };
+}
+
+function genEsperance() {
+  const d = randChoice([2, 4, 5, 10]);
+  const q = randInt(2, 8);
+  const G = d * q;
+  const m = randInt(1, q + 2);
+  const E = q - m;
+  const fm = x => (x < 0 ? '-' : '') + Math.abs(x) + ' €';
+  const correct = fm(E);
+  const { options, why } = mkOpts(correct,
+    `Bonne réponse : ${q} − ${m} = ${E} €.`,
+    [
+      [fm(q), `Tu as oublié de retirer la mise (${m} €) : le gain moyen est net de la mise.`],
+      [fm(G - m), `Tu as supposé gagner à tous les coups : le gain n'arrive qu'avec la probabilité 1/${d}.`],
+      [fm(-m), `Tu as ignoré la possibilité de gagner : l'espérance tient compte des gains possibles.`],
+      [fm(q + m), `Tu as ajouté la mise au lieu de la retirer.`]
+    ], k => fm(E + k));
+  return {
+    cat: 'proba', title: 'Espérance (gain moyen)', calc: false,
+    statement: [`Un jeu coûte ${m} € pour participer. Avec une probabilité de 1/${d}, le joueur reçoit ${G} € ; sinon, il ne reçoit rien.`, `Quel est le gain net moyen (espérance) par partie ?`],
+    correct, options, why,
+    steps: [
+      `Espérance du gain reçu : ${G} € × 1/${d} + 0 € × ${d - 1}/${d} = ${q} €.`,
+      `Le joueur paie ${m} € à chaque partie : gain net moyen = ${q} − ${m} = ${E} €.`,
+      E > 0 ? `Gain moyen positif : le jeu est favorable au joueur.` : E === 0 ? `Gain moyen nul : le jeu est équitable.` : `Gain moyen négatif : en moyenne, le joueur perd ${-E} € par partie.`
+    ],
+    tip: `Espérance = somme de (valeur × probabilité). N'oublie pas de déduire la mise.`,
+    meta: { kind: 'esp', G, d, m, E }
+  };
+}
+
 // ================= Diagrams =================
 function svgThales(d) {
   return `<svg viewBox="0 0 300 240" width="280">
@@ -989,6 +1681,8 @@ const CATS = [
   { key: 'meca', label: 'Mécanique', icon: '⚙️', color: '#8A5A2E' },
   { key: 'elec', label: 'Électricité', icon: '⚡', color: '#C9962E' },
   { key: 'fluid', label: 'Fluides', icon: '💧', color: '#2892A8' },
+  { key: 'stat', label: 'Statistiques', icon: '📊', color: '#A23B72' },
+  { key: 'proba', label: 'Probabilités', icon: '🎯', color: '#4C5FD5' },
   { key: 'nav', label: 'Navigation', icon: '🛫', color: '#3C6E47' },
   { key: 'aero', label: 'Aérodynamique', icon: '🪽', color: '#5B7FBE' }
 ];
@@ -1003,6 +1697,8 @@ const GEN_BY_CAT = {
   meca: [genIncline, genCG, genEnergieVol, genEnergieCinetique, genEnergieCinetiqueAvion, genEnergiePotentielle, genPuissanceMeca, genNewton1],
   elec: [genOhm, genPuissanceElec, genFrequence, genCircuit],
   fluid: [genMasseVolumique, genDensite, genPressionGaz],
+  stat: [genMoyenne, genMediane, genEtendue, genMode, genMoyenneManquante, genMoyennePonderee, genPourcentageStat],
+  proba: [genProbaUrne, genProbaDe, genProbaComplement, genProbaEtOu, genTirage, genPileFace, genDenombrement, genEsperance],
   nav: [genCatchup, genPercent2],
   aero: [genLift]
 };
@@ -1050,6 +1746,17 @@ function goNext() {
   else newQuestion();
 }
 
+function escHtml(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function buildExplanation(q) {
+  let steps = q.steps;
+  if (!steps && q.explanation) {
+    steps = q.explanation.replace(/\.\s+(?=[A-ZÀ-Ý])/g, '.\u0001').split('\u0001');
+  }
+  steps = steps || [];
+  let h = '<div class="exp-title">Raisonnement</div><ol>' + steps.map(t => '<li>' + escHtml(t) + '</li>').join('') + '</ol>';
+  if (q.tip) h += '<div class="tip">💡 <b>À retenir :</b> ' + escHtml(q.tip) + '</div>';
+  return h;
+}
 function render() {
   const q = state.current;
   const meta = CAT_META[q.cat] || CAT_META.geo;
@@ -1086,7 +1793,7 @@ function render() {
 
   const exp = document.getElementById('explanation');
   exp.classList.remove('show');
-  exp.textContent = q.explanation;
+  exp.innerHTML = buildExplanation(q);
 
   if (entry.chosen !== null) showAnswer(entry.chosen, false);
 
@@ -1134,6 +1841,7 @@ function showAnswer(i, live) {
     r.classList.add('disabled');
     const text = r.querySelector('.opt-text').textContent;
     const markEl = r.querySelector('.mark');
+    if (q.why && q.why[text] && !r.querySelector('.opt-note')) { const n = document.createElement('div'); n.className = 'opt-note'; n.textContent = (text === q.correct ? '✓ ' : '✕ ') + q.why[text]; r.appendChild(n); }
     if (text === q.correct) { r.classList.add('correct'); markEl.textContent = '✓'; }
   });
   if (!isCorrect) {
