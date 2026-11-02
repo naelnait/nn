@@ -1612,6 +1612,698 @@ function genEsperance() {
   };
 }
 
+// ============================================================
+// PSY 0 — tests psychotechniques (sélection pilote)
+// ============================================================
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function lt(i) { return ALPHA[((i % 26) + 26) % 26]; }
+function p3(n) { return String(n).padStart(3, '0'); }
+function sign(x) { return x < 0 ? '−' + Math.abs(x) : String(x); }
+
+// ---------- Séries numériques ----------
+function genSerieNum() {
+  const type = randChoice(['arith', 'geom', 'incr', 'inter', 'carre', 'fibo', 'altern']);
+  let terms = [], next = 0, rule = '', cands = [], tip = '', meta = {};
+  if (type === 'arith') {
+    const d = randChoice([3, 4, 5, 6, 7, 8, 9, 11, 12, 13]) * randChoice([1, 1, -1]), a = d < 0 ? randInt(70, 100) : randInt(2, 30);
+    terms = [0, 1, 2, 3, 4].map(i => a + i * d); next = a + 5 * d;
+    rule = `Chaque terme s'obtient en ajoutant ${sign(d)} au précédent.`;
+    const last = terms[4];
+    cands = [[next + d, `Tu as sauté un terme (ajouté deux fois ${sign(d)}).`], [last, `Tu as répété le dernier terme au lieu d'appliquer la règle.`], [last + d + 1, `Pas de ${sign(d + 1)} au lieu de ${sign(d)}.`], [last + d - 1, `Pas de ${sign(d - 1)} au lieu de ${sign(d)}.`]];
+    tip = `Calcule d'abord les écarts entre termes consécutifs : s'ils sont constants, c'est une suite arithmétique.`;
+    meta = { type, a, d };
+  } else if (type === 'geom') {
+    const a = randInt(1, 4), r = randChoice([2, 2, 3]);
+    terms = [0, 1, 2, 3, 4].map(i => a * Math.pow(r, i)); next = a * Math.pow(r, 5);
+    rule = `Chaque terme s'obtient en multipliant le précédent par ${r}.`;
+    const last = terms[4], prev = terms[3];
+    cands = [[last + (last - prev), `Tu as continué avec l'écart précédent (${last - prev}) : la suite est multiplicative, pas additive.`], [last * (r + 1), `Tu as multiplié par ${r + 1} au lieu de ${r}.`], [last + r, `Tu as ajouté ${r} au lieu de multiplier par ${r}.`], [last * r - r, `Erreur de calcul : ${last} × ${r} = ${next}.`]];
+    tip = `Si les écarts grandissent vite, teste le rapport entre termes consécutifs (terme ÷ précédent).`;
+    meta = { type, a, r };
+  } else if (type === 'incr') {
+    const a = randInt(1, 12), d = randInt(1, 4), k = randInt(1, 3);
+    let x = a; terms = [x];
+    for (let i = 0; i < 4; i++) { x += d + i * k; terms.push(x); }
+    next = x + d + 4 * k;
+    rule = `Les écarts augmentent de ${k} à chaque fois : ${[0, 1, 2, 3, 4].map(i => '+' + (d + i * k)).join(', ')}.`;
+    const last = terms[4];
+    cands = [[last + d + 3 * k, `Tu as répété le dernier écart (+${d + 3 * k}) au lieu de le faire croître.`], [last + d + 5 * k, `Tu as augmenté l'écart de deux crans (+${d + 5 * k}).`], [last + d + 4 * k + 1, `Erreur de calcul sur le dernier ajout.`], [last + d + 4 * k - 1, `Erreur de calcul sur le dernier ajout.`]];
+    tip = `Quand les écarts ne sont pas constants, calcule les écarts des écarts.`;
+    meta = { type, a, d, k };
+  } else if (type === 'inter') {
+    const a = randInt(1, 20), d1 = randInt(2, 6), b = randInt(30, 60), d2 = randChoice([-6, -5, -4, -3, 3, 4, 5, 6]);
+    for (let i = 0; i < 3; i++) { terms.push(a + i * d1); terms.push(b + i * d2); }
+    next = a + 3 * d1;
+    rule = `Deux suites s'entremêlent : positions impaires (${terms[0]}, ${terms[2]}, ${terms[4]}) avec un pas de ${sign(d1)} ; positions paires (${terms[1]}, ${terms[3]}, ${terms[5]}) avec un pas de ${sign(d2)}. Le 7e terme est le 4e de la suite impaire.`;
+    cands = [[b + 3 * d2, `C'est le terme suivant de l'AUTRE suite (positions paires) : le 7e terme est en position impaire.`], [terms[5] + d1, `Tu as appliqué le pas de la suite impaire au dernier terme affiché.`], [terms[5] + d2, `Tu as appliqué un seul pas au dernier terme, sans séparer les deux suites.`], [a + 4 * d1, `Tu as sauté un terme de la suite impaire.`]];
+    tip = `Si la série "zigzague", sépare les termes de rang impair et de rang pair et étudie chaque suite à part.`;
+    meta = { type, a, d1, b, d2 };
+  } else if (type === 'carre') {
+    const n0 = randInt(1, 5), c = randInt(-3, 6);
+    terms = [0, 1, 2, 3, 4].map(i => (n0 + i) * (n0 + i) + c); const n = n0 + 5; next = n * n + c;
+    rule = `Chaque terme est un carré parfait ${c === 0 ? '' : (c > 0 ? 'plus ' + c : 'moins ' + (-c))} : ${[0, 1, 2, 3, 4].map(i => (n0 + i) + '²' + (c === 0 ? '' : (c > 0 ? '+' : '−') + Math.abs(c))).join(', ')}. Le terme suivant est ${n}²${c === 0 ? '' : (c > 0 ? '+' : '−') + Math.abs(c)} = ${next}.`;
+    cands = [[n * n, `Tu as oublié d'appliquer l'ajustement (${sign(c)}).`], [(n + 1) * (n + 1) + c, `Tu as sauté un carré (${n + 1}² au lieu de ${n}²).`], [terms[4] + (terms[4] - terms[3]), `Tu as utilisé l'écart précédent : les écarts ne sont pas constants (ils augmentent de 2).`], [n * n + c + 1, `Erreur de calcul sur ${n}².`]];
+    tip = `Des écarts qui augmentent de 2 à chaque fois signalent des carrés : 1, 4, 9, 16, 25, 36…`;
+    meta = { type, n0, c };
+  } else if (type === 'fibo') {
+    const a = randInt(1, 5), b = randInt(2, 7);
+    terms = [a, b]; for (let i = 2; i < 6; i++) terms.push(terms[i - 1] + terms[i - 2]);
+    next = terms[5] + terms[4];
+    rule = `Chaque terme est la somme des deux précédents : ${terms[4]} + ${terms[5]} = ${next}.`;
+    cands = [[terms[5] * 2, `Tu as doublé le dernier terme au lieu d'additionner les deux derniers.`], [terms[5] + terms[3], `Tu as additionné le dernier terme et l'avant-avant-dernier.`], [terms[5] + (terms[5] - terms[4]), `Tu as utilisé l'écart précédent : ici la règle porte sur la somme des deux termes précédents.`], [next + 1, `Erreur de calcul : ${terms[4]} + ${terms[5]} = ${next}.`]];
+    tip = `Si les termes grossissent de plus en plus vite sans être multipliés par un facteur fixe, teste "somme des deux précédents".`;
+    meta = { type, a, b };
+  } else {
+    const s = randInt(1, 6), a = randInt(2, 8), m = randChoice([2, 3]);
+    const x = [s]; for (let i = 0; i < 5; i++) x.push(i % 2 === 0 ? x[i] + a : x[i] * m);
+    terms = x; next = x[5] * m;
+    rule = `Deux opérations alternent : +${a}, ×${m}, +${a}, ×${m}, +${a}, puis ×${m}. Le terme suivant est ${x[5]} × ${m} = ${next}.`;
+    cands = [[x[5] + a, `Tu as appliqué +${a} au lieu de ×${m} : les opérations alternent, la dernière était +${a}.`], [x[5] * m + a, `Tu as enchaîné ×${m} puis +${a} : le prochain pas est seulement ×${m}.`], [x[5] * (m + 1), `Tu as multiplié par ${m + 1} au lieu de ${m}.`], [x[5] + a * m, `Tu as mélangé les deux opérations.`]];
+    tip = `Quand les écarts sont irréguliers, cherche deux opérations qui alternent (+ puis ×, par exemple).`;
+    meta = { type, s, a, m };
+  }
+  const correct = String(next);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${next}. ${rule}`, cands.map(c => [String(c[0]), c[1]]), k => String(next + k * 2));
+  return {
+    cat: 'psy', title: 'Série numérique', calc: false,
+    statement: [`Quel est le terme suivant de la série ?`, terms.join(' ; ') + ' ; ?'],
+    correct, options, why,
+    steps: [`Écarts successifs : ${terms.slice(1).map((v, i) => sign(v - terms[i])).join(' ; ')}.`, rule, `Terme suivant : ${next}.`],
+    tip, meta: Object.assign({ kind: 'serieNum', terms, next }, meta)
+  };
+}
+
+// ---------- Séries de lettres ----------
+function genSerieLettres() {
+  const type = randChoice(['const', 'alt', 'inter']);
+  let seq = [], nextI = 0, rule = '', cands = [];
+  const start = randInt(0, 25);
+  if (type === 'const') {
+    const s = randInt(2, 5);
+    seq = [0, 1, 2, 3, 4].map(i => start + i * s); nextI = start + 5 * s;
+    rule = `Chaque lettre avance de ${s} rangs dans l'alphabet.`;
+    cands = [[nextI + s, `Tu as sauté une lettre de la série.`], [nextI - 1, `Décalage d'un rang : le pas est ${s}.`], [nextI + 1, `Décalage d'un rang : le pas est ${s}.`], [seq[4], `Tu as répété la dernière lettre.`]];
+  } else if (type === 'alt') {
+    const a = randInt(1, 3), b = randInt(2, 5);
+    seq = [start]; for (let i = 0; i < 5; i++) seq.push(seq[i] + (i % 2 === 0 ? a : b));
+    nextI = seq[5] + a;
+    rule = `Les pas alternent : +${a}, +${b}, +${a}, +${b}, +${a}, puis +${a}... le prochain pas est +${a} (cycle +${a} / +${b}).`;
+    rule = `Les pas alternent : +${a}, +${b}, +${a}, +${b}, +${a}. Le prochain pas est donc +${b}.`;
+    nextI = seq[5] + b;
+    cands = [[seq[5] + a, `Tu as répété le dernier pas (+${a}) au lieu de passer à +${b}.`], [seq[5] + a + b, `Tu as appliqué les deux pas à la fois.`], [seq[5] + b + 1, `Décalage d'un rang.`], [seq[5] + b - 1, `Décalage d'un rang.`]];
+  } else {
+    const down = randInt(20, 25);
+    seq = [];
+    for (let i = 0; i < 3; i++) { seq.push(start + i); seq.push(down - i); }
+    nextI = start + 3;
+    rule = `Deux séries entremêlées : une qui avance (${lt(seq[0])}, ${lt(seq[2])}, ${lt(seq[4])}) et une qui recule (${lt(seq[1])}, ${lt(seq[3])}, ${lt(seq[5])}). La 7e lettre est la suivante de la série qui avance.`;
+    cands = [[down - 3, `C'est la suite de la série qui RECULE : la 7e lettre est en position impaire (série qui avance).`], [start + 4, `Tu as sauté une lettre de la série qui avance.`], [seq[5] - 1, `Tu as continué la série qui recule sans alterner.`], [seq[5] + 1, `Tu as continué dans le même sens que la dernière lettre, sans alterner.`]];
+  }
+  const correct = lt(nextI);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${correct}. ${rule}`, cands.map(c => [lt(c[0]), c[1]]), k => lt(nextI + k + 5));
+  return {
+    cat: 'psy', title: 'Série de lettres', calc: false,
+    statement: [`Quelle lettre complète la série ?`, seq.map(lt).join(' ; ') + ' ; ?'],
+    correct, options, why,
+    steps: [`Rangs dans l'alphabet : ${seq.map(i => ((i % 26) + 26) % 26 + 1).join(' ; ')}.`, rule, `Lettre suivante : ${correct}.`],
+    tip: `Convertis les lettres en rangs (A=1 … Z=26) et traite-les comme une série numérique. Le 26 reboucle sur A.`,
+    meta: { kind: 'serieLettres', type, seq, nextI }
+  };
+}
+
+// ---------- Calcul mental rapide ----------
+function genCalculRapide() {
+  const kind = randChoice(['mul', 'add', 'sub', 'div']);
+  let stmt, val, steps, cands, tip;
+  if (kind === 'mul') {
+    const a = randInt(13, 49), b = randInt(3, 9); val = a * b;
+    const t = Math.floor(a / 10) * 10, u = a % 10;
+    stmt = `${a} × ${b}`;
+    steps = [`On décompose ${a} = ${t} + ${u}.`, `${t} × ${b} = ${t * b} et ${u} × ${b} = ${u * b}.`, `${t * b} + ${u * b} = ${val}.`];
+    cands = [[t * b, `Tu as oublié de multiplier les unités (${u} × ${b} = ${u * b}).`], [val + 10, `Erreur d'une dizaine dans l'addition finale.`], [val - 10, `Erreur d'une dizaine dans l'addition finale.`], [t * b + u, `Tu as multiplié les dizaines par ${b} mais pas les unités.`]];
+    tip = `Décompose le plus grand nombre en dizaines + unités, multiplie séparément, additionne.`;
+  } else if (kind === 'add') {
+    const a = randInt(120, 480), b = randInt(120, 480); val = a + b;
+    stmt = `${a} + ${b}`;
+    steps = [`Centaines : ${Math.floor(a / 100) * 100} + ${Math.floor(b / 100) * 100} = ${Math.floor(a / 100) * 100 + Math.floor(b / 100) * 100}.`, `Reste : ${a % 100} + ${b % 100} = ${a % 100 + b % 100}.`, `Total : ${val}.`];
+    cands = [[val + 10, `Erreur d'une dizaine.`], [val - 10, `Erreur d'une dizaine.`], [val + 100, `Retenue comptée en trop.`], [val - 100, `Retenue oubliée.`]];
+    tip = `Additionne d'abord les centaines, puis les dizaines et unités, puis regroupe.`;
+  } else if (kind === 'sub') {
+    const a = randInt(300, 900), b = randInt(110, 290); val = a - b;
+    stmt = `${a} − ${b}`;
+    steps = [`On retire d'abord ${Math.floor(b / 100) * 100} : ${a} − ${Math.floor(b / 100) * 100} = ${a - Math.floor(b / 100) * 100}.`, `Puis ${b % 100} : ${a - Math.floor(b / 100) * 100} − ${b % 100} = ${val}.`];
+    cands = [[val + 10, `Erreur d'une dizaine.`], [val - 10, `Erreur d'une dizaine.`], [val + 100, `Erreur de retenue.`], [a + b, `Tu as additionné au lieu de soustraire.`]];
+    tip = `Soustrais par étapes : d'abord les centaines, puis le reste.`;
+  } else {
+    const d = randInt(3, 9), q = randInt(12, 49); const n = d * q; val = q;
+    stmt = `${n} ÷ ${d}`;
+    steps = [`On cherche q tel que ${d} × q = ${n}.`, `${d} × ${Math.floor(q / 10) * 10} = ${d * Math.floor(q / 10) * 10}, il reste ${n - d * Math.floor(q / 10) * 10}, et ${n - d * Math.floor(q / 10) * 10} ÷ ${d} = ${q % 10}.`, `Résultat : ${Math.floor(q / 10) * 10} + ${q % 10} = ${q}.`];
+    cands = [[q + 1, `Erreur d'une unité sur le quotient.`], [q - 1, `Erreur d'une unité sur le quotient.`], [q + 10, `Erreur d'une dizaine sur le quotient.`], [q - 10, `Erreur d'une dizaine sur le quotient.`]];
+    tip = `Pour diviser, cherche d'abord combien de dizaines entières tiennent dans le nombre, puis divise le reste.`;
+  }
+  const correct = String(val);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${val}.`, cands.map(c => [String(c[0]), c[1]]), k => String(val + k * 3));
+  return {
+    cat: 'psy', title: 'Calcul mental rapide', calc: false,
+    statement: [`Calcule de tête :`, stmt + ' = ?'],
+    correct, options, why, steps, tip,
+    meta: { kind: 'calcRapide', sub: kind, stmt, val }
+  };
+}
+
+// ---------- Plus petit intervalle ----------
+function genPlusPetitIntervalle() {
+  let nums, diffs, min;
+  for (let t = 0; t < 500; t++) {
+    nums = [];
+    while (nums.length < 5) { const x = randInt(100, 990); if (!nums.includes(x)) nums.push(x); }
+    const s = nums.slice().sort((a, b) => a - b);
+    diffs = s.slice(1).map((v, i) => v - s[i]);
+    min = Math.min.apply(null, diffs);
+    if (diffs.filter(d => d === min).length === 1) break;
+  }
+  const s = nums.slice().sort((a, b) => a - b);
+  const max = s[4] - s[0];
+  const secondMin = diffs.slice().sort((a, b) => a - b)[1];
+  const correct = String(min);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${min}, écart minimal entre deux nombres consécutifs une fois triés.`,
+    [[String(max), `C'est le plus GRAND écart (maximum − minimum), pas le plus petit.`],
+     [String(secondMin), `C'est le deuxième plus petit écart.`],
+     [String(Math.abs(nums[0] - nums[1])), `Tu as comparé seulement les deux premiers nombres de la liste, sans trier.`],
+     [String(min + 10), `Erreur de soustraction.`]], k => String(min + k * 4));
+  return {
+    cat: 'psy', title: 'Plus petit intervalle', calc: false,
+    statement: [`Parmi ces nombres, quel est le plus petit écart entre deux d'entre eux ?`, nums.join(' ; ')],
+    correct, options, why,
+    steps: [`Il faut d'abord trier : ${s.join(' ; ')}.`, `Le plus petit écart se trouve forcément entre deux nombres voisins dans l'ordre trié.`, `Écarts : ${diffs.join(' ; ')}.`, `Le plus petit est ${min}.`],
+    tip: `Trie toujours la liste avant de chercher le plus petit écart : seuls les voisins sont à comparer.`,
+    meta: { kind: 'minGap', nums, min }
+  };
+}
+
+// ---------- Équation à trou (signe manquant) ----------
+function genSigneManquant() {
+  const ops = ['+', '−', '×', '÷'];
+  const ap = { '+': (a, b) => a + b, '−': (a, b) => a - b, '×': (a, b) => a * b, '÷': (a, b) => a / b };
+  let a, b, op, c;
+  for (let t = 0; t < 1000; t++) {
+    op = randChoice(ops);
+    if (op === '÷') { b = randInt(2, 9); c = randInt(2, 15); a = b * c; }
+    else { a = randInt(3, 30); b = randInt(2, 15); }
+    if (op !== '÷') c = ap[op](a, b);
+    if (c > 0 && ops.filter(o => ap[o](a, b) === c).length === 1) break;
+  }
+  const why = {};
+  ops.forEach(o => { const r = ap[o](a, b); why[o] = o === op ? `${a} ${o} ${b} = ${fmtTrim(r, 2)} : c'est bien ${c}.` : `${a} ${o} ${b} = ${fmtTrim(r, 2)}, et non ${c}.`; });
+  return {
+    cat: 'psy', title: 'Signe manquant', calc: false,
+    statement: [`Quel signe remplace le « ? » pour que l'égalité soit vraie ?`, `${a} ? ${b} = ${c}`],
+    correct: op, options: shuffle(ops.slice()), why,
+    steps: [`On teste mentalement chaque opération : ${ops.map(o => `${a} ${o} ${b} = ${fmtTrim(ap[o](a, b), 2)}`).join(' ; ')}.`, `Seule l'opération « ${op} » donne ${c}.`],
+    tip: `Estime l'ordre de grandeur : si le résultat est plus grand que les deux nombres, pense à + ou ×.`,
+    meta: { kind: 'signe', a, b, c, op }
+  };
+}
+
+// ---------- Comptage de symboles ----------
+function genComptageSymbole() {
+  const noise = ['l', '1', '|', 'T', 'J'];
+  const rows = 3, cols = 12;
+  const target = randInt(5, 11);
+  const cells = Array(rows * cols).fill(null);
+  const idx = shuffle(Array.from({ length: rows * cols }, (_, i) => i));
+  idx.slice(0, target).forEach(i => cells[i] = 'I');
+  for (let i = 0; i < cells.length; i++) if (!cells[i]) cells[i] = randChoice(noise);
+  const lines = [];
+  for (let r = 0; r < rows; r++) lines.push(cells.slice(r * cols, (r + 1) * cols).join(' '));
+  const count = cells.filter(x => x === 'I').length;
+  const lcount = cells.filter(x => x === 'l').length;
+  const correct = String(count);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${count} « I » majuscules.`,
+    [[String(count + 1), `Tu en as compté un de trop (confusion possible avec l, 1, | ou T).`],
+     [String(count - 1), `Tu en as oublié un.`],
+     [String(count + lcount), `Tu as compté aussi les « l » minuscules (${lcount}) : ils ne comptent pas.`],
+     [String(count + 2), `Tu en as compté deux de trop.`]], k => String(count + k + 2));
+  return {
+    cat: 'psy', title: 'Comptage de symboles', calc: false,
+    statement: [`Combien de « I » (i majuscule) vois-tu dans ce tableau ? Attention aux symboles proches : l (L minuscule), 1, |, T, J.`,
+      `<span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;letter-spacing:.12em;line-height:1.7;white-space:pre">${lines.join('\n')}</span>`],
+    correct, options, why,
+    steps: [`Parcours ligne par ligne : ${lines.map((l, i) => `ligne ${i + 1} = ${l.split(' ').filter(x => x === 'I').length}`).join(', ')}.`, `Total : ${count}.`],
+    tip: `Compte ligne par ligne et note le sous-total de chaque ligne ; ne recompte jamais depuis le début.`,
+    meta: { kind: 'comptage', cells, count }
+  };
+}
+
+// ---------- Orientation : caps et virages ----------
+function genOrientationCap() {
+  const start = randInt(0, 35) * 10;
+  const n = randChoice([2, 3]);
+  const turns = [];
+  let tot = 0;
+  for (let i = 0; i < n; i++) { const side = randChoice(['droite', 'gauche']); const deg = randChoice([30, 40, 60, 90, 120, 150, 180]); turns.push([side, deg]); tot += side === 'droite' ? deg : -deg; }
+  const raw = start + tot; const final = ((raw % 360) + 360) % 360;
+  const fmtC = x => p3(((x % 360) + 360) % 360) + '°';
+  const correct = fmtC(final);
+  const flipped = start + turns.reduce((a, t) => a + (t[0] === 'droite' ? -t[1] : t[1]), 0);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${start} ${tot >= 0 ? '+' : '−'} ${Math.abs(tot)} = ${raw}, soit ${correct} après réduction modulo 360.`,
+    [[fmtC(final + 180), `C'est le cap inverse (opposé de 180°) du cap final.`],
+     [fmtC(flipped), `Tu as inversé droite et gauche : un virage à droite augmente le cap (+), à gauche le diminue (−).`],
+     [(raw < 0 || raw >= 360) ? raw + '°' : null, `Tu n'as pas ramené le résultat dans l'intervalle 000°–359°.`],
+     [fmtC(final + 10), `Erreur de calcul de 10°.`],
+     [fmtC(final - 10), `Erreur de calcul de 10°.`]].filter(c => c[0]), k => fmtC(final + 20 * k));
+  const text = turns.map(t => `${t[1]}° à ${t[0]}`).join(', puis ');
+  return {
+    cat: 'psy', title: 'Orientation : caps et virages', calc: false,
+    statement: [`Un avion vole au cap ${p3(start)}°. Il effectue successivement un virage de ${text}.`, `Quel est son cap final ?`],
+    correct, options, why,
+    steps: [`Droite = on ajoute au cap ; gauche = on retranche.`, `${start} ${turns.map(t => (t[0] === 'droite' ? '+ ' : '− ') + t[1]).join(' ')} = ${raw}.`, raw < 0 ? `Cap négatif : on ajoute 360 → ${raw + 360}.` : raw >= 360 ? `Cap supérieur à 360 : on retranche 360 → ${raw - 360}.` : `Le résultat est déjà entre 0 et 359.`, `Cap final : ${correct}.`],
+    tip: `Les caps vivent sur un cercle de 360° : retranche ou ajoute 360 pour revenir dans 000–359.`,
+    meta: { kind: 'cap', start, turns, final }
+  };
+}
+
+// ---------- Angle des aiguilles ----------
+function genAngleHorloge() {
+  const h = randInt(1, 12), m = randChoice([0, 10, 20, 30, 40, 50, 20, 40]);
+  let ang = Math.abs(30 * (h % 12) - 5.5 * m); if (ang > 180) ang = 360 - ang;
+  const correct = fmtTrim(ang, 1) + '°';
+  const naive = Math.abs(30 * (h % 12) - 6 * m); const naiveA = naive > 180 ? 360 - naive : naive;
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${fmtTrim(ang, 1)}°.`,
+    [[fmtTrim(naiveA, 1) + '°', `Tu as ignoré que l'aiguille des heures avance de 0,5° par minute : à ${h} h ${pad(m)}, elle n'est pas pile sur le chiffre.`],
+     [fmtTrim(360 - ang, 1) + '°', `C'est l'angle rentrant (le grand angle) : on demande le plus petit angle.`],
+     [fmtTrim(Math.abs(30 * (h % 12) - 5 * m), 1) + '°', `Tu as pris 5° par minute pour la grande aiguille : elle fait 6° par minute.`],
+     [fmtTrim(ang + 15, 1) + '°', `Erreur de calcul.`]], k => fmtTrim(ang + 5 * k, 1) + '°');
+  const hA = 30 * (h % 12) + 0.5 * m, mA = 6 * m;
+  return {
+    cat: 'psy', title: 'Angle entre les aiguilles', calc: false,
+    statement: [`Il est ${h} h ${pad(m)}.`, `Quel est le plus petit angle entre l'aiguille des heures et celle des minutes ?`],
+    correct, options, why,
+    steps: [`La grande aiguille fait 360° en 60 min : 6° par minute → ${m} × 6 = ${mA}°.`, `La petite aiguille fait 360° en 12 h : 30° par heure, soit 0,5° par minute → ${30 * (h % 12)} + ${fmtTrim(0.5 * m, 1)} = ${fmtTrim(hA, 1)}°.`, `Écart : |${fmtTrim(hA, 1)} − ${mA}| = ${fmtTrim(Math.abs(hA - mA), 1)}°${Math.abs(hA - mA) > 180 ? `, supérieur à 180°, donc l'angle cherché est 360 − ${fmtTrim(Math.abs(hA - mA), 1)} = ${fmtTrim(ang, 1)}°` : ''}.`],
+    tip: `Grande aiguille : 6°/min. Petite aiguille : 30°/h et 0,5°/min. Garde le plus petit des deux angles (≤ 180°).`,
+    meta: { kind: 'horloge', h, m, ang }
+  };
+}
+
+// ---------- Lecture de cadran (SVG) ----------
+function gaugeSVG(max, v) {
+  const cx = 110, cy = 105, R = 80;
+  const pt = (deg, r) => [cx + r * Math.sin(deg * Math.PI / 180), cy - r * Math.cos(deg * Math.PI / 180)];
+  const A = x => -120 + 240 * x / max;
+  let s = `<svg viewBox="0 0 220 208" width="230" height="217" role="img" aria-label="Cadran" style="display:block;margin:6px auto"><circle cx="${cx}" cy="${cy}" r="${R + 12}" fill="#fff" stroke="#33404B" stroke-width="2"/>`;
+  for (let i = 0; i <= 50; i++) {
+    const major = i % 5 === 0;
+    const a = A(i * max / 50);
+    const p1 = pt(a, R), p2 = pt(a, R - (major ? 12 : 6));
+    s += `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="#33404B" stroke-width="${major ? 2 : 1}"/>`;
+    if (major) { const pl = pt(a, R - 24); s += `<text x="${pl[0].toFixed(1)}" y="${(pl[1] + 4).toFixed(1)}" font-size="11" text-anchor="middle" fill="#33404B">${i * max / 50}</text>`; }
+  }
+  const pn = pt(A(v), R - 8);
+  s += `<line x1="${cx}" y1="${cy}" x2="${pn[0].toFixed(1)}" y2="${pn[1].toFixed(1)}" stroke="#D14B3D" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="6" fill="#33404B"/></svg>`;
+  return s;
+}
+function genCompteur() {
+  const max = randChoice([50, 100, 200, 500]);
+  const minor = max / 50, major = max / 10;
+  let k;
+  do { k = randInt(2, 48); } while (k % 5 === 0 || k === 25);
+  const v = k * minor;
+  const nearMajor = Math.round(v / major) * major;
+  const correct = String(v);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${v}.`,
+    [[String(v + minor), `Tu as lu une graduation trop loin (une petite graduation vaut ${minor}).`],
+     [String(v - minor), `Tu as lu une graduation trop près (une petite graduation vaut ${minor}).`],
+     [String(nearMajor), `Tu as arrondi au repère numéroté le plus proche (${nearMajor}) sans compter les petites graduations.`],
+     [String(max - v), `Tu as lu le cadran à l'envers : la graduation 0 est en bas à gauche.`]], j => String(v + minor * (j + 1) * 2));
+  const lowMajor = Math.floor(v / major) * major;
+  return {
+    cat: 'psy', title: 'Lecture de compteur', calc: false,
+    statement: [`Quelle valeur indique l'aiguille ?`, gaugeSVG(max, v)],
+    correct, options, why,
+    steps: [`Entre deux repères numérotés (${major} d'écart), il y a 5 intervalles : une petite graduation vaut ${major} ÷ 5 = ${minor}.`, `L'aiguille a dépassé le repère ${lowMajor} de ${(v - lowMajor) / minor} petites graduations.`, `Valeur : ${lowMajor} + ${(v - lowMajor) / minor} × ${minor} = ${v}.`],
+    tip: `Avant toute lecture, calcule la valeur d'une petite graduation : (écart entre deux repères) ÷ (nombre d'intervalles).`,
+    meta: { kind: 'compteur', max, v }
+  };
+}
+
+// ---------- Rotation de figure sur grille (SVG) ----------
+function gridSVG(cells, size) {
+  const n = 3, c = size / n;
+  let s = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="vertical-align:middle;margin:2px 6px"><rect x="0.5" y="0.5" width="${size - 1}" height="${size - 1}" fill="#fff" stroke="#33404B"/>`;
+  for (let i = 1; i < n; i++) s += `<line x1="${i * c}" y1="0" x2="${i * c}" y2="${size}" stroke="#C9CED3"/><line x1="0" y1="${i * c}" x2="${size}" y2="${i * c}" stroke="#C9CED3"/>`;
+  cells.forEach(p => { s += `<rect x="${p[1] * c + 1}" y="${p[0] * c + 1}" width="${c - 2}" height="${c - 2}" fill="#2E86AB"/>`; });
+  return s + '</svg>';
+}
+function genRotationGrille() {
+  const rot = cs => cs.map(p => [p[1], 2 - p[0]]);
+  const mir = cs => cs.map(p => [p[0], 2 - p[1]]);
+  const key = cs => cs.map(p => p[0] * 3 + p[1]).sort((a, b) => a - b).join(',');
+  let base, rots, ok = false;
+  for (let t = 0; t < 3000 && !ok; t++) {
+    const all = [];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) all.push([r, c]);
+    base = shuffle(all).slice(0, randInt(4, 5));
+    rots = [base]; for (let i = 1; i < 4; i++) rots.push(rot(rots[i - 1]));
+    const keys = rots.map(key).concat(rots.map(r => key(mir(r))));
+    ok = new Set(keys).size === 8;
+  }
+  const kk = randChoice([1, 2, 3]);
+  const names = { 1: '90° dans le sens horaire', 2: '180°', 3: '90° dans le sens antihoraire (soit 270° horaire)' };
+  const correctCells = rots[kk];
+  const correct = gridSVG(correctCells, 60);
+  const cands = shuffle([0, 1, 2, 3].filter(i => i !== kk).map(i => [gridSVG(rots[i], 60), i === 0 ? `Figure non tournée.` : `Cette figure correspond à une rotation de ${i === 1 ? '90° horaire' : i === 2 ? '180°' : '90° antihoraire'}, pas de ${names[kk].split(' (')[0]}.`]).concat([[gridSVG(mir(correctCells), 60), `C'est l'image en miroir de la bonne figure : une rotation ne retourne pas la figure.`]]));
+  const { options, why } = mkOpts(correct, `Bonne réponse : figure tournée de ${names[kk].split(' (')[0]}.`, cands, k => null);
+  const ex = rots[0][0];
+  return {
+    cat: 'psy', title: 'Rotation de figure', calc: false,
+    statement: [`Figure de départ : ${gridSVG(base, 84)}`, `Quelle figure obtient-on après une rotation de ${names[kk]} ?`],
+    correct, options, why,
+    steps: [`Repère une case caractéristique (isolée ou en coin) et suis-la : la case en ligne ${ex[0] + 1}, colonne ${ex[1] + 1} va, après la rotation demandée, en ligne ${correctCells[0][0] + 1}, colonne ${correctCells[0][1] + 1}.`, kk === 1 ? `Rotation horaire de 90° : la ligne du haut devient la colonne de droite (lue de haut en bas), la colonne de gauche devient la ligne du haut.` : kk === 2 ? `Rotation de 180° : la ligne du haut devient la ligne du bas (lue de droite à gauche), la colonne de gauche devient la colonne de droite.` : `Rotation antihoraire de 90° : la ligne du haut devient la colonne de gauche (lue de bas en haut), la colonne de droite devient la ligne du haut.`, `On élimine les figures en miroir (une rotation ne les produit jamais) et celles tournées dans un autre angle.`],
+    tip: `Ne fais pas pivoter toute la figure d'un coup : suis 2 cases repères et vérifie les autres ensuite. Éliminer les miroirs est le gain de temps n°1.`,
+    meta: { kind: 'rotGrille', base, kk, keyCorrect: key(correctCells), keys: options.length }
+  };
+}
+
+// ---------- Série de figures : flèches (SVG) ----------
+function arrowSVG(a, q) {
+  const body = q ? `<text x="25" y="35" font-size="28" text-anchor="middle" fill="#6B7580">?</text>` :
+    `<g transform="rotate(${a} 25 25)"><line x1="25" y1="42" x2="25" y2="12" stroke="#2E86AB" stroke-width="4" stroke-linecap="round"/><polygon points="25,4 16,18 34,18" fill="#2E86AB"/></g>`;
+  return `<svg viewBox="0 0 50 50" width="50" height="50" style="vertical-align:middle;margin:2px 4px"><rect x="0.5" y="0.5" width="49" height="49" fill="#fff" stroke="#C9CED3"/>${body}</svg>`;
+}
+function genSerieFleches() {
+  const s = randChoice([45, 90, 135, -45, -90, -135]);
+  const a0 = randChoice([0, 45, 90, 135, 180, 225, 270, 315]);
+  const ang = i => ((a0 + i * s) % 360 + 360) % 360;
+  const dir = s > 0 ? 'horaire' : 'antihoraire';
+  const correct = arrowSVG(ang(4), false);
+  const { options, why } = mkOpts(correct, `Bonne réponse : la flèche a tourné de ${Math.abs(s)}° dans le sens ${dir} à chaque étape.`,
+    [[arrowSVG(ang(5), false), `Tu as tourné d'une étape de trop.`],
+     [arrowSVG(ang(3), false), `C'est la flèche de l'étape précédente : il faut la tourner encore de ${Math.abs(s)}°.`],
+     [arrowSVG((ang(4) + 180) % 360, false), `Orientation opposée à la bonne : erreur de sens ou de pas.`]], k => null);
+  return {
+    cat: 'psy', title: 'Série de figures', calc: false,
+    statement: [`Quelle figure complète la série ?`, [0, 1, 2, 3].map(i => arrowSVG(ang(i), false)).join('') + arrowSVG(0, true)],
+    correct, options, why,
+    steps: [`Compare deux flèches consécutives : la rotation est de ${Math.abs(s)}° dans le sens ${dir}.`, `Le pas est le même à chaque étape (rotation régulière).`, `La 5e flèche s'obtient en tournant la 4e de ${Math.abs(s)}° dans le sens ${dir}.`],
+    tip: `Pour une rotation, mesure le pas entre deux flèches puis vérifie qu'il est constant. Pense aussi à vérifier le sens (horaire / antihoraire).`,
+    meta: { kind: 'flèches', s, a0 }
+  };
+}
+
+// ---------- Déduction : ordre ----------
+function genDeductionOrdre() {
+  const NAMES = ['Léa', 'Hugo', 'Inès', 'Marc', 'Nina', 'Théo', 'Zoé', 'Paul'];
+  const names = shuffle(NAMES.slice()).slice(0, 4);
+  const perms = [];
+  (function p(arr, cur) { if (!arr.length) { perms.push(cur); return; } arr.forEach((x, i) => p(arr.slice(0, i).concat(arr.slice(i + 1)), cur.concat([x]))); })(names, []);
+  const hidden = randChoice(perms);
+  const pos = (perm, n) => perm.indexOf(n) + 1;
+  const clueOf = [];
+  names.forEach(a => {
+    names.forEach(b => {
+      if (a === b) return;
+      clueOf.push({ t: `${a} passe avant ${b}.`, f: pm => pos(pm, a) < pos(pm, b) });
+      clueOf.push({ t: `${a} est juste avant ${b}.`, f: pm => pos(pm, a) + 1 === pos(pm, b) });
+      if (a < b) clueOf.push({ t: `${a} et ${b} ne sont pas côte à côte.`, f: pm => Math.abs(pos(pm, a) - pos(pm, b)) !== 1 });
+    });
+    for (let k = 1; k <= 4; k++) {
+      clueOf.push({ t: `${a} est en position ${k}.`, f: pm => pos(pm, a) === k });
+      clueOf.push({ t: `${a} n'est pas en position ${k}.`, f: pm => pos(pm, a) !== k });
+    }
+  });
+  const trues = shuffle(clueOf.filter(c => c.f(hidden)));
+  const consistent = cl => perms.filter(pm => cl.every(c => c.f(pm)));
+  let chosen = [];
+  for (const c of trues) { chosen.push(c); if (consistent(chosen).length === 1) break; if (chosen.length > 8) break; }
+  for (let i = chosen.length - 1; i >= 0; i--) { const t = chosen.filter((_, j) => j !== i); if (consistent(t).length === 1) chosen = t; }
+  if (consistent(chosen).length !== 1) return genDeductionOrdre();
+  const q = randInt(1, 4);
+  const correct = hidden[q - 1];
+  const why = {};
+  names.forEach(n => { why[n] = n === correct ? `Bonne réponse : ${n} est en position ${q}.` : `${n} est en position ${pos(hidden, n)}, pas ${q}.`; });
+  return {
+    cat: 'psy', title: 'Déduction : ordre', calc: false,
+    statement: [`Quatre personnes sont dans une file, de la position 1 (devant) à la position 4 (derrière) : ${names.join(', ')}.`, `Indices :<br>• ${chosen.map(c => c.t).join('<br>• ')}`, `Qui est en position ${q} ?`],
+    correct, options: shuffle(names.slice()), why,
+    steps: [`On note les indices un par un et on élimine les ordres impossibles.`, `Seul un ordre respecte tous les indices : ${hidden.map((n, i) => `${i + 1}. ${n}`).join(' ; ')}.`, `Position ${q} : ${correct}.`],
+    tip: `Commence par les indices les plus précis ("est en position k") puis place les indices relatifs ("avant", "juste avant") autour.`,
+    meta: { kind: 'ordre', names, clues: chosen.length, hidden, q, uniq: consistent(chosen).length }
+  };
+}
+
+// ---------- Syllogismes (vrai / faux / indéterminé) ----------
+function genSyllogisme() {
+  const SUB = [['chats', 'un chat', 'animaux', 'un animal'], ['avions', 'un avion', 'appareils volants', 'un appareil volant'], ['carrés', 'un carré', 'quadrilatères', 'un quadrilatère'], ['pilotes', 'un pilote', 'professionnels navigants', 'un professionnel navigant'], ['roses', 'une rose', 'fleurs', 'une fleur']];
+  const DIS = [['chats', 'un chat', 'poissons', 'un poisson'], ['avions', 'un avion', 'bateaux', 'un bateau'], ['carrés', 'un carré', 'cercles', 'un cercle'], ['roses', 'une rose', 'arbres', 'un arbre']];
+  const NAMEP = ['Max', 'Sam', 'Alex', 'Noa'];
+  const T = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'];
+  const t = randChoice(T), nm = randChoice(NAMEP);
+  let X, Y, premise, concl, ans, expl;
+  if (t === 'T3') { const p = randChoice(DIS); X = p; Y = [p[2], p[3]]; }
+  else { const p = randChoice(SUB); X = p; Y = [p[2], p[3]]; }
+  const xP = X[0], xS = X[1], yP = Y[0], yS = Y[1];
+  const art = s => s.replace(/^un /, '').replace(/^une /, '');
+  if (t === 'T1') { premise = [`Tous les ${xP} sont des ${yP}.`, `${nm} est ${xS}.`]; concl = `${nm} est ${yS}.`; ans = 'Vrai'; expl = `${nm} appartient à la catégorie incluse, donc à la catégorie qui l'inclut.`; }
+  if (t === 'T2') { premise = [`Tous les ${xP} sont des ${yP}.`, `${nm} est ${yS}.`]; concl = `${nm} est ${xS}.`; ans = 'Indéterminé'; expl = `Être ${yS} n'implique pas d'être ${xS} : la réciproque n'est pas garantie.`; }
+  if (t === 'T3') { premise = [`Aucun des ${xP} n'est ${yS}.`, `${nm} est ${xS}.`]; concl = `${nm} est ${yS}.`; ans = 'Faux'; expl = `Les deux catégories s'excluent : ${nm} ne peut pas être dans les deux.`; }
+  if (t === 'T4') { premise = [`Tous les ${xP} sont des ${yP}.`, `${nm} n'est pas ${yS}.`]; concl = `${nm} est ${xS}.`; ans = 'Faux'; expl = `Si ${nm} était ${xS}, il serait ${yS} (contraposée) : c'est contredit par l'énoncé.`; }
+  if (t === 'T5') { premise = [`Certains ${yP} sont des ${xP}.`, `${nm} est ${yS}.`]; concl = `${nm} est ${xS}.`; ans = 'Indéterminé'; expl = `« Certains » ne dit rien sur ${nm} en particulier.`; }
+  if (t === 'T6') { premise = [`Tous les ${xP} sont des ${yP}.`, `${nm} n'est pas ${xS}.`]; concl = `${nm} n'est pas ${yS}.`; ans = 'Indéterminé'; expl = `${nm} peut être ${yS} sans être ${xS} : d'autres ${yP} existent.`; }
+  const opts = ['Vrai', 'Faux', 'Indéterminé', 'Les données sont contradictoires'];
+  const why = {
+    'Vrai': ans === 'Vrai' ? `Bonne réponse : ${expl}` : `La conclusion ne découle pas nécessairement des prémisses.`,
+    'Faux': ans === 'Faux' ? `Bonne réponse : ${expl}` : `La conclusion n'est pas démontrée fausse par les prémisses.`,
+    'Indéterminé': ans === 'Indéterminé' ? `Bonne réponse : ${expl}` : `Les prémisses suffisent à trancher.`,
+    'Les données sont contradictoires': `Les prémisses sont compatibles entre elles.`
+  };
+  return {
+    cat: 'psy', title: 'Raisonnement déductif', calc: false,
+    statement: [premise.join('<br>'), `Conclusion : « ${concl} »`, `Cette conclusion est-elle vraie, fausse ou indéterminée ?`],
+    correct: ans, options: shuffle(opts), why,
+    steps: [`On ne retient QUE ce que disent les prémisses, pas les connaissances extérieures.`, expl, `Réponse : ${ans}.`],
+    tip: `"Tous les A sont B" ne dit rien de "tous les B sont A". La contraposée ("si pas B alors pas A") est toujours valide.`,
+    meta: { kind: 'syllo', t, ans }
+  };
+}
+
+// ---------- Compréhension de lecture (vrai / faux / indéterminé) ----------
+function genLecture() {
+  const dep = randInt(6, 17) * 60 + randChoice([0, 10, 20, 30, 40, 50]);
+  const h = randInt(1, 4), mi = randChoice([0, 10, 20, 30, 40, 50]);
+  const dur = h * 60 + mi, arr = dep + dur;
+  const pax = randChoice([120, 150, 180, 200, 240, 300]);
+  const hm = x => Math.floor(x / 60) + ' h ' + pad(x % 60);
+  const flight = 'AF' + randInt(100, 999);
+  const kind = randChoice(['arrT', 'arrF', 'paxT', 'paxF', 'ind', 'ind']);
+  let st, ans, expl;
+  if (kind === 'arrT') { const t = arr + randChoice([10, 20, 30]); st = `Le vol ${flight} atterrit avant ${hm(t)}.`; ans = 'Vrai'; expl = `Arrivée = ${hm(dep)} + ${hm(dur)} = ${hm(arr)}, avant ${hm(t)}.`; }
+  else if (kind === 'arrF') { const t = arr - randChoice([10, 20, 30]); st = `Le vol ${flight} atterrit avant ${hm(t)}.`; ans = 'Faux'; expl = `Arrivée = ${hm(dep)} + ${hm(dur)} = ${hm(arr)}, après ${hm(t)}.`; }
+  else if (kind === 'paxT') { const x = pax - randChoice([10, 20, 30]); st = `Le vol ${flight} transporte plus de ${x} passagers.`; ans = 'Vrai'; expl = `Il transporte ${pax} passagers, donc plus de ${x}.`; }
+  else if (kind === 'paxF') { const x = pax + randChoice([10, 20, 30]); st = `Le vol ${flight} transporte plus de ${x} passagers.`; ans = 'Faux'; expl = `Il transporte ${pax} passagers, donc pas plus de ${x}.`; }
+  else { st = randChoice([`Le vol ${flight} est assuré par un avion de type Airbus.`, `Le vol ${flight} est complet.`, `Le vol ${flight} atterrit avec du retard.`, `Le vol ${flight} est un vol international.`]); ans = 'Indéterminé'; expl = `Le texte ne dit rien à ce sujet : on ne peut ni confirmer ni infirmer.`; }
+  const opts = ['Vrai', 'Faux', 'Indéterminé', 'Les informations sont contradictoires'];
+  const why = {
+    'Vrai': ans === 'Vrai' ? `Bonne réponse : ${expl}` : `Le texte ne permet pas d'affirmer cela.`,
+    'Faux': ans === 'Faux' ? `Bonne réponse : ${expl}` : `Le texte ne contredit pas cette affirmation.`,
+    'Indéterminé': ans === 'Indéterminé' ? `Bonne réponse : ${expl}` : `Le texte contient l'information nécessaire pour trancher.`,
+    'Les informations sont contradictoires': `Le texte ne se contredit pas.`
+  };
+  return {
+    cat: 'psy', title: 'Compréhension de lecture', calc: false,
+    statement: [`Texte : « Le vol ${flight} décolle à ${hm(dep)}. Sa durée est de ${h} h ${pad(mi)}. Il transporte ${pax} passagers. »`, `Affirmation : « ${st.replace(/^./, c => c)} »`, `Cette affirmation est-elle vraie, fausse ou indéterminée d'après le texte ?`],
+    correct: ans, options: shuffle(opts), why,
+    steps: [`On ne tient compte que du texte : décollage ${hm(dep)}, durée ${h} h ${pad(mi)}, ${pax} passagers.`, expl, `Réponse : ${ans}.`],
+    tip: `"Indéterminé" = le texte ne donne pas l'information. Ne complète jamais avec ce que tu sais du monde réel.`,
+    meta: { kind: 'lecture', kind2: kind, dep, dur, pax, ans }
+  };
+}
+
+// ---------- Tableau de données ----------
+function genTableau() {
+  const mois = ['Janvier', 'Février', 'Mars', 'Avril'];
+  const variant = randChoice(['pct', 'hausse', 'total']);
+  let vals, statement, correct, steps, cands, tip, meta;
+  const tbl = v => `<table style="border-collapse:collapse;margin:6px 0;font-size:14px"><tr>${mois.map(m => `<th style="border:1px solid #C9CED3;padding:5px 10px;background:#F1EDE1">${m}</th>`).join('')}</tr><tr>${v.map(x => `<td style="border:1px solid #C9CED3;padding:5px 10px;text-align:center">${x}</td>`).join('')}</tr></table>`;
+  if (variant === 'pct') {
+    const base = randChoice([40, 50, 60, 80, 100, 120, 200]);
+    const p = randChoice([10, 20, 25, 30, 50]);
+    const nw = base * (100 + p) / 100;
+    if (!Number.isInteger(nw)) return genTableau();
+    const i = randInt(0, 2);
+    vals = [randInt(30, 220), randInt(30, 220), randInt(30, 220), randInt(30, 220)];
+    vals[i] = base; vals[i + 1] = nw;
+    statement = [`Nombre de passagers (en milliers) par mois :`, tbl(vals), `Quelle est l'évolution, en %, entre ${mois[i]} et ${mois[i + 1]} ?`];
+    correct = '+' + p + ' %';
+    cands = [[`+${Math.round((nw - base) / nw * 100)} %`, `Tu as calculé l'écart par rapport à la valeur d'arrivée (${nw}) au lieu de la valeur de départ (${base}).`], [`+${nw - base} %`, `Tu as donné l'écart brut (${nw - base} milliers) comme un pourcentage.`], [`−${p} %`, `Mauvais signe : la valeur a augmenté.`], [`+${p + 10} %`, `Erreur de calcul.`]];
+    steps = [`Évolution = (nouvelle − ancienne) ÷ ancienne × 100.`, `(${nw} − ${base}) ÷ ${base} = ${nw - base} ÷ ${base} = ${fmtTrim((nw - base) / base, 3)}.`, `Soit +${p} %.`];
+    tip = `Le pourcentage d'évolution se calcule toujours par rapport à la valeur de DÉPART.`;
+    meta = { kind: 'tab', variant, base, nw, p };
+  } else if (variant === 'hausse') {
+    for (let t = 0; t < 500; t++) {
+      vals = [randInt(20, 200), randInt(20, 200), randInt(20, 200), randInt(20, 200)];
+      const d = [vals[1] - vals[0], vals[2] - vals[1], vals[3] - vals[2]];
+      const mx = Math.max.apply(null, d);
+      if (d.filter(x => x === mx).length === 1 && mx > 0) break;
+    }
+    const d = [vals[1] - vals[0], vals[2] - vals[1], vals[3] - vals[2]];
+    const mx = Math.max.apply(null, d), im = d.indexOf(mx);
+    statement = [`Nombre de passagers (en milliers) par mois :`, tbl(vals), `Entre quels mois la hausse (en valeur absolue) est-elle la plus forte ?`];
+    const lab = i => `${mois[i]} → ${mois[i + 1]}`;
+    correct = lab(im);
+    const others = [0, 1, 2].filter(i => i !== im);
+    cands = others.map(i => [lab(i), `Écart ${d[i] >= 0 ? '+' : ''}${d[i]} seulement, inférieur à ${sign(mx)}.`]);
+    cands.push([`${mois[0]} → ${mois[3]}`, `Ce n'est pas une variation d'un mois à l'autre.`]);
+    steps = [`Écarts mois par mois : ${d.map((x, i) => `${lab(i)} : ${x >= 0 ? '+' : ''}${x}`).join(' ; ')}.`, `Le plus grand écart est +${mx} : ${lab(im)}.`];
+    tip = `Calcule les trois écarts consécutifs avant de comparer : la plus forte valeur n'est pas forcément à côté de la plus forte hausse.`;
+    meta = { kind: 'tab', variant, vals, im };
+  } else {
+    vals = [randInt(30, 220), randInt(30, 220), randInt(30, 220), randInt(30, 220)];
+    const sel = shuffle([0, 1, 2, 3]).slice(0, 3).sort();
+    const tot = sel.reduce((a, i) => a + vals[i], 0);
+    statement = [`Nombre de passagers (en milliers) par mois :`, tbl(vals), `Quel est le total pour ${sel.map(i => mois[i]).join(', ').replace(/, ([^,]*)$/, ' et $1')} ?`];
+    correct = String(tot);
+    const all = vals.reduce((a, b) => a + b, 0);
+    const missing = [0, 1, 2, 3].find(i => !sel.includes(i));
+    cands = [[String(all), `Tu as additionné les quatre mois, y compris ${mois[missing]}.`], [String(tot - sel.map(i => vals[i]).sort((a, b) => a - b)[0]), `Tu as oublié le plus petit des trois mois.`], [String(tot + 10), `Erreur d'une dizaine.`], [String(tot - 10), `Erreur d'une dizaine.`]];
+    steps = [`Lecture : ${sel.map(i => `${mois[i]} = ${vals[i]}`).join(', ')}.`, `Somme : ${sel.map(i => vals[i]).join(' + ')} = ${tot}.`];
+    tip = `Souligne les colonnes demandées avant d'additionner pour ne pas inclure la mauvaise ligne.`;
+    meta = { kind: 'tab', variant, vals, sel, tot };
+  }
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${correct}.`, cands, k => variant === 'total' ? String(Number(correct) + k * 3) : (variant === 'pct' ? `+${parseInt(correct.slice(1)) + 5 * k + 7} %` : `${mois[0]} → ${mois[1]}`));
+  return { cat: 'psy', title: 'Lecture de tableau', calc: false, statement, correct, options, why, steps, tip, meta };
+}
+
+// ---------- Problèmes appliqués (carburant, temps, distance) ----------
+function genProblemeVol() {
+  const variant = randChoice(['carb', 'temps', 'dist']);
+  let statement, val, correct, steps, cands, tip;
+  const unit = { carb: ' L', temps: ' min', dist: ' NM' }[variant];
+  if (variant === 'carb') {
+    const rate = randChoice([120, 160, 180, 200, 240]);
+    const hh = randInt(1, 4), mm = randChoice([15, 30, 45]);
+    val = rate * hh + rate * mm / 60;
+    statement = [`Un avion consomme ${rate} L par heure.`, `Quelle quantité de carburant est nécessaire pour un vol de ${hh} h ${mm} min ?`];
+    steps = [`${mm} min = ${mm} ÷ 60 = ${fmtTrim(mm / 60, 2)} h, donc ${hh} h ${mm} min = ${fmtTrim(hh + mm / 60, 2)} h.`, `Carburant = ${rate} × ${fmtTrim(hh + mm / 60, 2)} = ${val} L.`];
+    cands = [[rate * (hh + mm / 100), `Tu as lu ${hh} h ${mm} min comme ${hh},${mm} h : une heure compte 60 minutes, pas 100.`], [rate * hh, `Tu as oublié les ${mm} minutes.`], [rate * (hh + 1), `Tu as arrondi à l'heure supérieure.`], [rate * mm / 60, `Tu as oublié les heures entières.`]];
+    tip = `Convertis toujours les minutes en fraction d'heure (÷ 60) : 15 min = 0,25 h, 30 min = 0,5 h, 45 min = 0,75 h.`;
+  } else if (variant === 'temps') {
+    const sp = randChoice([60, 90, 120, 150, 180, 240, 300]);
+    const min = randChoice([10, 14, 16, 20, 24, 30, 36, 40, 44, 50, 60]);
+    const d = sp * min / 60; val = min;
+    statement = [`Un avion vole à ${sp} kt (${sp} NM par heure) sur une distance de ${fmtTrim(d, 1)} NM.`, `Quelle est la durée du trajet ?`];
+    steps = [`Temps = distance ÷ vitesse = ${fmtTrim(d, 1)} ÷ ${sp} = ${fmtTrim(d / sp, 3)} h.`, `En minutes : ${fmtTrim(d / sp, 3)} × 60 = ${val} min.`];
+    cands = [[d / sp * 100, `Tu as multiplié l'heure décimale par 100 au lieu de 60.`], [sp / d * 60, `Tu as inversé le rapport (vitesse ÷ distance).`], [d / sp * 60 + 10, `Erreur d'une dizaine de minutes.`], [d / sp * 60 - 10, `Erreur d'une dizaine de minutes.`]];
+    tip = `Repère clé : vitesse en kt ÷ 60 = distance parcourue par minute en NM (120 kt = 2 NM/min).`;
+  } else {
+    const sp = randChoice([60, 90, 120, 150, 180, 240, 300]);
+    const min = randChoice([10, 14, 16, 20, 24, 30, 36, 40, 44, 50]);
+    val = sp * min / 60;
+    statement = [`Un avion vole à ${sp} kt pendant ${min} minutes.`, `Quelle distance parcourt-il ?`];
+    steps = [`${sp} kt = ${sp / 60} NM par minute (${sp} ÷ 60).`, `Distance = ${fmtTrim(sp / 60, 2)} × ${min} = ${fmtTrim(val, 1)} NM.`];
+    cands = [[sp * min / 100, `Tu as divisé par 100 au lieu de 60.`], [sp * min, `Tu as oublié de convertir les minutes en heures.`], [sp * (min / 60) * 2, `Tu as doublé le résultat.`], [sp / min, `Tu as divisé la vitesse par la durée.`]];
+    tip = `Vitesse (kt) × durée (min) ÷ 60 = distance (NM). Exemple : 120 kt = 2 NM/min.`;
+  }
+  const fmtV = x => fmtTrim(x, 1) + unit;
+  correct = fmtV(val);
+  const { options, why } = mkOpts(correct, `Bonne réponse : ${correct}.`, cands.map(c => [fmtV(c[0]), c[1]]), k => fmtV(val + 10 * k));
+  return { cat: 'psy', title: 'Problème appliqué (vol)', calc: false, statement, correct, options, why, steps, tip, meta: { kind: 'probVol', variant, val } };
+}
+
+// ---------- Intrus numérique ----------
+const PRED = [
+  ['pairs', x => x % 2 === 0], ['impairs', x => x % 2 === 1], ['multiples de 3', x => x % 3 === 0], ['multiples de 4', x => x % 4 === 0],
+  ['multiples de 5', x => x % 5 === 0], ['multiples de 6', x => x % 6 === 0], ['multiples de 7', x => x % 7 === 0], ['multiples de 9', x => x % 9 === 0], ['multiples de 11', x => x % 11 === 0],
+  ['nombres premiers', x => { if (x < 2) return false; for (let i = 2; i * i <= x; i++) if (x % i === 0) return false; return true; }],
+  ['carrés parfaits', x => Number.isInteger(Math.sqrt(x))], ['cubes parfaits', x => Number.isInteger(Math.round(Math.cbrt(x))) && Math.round(Math.cbrt(x)) ** 3 === x],
+  ['nombres de 2 chiffres', x => x >= 10 && x < 100], ['palindromes', x => String(x) === String(x).split('').reverse().join('')],
+  ['nombres supérieurs à 50', x => x > 50], ['nombres dont la somme des chiffres est paire', x => String(x).split('').reduce((a, b) => a + +b, 0) % 2 === 0]
+];
+function genIntrusNum() {
+  const goodPreds = PRED.filter(p => ['pairs', 'impairs', 'multiples de 3', 'multiples de 4', 'multiples de 5', 'multiples de 6', 'multiples de 7', 'multiples de 9', 'nombres premiers', 'carrés parfaits'].includes(p[0]));
+  for (let t = 0; t < 5000; t++) {
+    const [name, f] = randChoice(goodPreds);
+    const good = [], bad = [];
+    for (let x = 3; x < 99; x++) (f(x) ? good : bad).push(x);
+    if (good.length < 3 || bad.length < 1) continue;
+    const trio = shuffle(good).slice(0, 3), odd = randChoice(bad);
+    const nums = shuffle(trio.concat([odd]));
+    if (new Set(nums).size !== 4) continue;
+    const cand = new Set();
+    PRED.forEach(p => { const sat = nums.filter(p[1]); if (sat.length === 3) cand.add(nums.find(x => !p[1](x))); else if (sat.length === 1) cand.add(sat[0]); });
+    if (cand.size !== 1 || !cand.has(odd)) continue;
+    const correct = String(odd);
+    const why = {};
+    nums.forEach(x => { why[String(x)] = x === odd ? `Bonne réponse : ${x} n'est pas dans la catégorie « ${name} » commune aux trois autres.` : `${x} fait partie des ${name}.`; });
+    return {
+      cat: 'psy', title: 'Intrus numérique', calc: false,
+      statement: [`Quel nombre est l'intrus ?`],
+      correct, options: nums.map(String), why,
+      steps: [`Cherche une propriété commune à trois nombres sur quatre : ici, ${trio.sort((a, b) => a - b).join(', ')} sont des ${name}.`, `${odd} n'en est pas un : c'est l'intrus.`],
+      tip: `Teste dans l'ordre : parité, multiples de 3/4/5/7, carrés, nombres premiers.`,
+      meta: { kind: 'intrusNum', nums, odd }
+    };
+  }
+  return genIntrusNum();
+}
+
+// ---------- Intrus verbal ----------
+const CATS_MOTS = [
+  ['instruments de bord', ['altimètre', 'badin', 'variomètre', 'horizon artificiel', 'conservateur de cap', 'tachymètre']],
+  ['nuages', ['cumulus', 'stratus', 'cirrus', 'altocumulus', 'cumulonimbus']],
+  ['métaux', ['fer', 'cuivre', 'zinc', 'plomb', 'aluminium', 'titane']],
+  ['planètes', ['Mars', 'Vénus', 'Jupiter', 'Saturne', 'Neptune', 'Uranus']],
+  ['unités de longueur', ['mètre', 'pouce', 'mille', 'pied', 'kilomètre', 'yard']],
+  ['unités de masse', ['gramme', 'livre', 'tonne', 'once', 'kilogramme']],
+  ['couleurs', ['rouge', 'bleu', 'vert', 'jaune', 'orange', 'violet']],
+  ['animaux marins', ['requin', 'dauphin', 'raie', 'thon', 'baleine']],
+  ['commandes de vol', ['manche', 'palonnier', 'manette des gaz', 'compensateur', 'volet']],
+  ['capitales', ['Paris', 'Rome', 'Madrid', 'Berlin', 'Lisbonne', 'Vienne']]
+];
+function genIntrusMot() {
+  const [ca, cb] = shuffle(CATS_MOTS.slice()).slice(0, 2);
+  const trio = shuffle(ca[1].slice()).slice(0, 3), odd = randChoice(cb[1]);
+  const words = shuffle(trio.concat([odd]));
+  const why = {};
+  words.forEach(w => { why[w] = w === odd ? `Bonne réponse : « ${w} » appartient à la catégorie « ${cb[0]} », pas à « ${ca[0]} ».` : `« ${w} » fait partie des ${ca[0]}.`; });
+  return {
+    cat: 'psy', title: 'Intrus verbal', calc: false,
+    statement: [`Quel mot est l'intrus ?`],
+    correct: odd, options: words, why,
+    steps: [`Trois mots appartiennent à la même catégorie : ${trio.join(', ')} → ${ca[0]}.`, `« ${odd} » appartient à une autre catégorie (${cb[0]}).`],
+    tip: `Cherche d'abord la catégorie que partagent deux mots évidents, puis vérifie si le troisième y entre.`,
+    meta: { kind: 'intrusMot', words, odd, ca: ca[0], cb: cb[0] }
+  };
+}
+
+// ---------- Analogies ----------
+const ANALOGIES = [
+  ['Altimètre est à altitude comme badin est à…', 'vitesse', ['cap', 'pression', 'température']],
+  ['Pilote est à avion comme capitaine est à…', 'navire', ['piste', 'voyageur', 'port']],
+  ['Chaud est à froid comme jour est à…', 'nuit', ['soleil', 'lumière', 'matin']],
+  ['Main est à doigt comme pied est à…', 'orteil', ['talon', 'jambe', 'chaussure']],
+  ['Oiseau est à aile comme poisson est à…', 'nageoire', ['écaille', 'eau', 'branchie']],
+  ['Livre est à page comme maison est à…', 'pièce', ['mur', 'toit', 'jardin']],
+  ['Fusible est à électricité comme soupape est à…', 'pression', ['chaleur', 'vitesse', 'volume']],
+  ['Décollage est à atterrissage comme départ est à…', 'arrivée', ['voyage', 'piste', 'escale']],
+  ['Thermomètre est à température comme baromètre est à…', 'pression', ['altitude', 'humidité', 'vent']],
+  ['Mètre est à longueur comme litre est à…', 'volume', ['masse', 'pression', 'surface']],
+  ['Gouvernail est à bateau comme gouverne de direction est à…', 'avion', ['voile', 'hélice', 'port']],
+  ['Sec est à humide comme léger est à…', 'lourd', ['petit', 'rapide', 'mince']]
+];
+function genAnalogie() {
+  const a = randChoice(ANALOGIES);
+  const why = {}; why[a[1]] = `Bonne réponse : « ${a[1]} » reproduit exactement la même relation que le premier couple.`;
+  a[2].forEach(w => why[w] = `« ${w} » ne reproduit pas la relation du premier couple.`);
+  return {
+    cat: 'psy', title: 'Analogie', calc: false,
+    statement: [a[0]],
+    correct: a[1], options: shuffle([a[1]].concat(a[2])), why,
+    steps: [`Formule d'abord la relation du premier couple en une phrase (ex. « X mesure Y », « X est composé de Y », « X est le contraire de Y »).`, `Applique la MÊME phrase au second couple.`, `Réponse : « ${a[1]} ».`],
+    tip: `Une analogie A : B :: C : ? se résout en nommant la relation entre A et B, puis en la répétant avec C.`,
+    meta: { kind: 'analogie', a }
+  };
+}
+
 // ================= Diagrams =================
 function svgThales(d) {
   return `<svg viewBox="0 0 300 240" width="280">
@@ -1683,6 +2375,7 @@ const CATS = [
   { key: 'fluid', label: 'Fluides', icon: '💧', color: '#2892A8' },
   { key: 'stat', label: 'Statistiques', icon: '📊', color: '#A23B72' },
   { key: 'proba', label: 'Probabilités', icon: '🎯', color: '#4C5FD5' },
+  { key: 'psy', label: 'Psy 0', icon: '🧠', color: '#7A4E9E' },
   { key: 'nav', label: 'Navigation', icon: '🛫', color: '#3C6E47' },
   { key: 'aero', label: 'Aérodynamique', icon: '🪽', color: '#5B7FBE' }
 ];
@@ -1699,6 +2392,7 @@ const GEN_BY_CAT = {
   fluid: [genMasseVolumique, genDensite, genPressionGaz],
   stat: [genMoyenne, genMediane, genEtendue, genMode, genMoyenneManquante, genMoyennePonderee, genPourcentageStat],
   proba: [genProbaUrne, genProbaDe, genProbaComplement, genProbaEtOu, genTirage, genPileFace, genDenombrement, genEsperance],
+  psy: [genSerieNum, genSerieLettres, genCalculRapide, genPlusPetitIntervalle, genSigneManquant, genComptageSymbole, genOrientationCap, genAngleHorloge, genCompteur, genRotationGrille, genSerieFleches, genDeductionOrdre, genSyllogisme, genLecture, genTableau, genProblemeVol, genIntrusNum, genIntrusMot, genAnalogie],
   nav: [genCatchup, genPercent2],
   aero: [genLift]
 };
@@ -1837,9 +2531,9 @@ function showAnswer(i, live) {
   const isCorrect = q.options[i] === q.correct;
 
   const rows = document.querySelectorAll('#options .option');
-  rows.forEach(r => {
+  rows.forEach((r, idx) => {
     r.classList.add('disabled');
-    const text = r.querySelector('.opt-text').textContent;
+    const text = q.options[idx];
     const markEl = r.querySelector('.mark');
     if (q.why && q.why[text] && !r.querySelector('.opt-note')) { const n = document.createElement('div'); n.className = 'opt-note'; n.textContent = (text === q.correct ? '✓ ' : '✕ ') + q.why[text]; r.appendChild(n); }
     if (text === q.correct) { r.classList.add('correct'); markEl.textContent = '✓'; }
