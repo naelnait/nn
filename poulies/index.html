@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Poulies">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Cordes et poulies</title>
+<style>
+  :root{
+    --bg-top:#0B1117; --bg-bot:#131B23;
+    --paper:#FBF9F4; --paper-head:#F5F2E9;
+    --ink:#1C2530; --muted:#6B7580;
+    --rule:#E3DECF;
+    --good:#1E8F63; --good-bg:#E4F5EC;
+    --bad:#D14B3D; --bad-bg:#FBEAE7;
+    --calc:#8A5A19; --calc-bg:#F3E7D2;
+    --mental:#1E5F7A; --mental-bg:#E1EFF4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:
+      radial-gradient(1100px 500px at 15% -5%, #1B2836 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #16222C 0%, transparent 55%),
+      linear-gradient(180deg,var(--bg-top),var(--bg-bot));
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:20px 12px 50px;
+  }
+  .toolbar{width:100%; max-width:800px; display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; gap:10px;}
+  .toolbar h1{font-size:17px; font-weight:700; color:#F3F5F7; margin:0; letter-spacing:.1px;}
+  .toolbar .sub{font-size:12px; color:#8B95A1; margin-top:3px;}
+  .stats{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .offline-state{display:inline-block; margin-left:8px; font-weight:700; color:#6FD3A8;}
+  .offline-state.wait{color:#8B95A1; font-weight:600;}
+  .streak{font-size:13px; font-weight:700; color:#FFB258; opacity:0; transform:scale(.7); transition:opacity .2s, transform .2s; white-space:nowrap;}
+  .streak.show{opacity:1; transform:scale(1);}
+  .score-ring{position:relative; width:52px; height:52px; border-radius:50%; cursor:pointer; flex-shrink:0;}
+  .score-ring svg{transform:rotate(-90deg);}
+  .score-ring .pct{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:ui-monospace,Menlo,monospace; color:#EDEFF2;}
+
+  .tabs{width:100%; max-width:800px; display:flex; gap:5px; flex-wrap:wrap; margin-bottom:0; position:relative; z-index:2;}
+  .tab{
+    display:flex; align-items:center; gap:6px;
+    background:#161F28; color:#9AA5B1; border:1px solid #263140; border-bottom:none;
+    padding:9px 13px 11px; border-radius:10px 10px 0 0; font-size:12.5px; font-weight:600; cursor:pointer;
+    transition:transform .12s, background .15s, color .15s; transform:translateY(4px);
+  }
+  .tab .ic{font-size:14px;}
+  .tab:hover{transform:translateY(1px); color:#D5DBE2;}
+  .tab.active{transform:translateY(0); color:#1C2530; background:var(--tabcolor,#0B4F6C);}
+
+  .card{width:100%; max-width:800px; background:var(--paper); border-radius:0 12px 12px 12px; box-shadow:0 24px 60px rgba(0,0,0,.4); overflow:hidden; position:relative; border-top:5px solid var(--tabcolor,#0B4F6C);}
+  .card-head{padding:15px 22px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--paper-head); flex-wrap:wrap;}
+  .card-head .left{display:flex; align-items:center; gap:11px; flex-wrap:wrap;}
+  .cat-icon{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; background:var(--tabcolor,#0B4F6C); flex-shrink:0;}
+  .card-head .qtitle{font-size:14.5px; font-weight:700; color:var(--ink);}
+  .card-head .qnum{font-size:12px; color:var(--muted); font-family:ui-monospace,Menlo,monospace;}
+  .badge{font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap;}
+  .badge.calc{color:var(--calc); background:var(--calc-bg);}
+  .badge.mental{color:var(--mental); background:var(--mental-bg);}
+
+  .card-body{padding:22px; animation:fadeIn .28s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .statement p{font-size:15.5px; line-height:1.6; margin:0 0 10px;}
+  .statement p:last-child{margin-bottom:0;}
+  .diagram{margin:8px 0 18px; display:flex; justify-content:center;}
+  .diagram svg{max-width:100%; height:auto;}
+
+  .feedback-banner{display:none; align-items:center; gap:10px; margin:14px 0 0; padding:11px 15px; border-radius:9px; font-size:14px; font-weight:700;}
+  .feedback-banner.show{display:flex; animation:popIn .25s ease;}
+  .feedback-banner.good{background:var(--good-bg); color:var(--good);}
+  .feedback-banner.bad{background:var(--bad-bg); color:var(--bad);}
+  @keyframes popIn{from{transform:scale(.9); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  .options{margin-top:16px; display:flex; flex-direction:column; gap:8px;}
+  .option{
+    display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:10px; cursor:pointer;
+    font-size:14.5px; line-height:1.4; border:1.5px solid var(--rule); background:#fff;
+    transition:border-color .12s, background .12s, transform .08s;
+  }
+  .option:hover:not(.disabled){border-color:#0B4F6C; transform:translateX(2px);}
+  .option:active:not(.disabled){transform:scale(.99);}
+  .letter{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; background:#EFECE3; color:#6B7580; border:1.5px solid var(--rule);
+  }
+  .opt-text{flex:1;}
+  .mark{font-size:15px; flex-shrink:0; width:18px; text-align:center;}
+  .option.correct{background:var(--good-bg); border-color:var(--good);}
+  .option.correct .letter{background:var(--good); color:#fff; border-color:var(--good);}
+  .option.wrong{background:var(--bad-bg); border-color:var(--bad);}
+  .option.wrong .letter{background:var(--bad); color:#fff; border-color:var(--bad);}
+  .option.disabled{cursor:default;}
+  .option.disabled:hover{transform:none;}
+
+  .explanation{display:none; margin:14px 0 0; padding:13px 15px; background:#F1EDE1; border-left:3px solid var(--tabcolor,#0B4F6C); font-size:13.5px; line-height:1.55; color:#33404B; border-radius:0 8px 8px 0;}
+  .explanation.show{display:block; animation:fadeIn .25s ease;}
+
+
+  .explanation .exp-title{font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--tabcolor,#0B4F6C); margin:0 0 8px;}
+  .explanation ol{margin:0 0 0 20px; padding:0;}
+  .explanation li{margin:0 0 6px; padding-left:2px;}
+  .explanation .tip{margin-top:10px; padding:9px 11px; background:#FFF6D6; border-radius:8px; font-size:13px;}
+  .opt-note{display:none; flex-basis:100%; margin:6px 0 0 44px; font-size:12.5px; line-height:1.45; color:#4A5560;}
+  .option.disabled .opt-note{display:block;}
+  .option{flex-wrap:wrap;}
+
+  .footer-row{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:16px 22px; border-top:1px solid var(--rule); background:var(--paper-head);}
+  button.next{
+    background:var(--tabcolor,#0B4F6C); color:#fff; border:none; padding:12px 22px; border-radius:9px;
+    font-size:14px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:8px;
+    transition:filter .12s, transform .08s; width:100%; justify-content:center;
+  }
+  button.next:hover{filter:brightness(1.12);}
+  button.next:active{transform:scale(.98);}
+  button.prev{
+    background:transparent; color:var(--tabcolor,#0B4F6C); border:2px solid var(--tabcolor,#0B4F6C);
+    padding:10px 16px; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer;
+    white-space:nowrap; flex:0 0 auto; transition:opacity .12s, transform .08s;
+  }
+  button.prev:active{transform:scale(.98);}
+  button.prev:disabled{opacity:.35; cursor:default;}
+  .review-note{display:none; font-size:12.5px; font-weight:600; opacity:.75; margin:0 0 10px;}
+  .review-note.show{display:block;}
+
+  .sparkle{position:fixed; font-size:22px; pointer-events:none; animation:sparkleUp 1s ease-out forwards; z-index:50;}
+  @keyframes sparkleUp{
+    0%{transform:translate(0,0) scale(.6) rotate(0deg); opacity:1;}
+    100%{transform:translate(var(--dx),-90px) scale(1.1) rotate(var(--rot)); opacity:0;}
+  }
+
+  @media (max-width:480px){
+    .card-body{padding:16px;}
+    .statement p{font-size:14.5px;}
+    .card-head{padding:12px 16px;}
+    .footer-row{padding:12px 16px;}
+    .tab{padding:8px 10px 10px; font-size:11.5px;}
+    .toolbar h1{font-size:15px;}
+  }
+
+  .fiche-btn{background:#1B2836; color:#E8EDF2; border:1px solid #2E3B4A; border-radius:9px; padding:8px 12px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;}
+  .fiche-btn:active{transform:scale(.97);}
+  .overlay{position:fixed; inset:0; background:rgba(5,9,13,.72); display:none; z-index:60; overflow-y:auto; padding:20px 12px 40px;}
+  .overlay.show{display:block;}
+  .sheet{max-width:800px; margin:0 auto; background:var(--paper); border-radius:12px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5);}
+  .sheet-head{display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:var(--paper-head); border-bottom:1px solid var(--rule); position:sticky; top:0;}
+  .sheet-head h2{margin:0; font-size:16px;}
+  .sheet-head button{border:none; background:#E3DECF; border-radius:8px; padding:7px 12px; font-weight:700; cursor:pointer;}
+  .sheet-body{padding:6px 18px 18px;}
+  .sheet-body h3{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#0B4F6C; margin:18px 0 6px;}
+  .frow{display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--rule); font-size:13.5px; line-height:1.4;}
+  .frow .fd{color:#4A5560; flex:1;}
+  .frow .ff{font-weight:700; color:var(--ink); text-align:right; flex:0 0 46%;}
+  .sheet-note{font-size:12.5px; color:#4A5560; margin:12px 0 0;}
+  @media (max-width:480px){ .frow{flex-direction:column; gap:3px;} .frow .ff{text-align:left;} }
+</style>
+
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <h1>Cordes et poulies — 30 cas</h1>
+    <div class="sub">Compter les forces, suivre la longueur de corde</div>
+  </div>
+  <div class="stats">
+    <button class="fiche-btn" id="ficheBtn">📋 Fiche</button>
+    <div class="streak" id="streak">🔥 x0</div>
+    <div class="score-ring" id="scoreBox" title="Cliquer pour réinitialiser">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="#26313C" stroke-width="5"/>
+        <circle id="ringProgress" cx="26" cy="26" r="22" fill="none" stroke="#3FBF8F" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="138"/>
+      </svg>
+      <div class="pct" id="scorePct">0/0</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="card" id="card">
+  <div class="card-head">
+    <div class="left">
+      <div class="cat-icon" id="catIcon">🎲</div>
+      <div>
+        <div class="qtitle" id="qtitle">—</div>
+        <div class="qnum" id="qnum">Question 0</div>
+      </div>
+    </div>
+    <span class="badge" id="calcBadge"></span>
+  </div>
+  <div class="card-body" id="cardBody">
+    <div class="review-note" id="reviewNote">↩ Question déjà répondue — consultation seule</div>
+    <div class="statement" id="statement"></div>
+    <div class="diagram" id="diagram"></div>
+    <div class="feedback-banner" id="feedbackBanner"></div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+  <div class="footer-row">
+    <button class="prev" id="prevBtn" disabled>← Précédente</button>
+    <button class="next" id="nextBtn">Question suivante →</button>
+  </div>
+</div>
+
+<div class="overlay" id="fiche">
+  <div class="sheet">
+    <div class="sheet-head"><h2>📋 Fiche des formules</h2><button id="ficheClose">Fermer ✕</button></div>
+    <div class="sheet-body" id="ficheBody"></div>
+  </div>
+</div>
+
+<script>
+// ===== Helpers =====
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[randInt(0, arr.length - 1)]; }
+function round(x, d) { d = d || 1; const f = Math.pow(10, d); return Math.round((x + Number.EPSILON) * f) / f; }
+function fmt(x, d) { d = d || 1; return round(x, d).toFixed(d).replace('.', ','); }
+function fmtTrim(x, d) { d = d || 2; return fmt(x, d).replace(/,0+$/, ''); }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i);[a[i], a[j]] = [a[j], a[i]]; } return a; }
+function nf(x) { return fmtTrim(x, 1); }
+// candidates : tableau de [texte, raison] ; fallback(k) : texte de secours
+function mkOpts(correct, correctWhy, candidates, fallback) {
+  const why = {};
+  why[correct] = correctWhy;
+  const ds = [];
+  for (const c of candidates) {
+    if (!c || c[0] == null || c[0] === correct || ds.includes(c[0])) continue;
+    ds.push(c[0]); why[c[0]] = c[1];
+    if (ds.length === 3) break;
+  }
+  for (let k = 1; ds.length < 3 && k < 80; k++) {
+    const t = fallback(k);
+    if (t == null || t === correct || ds.includes(t)) continue;
+    ds.push(t); why[t] = 'Valeur plausible mais qui ne découle d\'aucune étape correcte du calcul.';
+  }
+  return { options: shuffle([correct].concat(ds)), why };
+}
+
+// ===== Constantes physiques et trigonométrie =====
+const G = 10; // g = 10 m/s² dans tous les énoncés
+const SIN = { 30: 0.5, 45: Math.SQRT1_2, 60: Math.sqrt(3) / 2 };
+const COS = { 30: Math.sqrt(3) / 2, 45: Math.SQRT1_2, 60: 0.5 };
+const SINTXT = { 30: '0,5', 45: '≈ 0,707', 60: '≈ 0,866' };
+const COSTXT = { 30: '≈ 0,866', 45: '≈ 0,707', 60: '0,5' };
+const GTXT = '(g = 10 m/s²)';
+function N(x) { return nf(x) + ' N'; }
+function A(x) { return nf(x) + ' m/s²'; }
+function fbN(base) { return k => (base * (1 + 0.17 * k) > 0 ? N(base * (1 + 0.17 * k)) : null); }
+function fbA(base) { return k => A(Math.max(0.5, base) * (1 + 0.25 * k)); }
+function dirTxt(x, up, down) { return x > 0 ? up : down; }
+
+// ============================================================
+// 1. TENSION ET SENS DU MOUVEMENT (cas 1 à 5)
+// ============================================================
+function genTensionMouvement() {
+  const m = randInt(2, 20), a = randInt(1, 5), v = randInt(1, 4);
+  const cases = [
+    ['est immobile', 0, null],
+    [`monte à vitesse constante (v = ${v} m/s)`, 0, 'up'],
+    [`descend à vitesse constante (v = ${v} m/s)`, 0, 'down'],
+    [`monte en accélérant (a = ${a} m/s²)`, 1, 'up'],
+    [`descend en freinant (décélération de ${a} m/s²)`, 1, 'down'],
+    [`descend en accélérant (a = ${a} m/s²)`, -1, 'down'],
+    [`monte en freinant (décélération de ${a} m/s²)`, -1, 'up']
+  ];
+  const [txt, s, dir] = randChoice(cases);
+  const T = m * (G + s * a);
+  const correct = N(T);
+  const cands = s === 0 ? [
+    [N(m * (G + v)), 'La vitesse n\'entre pas dans le calcul : à vitesse constante, l\'accélération est nulle.'],
+    [N(m * G / 2), 'Il n\'y a qu\'un seul brin : il porte tout le poids.'],
+    [N(m * v), 'm·v est une quantité de mouvement, pas une force.']
+  ] : [
+    [N(m * (G - s * a)), 'Sens de l\'accélération inversé. Monter en accélérant ou descendre en freinant = accélération vers le haut.'],
+    [N(m * G), 'Accélération oubliée : T = mg seulement si a = 0.'],
+    [N(m * a), 'T = m·a oublie le poids.']
+  ];
+  const { options, why } = mkOpts(correct, 'Principe fondamental : T − mg = m·a, avec a compté positivement vers le haut.', cands, fbN(T));
+  const sense = s === 0 ? 'nulle (immobile ou vitesse constante)' : (s > 0 ? 'vers le haut' : 'vers le bas');
+  return {
+    cat: 'tens', title: 'Masse suspendue', calc: false,
+    statement: [`Une masse m = ${m} kg est suspendue à un câble vertical. Elle ${txt}.`, `Quelle est la tension du câble ? ${GTXT}`],
+    diagram: 'hang', diagramData: { dir, label: 'v', m: m + ' kg' },
+    correct, options, why,
+    steps: [
+      `Forces sur la masse : tension T vers le haut, poids mg = ${m * G} N vers le bas.`,
+      `Accélération ${sense}.`,
+      s === 0 ? `a = 0 donc T = mg = ${N(T)}.` : `T − mg = m·a (a ${s > 0 ? '+' : '−'}${a}) → T = m(g ${s > 0 ? '+' : '−'} a) = ${m} × ${G + s * a} = ${N(T)}.`
+    ],
+    tip: 'C\'est le sens de l\'accélération qui compte, pas celui de la vitesse. Descendre en freinant = accélération vers le haut = T > mg.'
+  };
+}
+
+function genAccDepuisTension() {
+  const m = randInt(2, 20);
+  let a = 0; while (a === 0) a = randInt(-5, 5);
+  const T = m * (G + a);
+  const mag = Math.abs(a);
+  const up = ' vers le haut', down = ' vers le bas';
+  const correct = A(mag) + (a > 0 ? up : down);
+  const cands = [
+    [A(mag) + (a > 0 ? down : up), 'Sens inversé : T > mg donne une accélération vers le haut, T < mg vers le bas.'],
+    [A(T / m) + up, 'Poids oublié : la résultante est T − mg, pas T.'],
+    [A((T + m * G) / m) + up, 'Le poids s\'oppose à la tension : on soustrait mg.']
+  ];
+  const { options, why } = mkOpts(correct, 'a = (T − mg)/m ; le signe donne le sens.', cands, k => A(mag + k) + (a > 0 ? up : down));
+  return {
+    cat: 'tens', title: 'Accélération à partir de la tension', calc: false,
+    statement: [`Une masse de ${m} kg est suspendue à un câble dont la tension vaut ${N(T)}.`, `Quelle est l'accélération de la masse ? ${GTXT}`],
+    diagram: 'hang', diagramData: { dir: null, m: m + ' kg' },
+    correct, options, why,
+    steps: [`Poids : mg = ${m} × 10 = ${m * G} N.`, `Résultante : T − mg = ${T} − ${m * G} = ${T - m * G} N.`, `a = ${T - m * G} / ${m} = ${nf(a)} m/s² → ${mag} m/s²${a > 0 ? up : down}.`],
+    tip: 'T > mg : accélération vers le haut. T < mg : vers le bas. T = mg : vitesse constante ou repos.'
+  };
+}
+
+function genCableMax() {
+  const m = randInt(1, 10) * 50, a = randInt(1, 5);
+  const Tmax = m * (G + a);
+  const correct = A(a);
+  const cands = [
+    [A(Tmax / m), 'Poids oublié : Tmax/m donne g + a, il faut retirer g.'],
+    [A(Tmax / m + G), 'Le poids se retranche, il ne s\'ajoute pas.'],
+    [A(a / 2), 'Aucune division par 2 : un seul brin porte la charge.']
+  ];
+  const { options, why } = mkOpts(correct, 'Tmax − mg = m·amax → amax = Tmax/m − g.', cands, fbA(a));
+  return {
+    cat: 'tens', title: 'Charge maximale d\'un câble', calc: false,
+    statement: [`Un câble supporte au maximum ${N(Tmax)}. On s'en sert pour hisser une charge de ${m} kg.`, `Quelle accélération maximale vers le haut peut-on donner à la charge ? ${GTXT}`],
+    diagram: 'hang', diagramData: { dir: 'up', label: 'a', m: m + ' kg' },
+    correct, options, why,
+    steps: [`Tmax − mg = m·amax.`, `amax = Tmax/m − g = ${Tmax}/${m} − 10 = ${G + a} − 10 = ${a} m/s².`],
+    tip: 'Monter en accélérant est le cas le plus contraignant pour un câble.'
+  };
+}
+
+// ============================================================
+// 2. CORDES INCLINÉES (cas 6 à 10) — angles mesurés depuis l'horizontale
+// ============================================================
+function genSymetrique() {
+  const m = randInt(2, 20), th = randChoice([30, 45, 60]);
+  const fromVert = Math.random() < 0.35;
+  const shown = fromVert ? 90 - th : th;
+  const T = m * G / (2 * SIN[th]);
+  const correct = N(T);
+  const cands = [
+    [N(m * G / 2), 'Angle oublié : mg/2 n\'est vrai que si les brins sont verticaux.'],
+    [N(m * G / (2 * COS[th])), fromVert ? 'Angle donné par rapport à la verticale : avec la verticale, c\'est le cosinus qui intervient.' : 'Sinus et cosinus inversés : avec l\'horizontale, la composante verticale est T·sinθ.'],
+    [N(m * G / SIN[th]), 'Il y a deux brins : chacun porte la moitié de la composante verticale.'],
+    [N(2 * m * G * SIN[th]), 'Formule retournée : 2T·sinθ = mg donne T = mg/(2 sinθ).']
+  ];
+  const { options, why } = mkOpts(correct, '2T·sinθ = mg avec θ mesuré depuis l\'horizontale.', cands, fbN(T));
+  const ref = fromVert ? 'la verticale' : 'l\'horizontale';
+  return {
+    cat: 'ang', title: 'Deux brins symétriques', calc: th !== 30,
+    statement: [`Une masse de ${m} kg est suspendue par deux brins symétriques. Chaque brin fait un angle de ${shown}° avec ${ref}.`, `Quelle est la tension dans chaque brin ? ${GTXT}`],
+    diagram: 'strings', diagramData: { mode: 'sym', a1: th, a2: th, lab1: shown + '°', lab2: shown + '°', ref: fromVert ? 'v' : 'h', m: m + ' kg' },
+    correct, options, why,
+    steps: [
+      fromVert ? `${shown}° avec la verticale = ${th}° avec l'horizontale.` : `Angle avec l'horizontale : θ = ${th}°.`,
+      `Horizontalement, les deux composantes T·cosθ s'annulent (symétrie).`,
+      `Verticalement : 2T·sin${th}° = mg = ${m * G} N.`,
+      `T = ${m * G} / (2 × ${SINTXT[th].replace('≈ ', '')}) = ${N(T)}.`
+    ],
+    tip: 'À 30° de l\'horizontale, T = mg. Plus les brins sont à plat, plus la tension explose (sinθ → 0).'
+  };
+}
+
+function genCordeHorizontale() {
+  const m = randInt(2, 20), th = randChoice([30, 45, 60]);
+  const T1 = m * G / SIN[th], T2 = T1 * COS[th];
+  const ask1 = Math.random() < 0.5;
+  const val = ask1 ? T1 : T2, other = ask1 ? T2 : T1;
+  const correct = N(val);
+  const cands = ask1 ? [
+    [N(m * G / COS[th]), 'Sinus et cosinus inversés : la composante verticale du brin incliné est T₁·sinθ.'],
+    [N(other), 'Ça, c\'est la tension du brin horizontal T₂.'],
+    [N(m * G), 'T₁ = mg seulement si le brin est vertical.']
+  ] : [
+    [N(T1 * SIN[th]), 'T₂ équilibre la composante horizontale de T₁, donc T₁·cosθ, pas T₁·sinθ.'],
+    [N(other), 'Ça, c\'est la tension du brin incliné T₁.'],
+    [N(m * G), 'Le brin horizontal ne porte aucune partie du poids directement.']
+  ];
+  const { options, why } = mkOpts(correct, ask1 ? 'T₁·sinθ = mg.' : 'T₂ = T₁·cosθ = mg/tanθ.', cands, fbN(val));
+  return {
+    cat: 'ang', title: 'Brin incliné + brin horizontal', calc: true,
+    statement: [`Une masse de ${m} kg est tenue par un brin (1) incliné de ${th}° par rapport à l'horizontale et un brin (2) horizontal.`, `Quelle est la tension du brin ${ask1 ? '(1) incliné' : '(2) horizontal'} ? ${GTXT}`],
+    diagram: 'strings', diagramData: { mode: 'horiz', a1: th, lab1: th + '°', ref: 'h', m: m + ' kg' },
+    correct, options, why,
+    steps: [
+      `Vertical : seul T₁ a une composante verticale → T₁·sin${th}° = mg = ${m * G} N → T₁ = ${N(T1)}.`,
+      `Horizontal : T₂ = T₁·cos${th}° = ${nf(T1)} × ${COSTXT[th].replace('≈ ', '')} = ${N(T2)}.`
+    ],
+    tip: 'Le brin horizontal ne sert qu\'à « tirer » de côté : il équilibre T₁·cosθ.'
+  };
+}
+
+function genAnglesInegaux() {
+  const m = randInt(2, 20);
+  const pair = shuffle([30, 45, 60]).slice(0, 2);
+  const al = pair[0], be = pair[1];
+  const s = Math.sin((al + be) * Math.PI / 180);
+  const T1 = m * G * COS[be] / s, T2 = m * G * COS[al] / s;
+  const ask1 = Math.random() < 0.5;
+  const val = ask1 ? T1 : T2, other = ask1 ? T2 : T1;
+  const correct = N(val);
+  const cands = [
+    [N(other), 'Tensions inversées : le brin le plus proche de la verticale est le plus tendu.'],
+    [N(m * G / 2), 'Partage égal faux : les angles sont différents.'],
+    [N(m * G * SIN[ask1 ? be : al] / s), 'Sinus et cosinus mélangés dans la résolution.']
+  ];
+  const { options, why } = mkOpts(correct, 'T₁cosα = T₂cosβ et T₁sinα + T₂sinβ = mg.', cands, fbN(val));
+  return {
+    cat: 'ang', title: 'Angles inégaux', calc: true,
+    statement: [`Une masse de ${m} kg est suspendue par deux brins : le brin 1 fait α = ${al}° avec l'horizontale, le brin 2 fait β = ${be}°.`, `Quelle est la tension T${ask1 ? '₁' : '₂'} ? ${GTXT}`],
+    diagram: 'strings', diagramData: { mode: 'uneq', a1: al, a2: be, lab1: 'α = ' + al + '°', lab2: 'β = ' + be + '°', ref: 'h', m: m + ' kg' },
+    correct, options, why,
+    steps: [
+      `Horizontal : T₁cos${al}° = T₂cos${be}°.`,
+      `Vertical : T₁sin${al}° + T₂sin${be}° = ${m * G} N.`,
+      `Résolution : T₁ = mg·cosβ / sin(α+β) = ${N(T1)} ; T₂ = mg·cosα / sin(α+β) = ${N(T2)}.`
+    ],
+    tip: 'Si α + β = 90°, T₁ = mg·sinα et T₂ = mg·sinβ : raccourci très rapide.'
+  };
+}
+
+function genPlusTendu() {
+  const pair = shuffle([20, 30, 45, 60, 70]).slice(0, 2);
+  const al = pair[0], be = pair[1];
+  const correct = al > be ? `Le brin 1 (${al}°)` : `Le brin 2 (${be}°)`;
+  const wrong = al > be ? `Le brin 2 (${be}°)` : `Le brin 1 (${al}°)`;
+  const options = shuffle([correct, wrong, 'Les deux ont la même tension', 'Ça dépend de la masse']);
+  const why = {};
+  why[correct] = 'Le brin le plus proche de la verticale porte la plus grande part du poids.';
+  why[wrong] = 'C\'est l\'inverse : le brin le plus à plat est le moins tendu des deux.';
+  why['Les deux ont la même tension'] = 'Vrai seulement si les angles sont égaux.';
+  why['Ça dépend de la masse'] = 'La masse change les valeurs mais pas leur rapport : T₁/T₂ = cosβ/cosα.';
+  return {
+    cat: 'ang', title: 'Quel brin est le plus tendu ?', calc: false,
+    statement: [`Une masse est suspendue par deux brins. Le brin 1 fait ${al}° avec l'horizontale, le brin 2 fait ${be}°.`, 'Quel brin est le plus tendu ?'],
+    diagram: 'strings', diagramData: { mode: 'uneq', a1: al, a2: be, lab1: al + '°', lab2: be + '°', ref: 'h', m: 'm' },
+    correct, options, why,
+    steps: ['Horizontal : T₁cosα = T₂cosβ → T₁/T₂ = cosβ/cosα.', `Le cosinus diminue quand l'angle augmente : le brin à ${Math.max(al, be)}° a le plus petit cosinus, donc la plus grande tension.`],
+    tip: 'Plus un brin est vertical, plus il est tendu.'
+  };
+}
+
+// ============================================================
+// 3. POULIES FIXES ET MACHINE D'ATWOOD (cas 11 à 15)
+// ============================================================
+function genPoulieFixe() {
+  const m = randInt(2, 30), a = randInt(1, 4);
+  const cases = [['maintient la charge immobile', 0], ['monte la charge à vitesse constante', 0], [`monte la charge avec une accélération de ${a} m/s²`, 1], [`descend la charge en accélérant à ${a} m/s²`, -1]];
+  const [txt, s] = randChoice(cases);
+  const F = m * (G + s * a);
+  const correct = N(F);
+  const cands = [
+    [N(F / 2), 'Une poulie fixe ne démultiplie pas l\'effort : elle change seulement sa direction.'],
+    [N(2 * F), 'La force sur la corde vaut T, pas 2T (2T est la force sur l\'attache de la poulie).'],
+    s === 0 ? [N(m * (G + a)), 'Pas d\'accélération ici.'] : [N(m * (G - s * a)), 'Signe de l\'accélération inversé.'],
+    [N(m * G), 'Accélération oubliée.']
+  ];
+  const { options, why } = mkOpts(correct, 'Poulie fixe : F = T, et T − mg = m·a pour la charge.', cands, fbN(F));
+  return {
+    cat: 'fix', title: 'Poulie fixe', calc: false,
+    statement: [`Une charge de ${m} kg pend d'une corde passant sur une poulie fixe. Un opérateur tire sur l'autre extrémité et ${txt}.`, `Quelle force exerce-t-il ? ${GTXT}`],
+    diagram: 'fixed', diagramData: { m: m + ' kg' },
+    correct, options, why,
+    steps: ['Poulie sans masse ni frottement : la tension est la même des deux côtés, F = T.', s === 0 ? `a = 0 → T = mg = ${N(F)}.` : `T = m(g ${s > 0 ? '+' : '−'} a) = ${m} × ${G + s * a} = ${N(F)}.`],
+    tip: 'Poulie fixe : aucun gain d\'effort. Poulie mobile : effort divisé par 2.'
+  };
+}
+
+function atwoodMasses() {
+  const m1 = randInt(1, 10); const m2 = m1 + randInt(1, 6);
+  return [m1, m2];
+}
+
+function genAtwoodA() {
+  const [m1, m2] = atwoodMasses();
+  const a = (m2 - m1) * G / (m1 + m2);
+  const correct = A(a);
+  const cands = [
+    [A((m2 - m1) * G / m2), 'On divise par la masse totale mise en mouvement, m₁ + m₂, pas par m₂ seule.'],
+    [A((m2 - m1) * G), 'Division par la masse totale oubliée.'],
+    [A(m2 * G / (m1 + m2)), 'La force motrice est la différence des poids (m₂ − m₁)g.'],
+    [A((m2 - m1) * G / m1), 'On divise par la masse totale m₁ + m₂.']
+  ];
+  const { options, why } = mkOpts(correct, 'a = (m₂ − m₁)g / (m₁ + m₂).', cands, fbA(a));
+  return {
+    cat: 'fix', title: 'Atwood : accélération', calc: (((m2 - m1) * G) % (m1 + m2)) !== 0,
+    statement: [`Machine d'Atwood : m₁ = ${m1} kg et m₂ = ${m2} kg pendent de part et d'autre d'une poulie fixe.`, `Quelle est l'accélération du système ? ${GTXT}`],
+    diagram: 'atwood', diagramData: { m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`Force motrice : différence des poids = (${m2} − ${m1}) × 10 = ${(m2 - m1) * G} N.`, `Masse entraînée : ${m1} + ${m2} = ${m1 + m2} kg.`, `a = ${(m2 - m1) * G} / ${m1 + m2} = ${A(a)}, m₂ descend.`],
+    tip: 'Atwood = « différence des poids sur somme des masses ».'
+  };
+}
+
+function genAtwoodT() {
+  const [m1, m2] = atwoodMasses();
+  const T = 2 * m1 * m2 * G / (m1 + m2);
+  const correct = N(T);
+  const cands = [
+    [N((m1 + m2) * G / 2), 'La moyenne des poids est fausse : T = 2m₁m₂g/(m₁+m₂), toujours un peu plus petite.'],
+    [N(m2 * G), 'T < m₂g, sinon m₂ ne descendrait pas.'],
+    [N(m1 * G), 'T > m₁g, sinon m₁ ne monterait pas.'],
+    [N(m1 * m2 * G / (m1 + m2)), 'Facteur 2 oublié (ça, c\'est la tension du cas table + masse pendante).']
+  ];
+  const { options, why } = mkOpts(correct, 'T = 2m₁m₂g / (m₁ + m₂), comprise entre m₁g et m₂g.', cands, fbN(T));
+  const a = (m2 - m1) * G / (m1 + m2);
+  return {
+    cat: 'fix', title: 'Atwood : tension', calc: true,
+    statement: [`Machine d'Atwood : m₁ = ${m1} kg et m₂ = ${m2} kg.`, `Quelle est la tension de la corde ? ${GTXT}`],
+    diagram: 'atwood', diagramData: { m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`a = (m₂ − m₁)g/(m₁ + m₂) = ${A(a)}.`, `Pour m₁ (qui monte) : T − m₁g = m₁a → T = ${m1} × (10 + ${nf(a)}) = ${N(T)}.`, `Vérification avec m₂ : m₂(g − a) = ${m2} × ${nf(G - a)} = ${N(m2 * (G - a))}.`],
+    tip: 'Contrôle rapide : m₁g < T < m₂g.'
+  };
+}
+
+function genAtwoodCinematique() {
+  const pairs = [[2, 3], [3, 5], [1, 3], [3, 7], [4, 6], [1, 4], [2, 8], [1, 9], [4, 5], [3, 4], [2, 6], [1, 2]];
+  const good = pairs.filter(([a, b]) => ((b - a) * G * 2) % (a + b) === 0);
+  const [m1, m2] = randChoice(good);
+  const a = (m2 - m1) * G / (m1 + m2), t = randInt(1, 4);
+  const askD = Math.random() < 0.6;
+  const val = askD ? a * t * t / 2 : a * t;
+  const unit = askD ? ' m' : ' m/s';
+  const correct = nf(val) + unit;
+  const cands = askD ? [
+    [nf(a * t * t) + unit, 'Facteur ½ oublié : d = ½·a·t².'],
+    [nf(G * t * t / 2) + unit, 'Ce serait une chute libre ; ici a < g.'],
+    [nf(a * t) + unit, 'a·t est une vitesse, pas une distance.']
+  ] : [
+    [nf(a * t / 2) + unit, 'La vitesse vaut a·t, sans ½.'],
+    [nf(G * t) + unit, 'Ce serait une chute libre ; ici a < g.'],
+    [nf(a * t * t / 2) + unit, '½·a·t² est une distance.']
+  ];
+  const { options, why } = mkOpts(correct, askD ? 'Départ arrêté : d = ½·a·t².' : 'Départ arrêté : v = a·t.', cands, k => nf(val * (1 + 0.3 * k)) + unit);
+  return {
+    cat: 'fix', title: 'Atwood : mouvement', calc: false,
+    statement: [`Machine d'Atwood : m₁ = ${m1} kg, m₂ = ${m2} kg, lâchée sans vitesse initiale.`, `${askD ? 'Quelle distance a parcouru m₂' : 'Quelle est la vitesse de m₂'} au bout de ${t} s ? ${GTXT}`],
+    diagram: 'atwood', diagramData: { m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`a = (${m2} − ${m1}) × 10 / ${m1 + m2} = ${A(a)}.`, askD ? `d = ½ × ${nf(a)} × ${t}² = ${correct}.` : `v = ${nf(a)} × ${t} = ${correct}.`],
+    tip: 'Accélération constante : v = a·t et d = ½·a·t² en partant du repos.'
+  };
+}
+
+function genAttachePoulie() {
+  const [m1, m2] = atwoodMasses();
+  const T = 2 * m1 * m2 * G / (m1 + m2);
+  const F = 2 * T;
+  const correct = N(F);
+  const cands = [
+    [N((m1 + m2) * G), 'Vrai seulement à l\'équilibre. Le système accélère, donc la force sur l\'attache est inférieure à la somme des poids.'],
+    [N(T), 'Deux brins tirent vers le bas sur la poulie : la force vaut 2T.'],
+    [N((m2 - m1) * G), 'La différence des poids est la force motrice, pas la charge sur l\'attache.']
+  ];
+  const { options, why } = mkOpts(correct, 'Les deux brins tirent la poulie vers le bas : F = 2T.', cands, fbN(F));
+  return {
+    cat: 'fix', title: 'Force sur l\'attache de la poulie', calc: true,
+    statement: [`Machine d'Atwood : m₁ = ${m1} kg et m₂ = ${m2} kg, poulie accrochée au plafond.`, `Quelle force l'attache exerce-t-elle pour retenir la poulie pendant le mouvement ? ${GTXT}`],
+    diagram: 'atwood', diagramData: { m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`T = 2m₁m₂g/(m₁ + m₂) = ${N(T)}.`, `Deux brins tendus tirent la poulie vers le bas : F = 2T = ${N(F)}.`, `C'est moins que (m₁ + m₂)g = ${(m1 + m2) * G} N, car le centre de masse accélère vers le bas.`],
+    tip: 'Poulie fixe : force sur l\'attache = 2T (brins parallèles).'
+  };
+}
+
+// ============================================================
+// 4. MASSES LIÉES (cas 16 à 20)
+// ============================================================
+function genTable() {
+  const m1 = randInt(1, 12), m2 = randInt(1, 10);
+  const a = m2 * G / (m1 + m2), T = m1 * a;
+  const askA = Math.random() < 0.5;
+  let correct, cands, why0;
+  if (askA) {
+    correct = A(a); why0 = 'Seul le poids de m₂ est moteur ; il entraîne m₁ + m₂ : a = m₂g/(m₁+m₂).';
+    cands = [[A(G), 'm₂ ne tombe pas librement : elle entraîne m₁.'], [A(m2 * G / m1), 'Il faut diviser par la masse totale m₁ + m₂.'], [A(m1 * G / (m1 + m2)), 'Le poids moteur est celui de m₂, la masse pendante.']];
+  } else {
+    correct = N(T); why0 = 'T = m₁·a = m₁m₂g/(m₁+m₂).';
+    cands = [[N(m2 * G), 'T = m₂g seulement à l\'équilibre ; m₂ accélère vers le bas, donc T < m₂g.'], [N(m1 * G), 'Le poids de m₁ est compensé par la table, il ne tire pas sur la corde.'], [N(2 * T), 'Facteur 2 en trop (confusion avec Atwood).']];
+  }
+  const res = mkOpts(correct, why0, cands, askA ? fbA(a) : fbN(T));
+  return {
+    cat: 'lie', title: askA ? 'Table + masse pendante : accélération' : 'Table + masse pendante : tension', calc: (m2 * G * (askA ? 1 : m1)) % (m1 + m2) !== 0,
+    statement: [`Un bloc m₁ = ${m1} kg glisse sans frottement sur une table. Il est relié par une corde, via une poulie au bord, à une masse pendante m₂ = ${m2} kg.`, `${askA ? 'Quelle est l\'accélération du système' : 'Quelle est la tension de la corde'} ? ${GTXT}`],
+    diagram: 'table', diagramData: { m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options: res.options, why: res.why,
+    steps: [`Force motrice : poids de m₂ = ${m2 * G} N (le poids de m₁ est compensé par la table).`, `a = ${m2 * G} / (${m1} + ${m2}) = ${A(a)}.`, `T = m₁·a = ${m1} × ${nf(a)} = ${N(T)}.`],
+    tip: 'Table lisse : a = m₂g/(m₁+m₂), T = m₁m₂g/(m₁+m₂) (pas de facteur 2, contrairement à Atwood).'
+  };
+}
+
+function genPlanPendante() {
+  const th = Math.random() < 0.7 ? 30 : randChoice([45, 60]);
+  let m1, m2, a;
+  do { m1 = randInt(2, 12); m2 = randInt(1, 10); a = G * (m2 - m1 * SIN[th]) / (m1 + m2); if (Math.abs(a) < 1e-9) a = 0; } while ((a !== 0 && Math.abs(a) < 0.15) || (a === 0 && Math.random() < 0.7));
+  const fmtA = x => Math.abs(x) < 1e-9 ? '0 m/s² : équilibre' : Math.abs(x) < 0.05 ? null : A(Math.abs(x)) + (x > 0 ? ', m₂ descend' : ', m₂ monte');
+  const correct = fmtA(a);
+  const cands = [
+    [fmtA(-a), 'Sens inversé : compare m₂g et m₁g·sinθ pour savoir qui l\'emporte.'],
+    [fmtA(G * (m2 - m1 * COS[th]) / (m1 + m2)), 'Sur le plan, la composante motrice du poids est m₁g·sinθ, pas cosθ.'],
+    [fmtA(G * (m2 - m1) / (m1 + m2)), 'Le poids de m₁ n\'agit pas en entier : seule la composante m₁g·sinθ tire le long de la pente.'],
+    [fmtA(G * (m2 - m1 * SIN[th]) / m2), 'On divise par la masse totale m₁ + m₂.']
+  ];
+  const { options, why } = mkOpts(correct, 'a = g(m₂ − m₁sinθ)/(m₁ + m₂), positif si m₂ descend.', cands, k => fmtA((Math.abs(a) + 0.5 * k) * (a >= 0 ? 1 : -1)));
+  return {
+    cat: 'lie', title: 'Plan incliné + masse pendante', calc: th !== 30 || (Math.abs(G * (m2 - m1 * SIN[th])) % (m1 + m2)) > 1e-9,
+    statement: [`Un bloc m₁ = ${m1} kg est posé sur un plan incliné lisse à θ = ${th}°. Il est relié, via une poulie au sommet, à une masse pendante m₂ = ${m2} kg.`, `Quelle est l'accélération et dans quel sens ? ${GTXT}`],
+    diagram: 'incline', diagramData: { th, m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`Côté m₂ : poids ${m2 * G} N. Côté m₁ : composante le long de la pente m₁g·sin${th}° = ${nf(m1 * G * SIN[th])} N.`, `Force motrice nette : ${m2 * G} − ${nf(m1 * G * SIN[th])} = ${nf(m2 * G - m1 * G * SIN[th])} N.`, `a = ${nf(m2 * G - m1 * G * SIN[th])} / ${m1 + m2} = ${nf(a)} m/s² → ${correct}.`],
+    tip: 'Sur un plan incliné, seule la composante mg·sinθ entraîne le bloc le long de la pente.'
+  };
+}
+
+function genDeuxPlans() {
+  const pair = shuffle([30, 45, 60]).slice(0, 2);
+  const al = pair[0], be = pair[1];
+  const m1 = randInt(2, 12);
+  const askEq = Math.random() < 0.5;
+  if (askEq) {
+    const m2 = m1 * SIN[al] / SIN[be];
+    const correct = nf(m2) + ' kg';
+    const cands = [
+      [nf(m1 * SIN[be] / SIN[al]) + ' kg', 'Rapport inversé : m₁sinα = m₂sinβ donne m₂ = m₁sinα/sinβ.'],
+      [nf(m1 * COS[al] / COS[be]) + ' kg', 'Le long de chaque pente, c\'est mg·sin(angle) qui tire, pas le cosinus.'],
+      [nf(m1) + ' kg', 'Masses égales seulement si les angles sont égaux.']
+    ];
+    const { options, why } = mkOpts(correct, 'Équilibre : m₁sinα = m₂sinβ.', cands, k => nf(m2 * (1 + 0.2 * k)) + ' kg');
+    return {
+      cat: 'lie', title: 'Deux plans : équilibre', calc: true,
+      statement: [`Deux blocs reliés par une corde passant sur une poulie au sommet de deux plans lisses. m₁ = ${m1} kg est sur la pente α = ${al}°, m₂ sur la pente β = ${be}°.`, 'Quelle masse m₂ assure l\'équilibre ?'],
+      diagram: 'twoInclines', diagramData: { al, be, m1: m1 + ' kg', m2: 'm₂' },
+      correct, options, why,
+      steps: [`Chaque bloc est tiré le long de sa pente par mg·sin(angle).`, `Équilibre : m₁g·sin${al}° = m₂g·sin${be}°.`, `m₂ = ${m1} × ${SINTXT[al].replace('≈ ', '')} / ${SINTXT[be].replace('≈ ', '')} = ${correct}.`],
+      tip: 'g se simplifie : l\'équilibre ne dépend que des masses et des angles.'
+    };
+  }
+  let m2, a;
+  do { m2 = randInt(2, 12); a = G * (m2 * SIN[be] - m1 * SIN[al]) / (m1 + m2); if (Math.abs(a) < 1e-9) a = 0; } while (a !== 0 && Math.abs(a) < 0.15);
+  const fmtA = x => Math.abs(x) < 1e-9 ? '0 m/s² : équilibre' : Math.abs(x) < 0.05 ? null : A(Math.abs(x)) + (x > 0 ? ', m₂ descend' : ', m₂ monte');
+  const correct = fmtA(a);
+  const cands = [
+    [fmtA(-a), 'Sens inversé : compare m₂sinβ et m₁sinα.'],
+    [fmtA(G * (m2 * COS[be] - m1 * COS[al]) / (m1 + m2)), 'Le long des pentes, c\'est le sinus qui intervient.'],
+    [fmtA(G * (m2 * SIN[be] - m1 * SIN[al])), 'Division par m₁ + m₂ oubliée.']
+  ];
+  const { options, why } = mkOpts(correct, 'a = g(m₂sinβ − m₁sinα)/(m₁ + m₂).', cands, k => fmtA((Math.abs(a) + 0.5 * k) * (a >= 0 ? 1 : -1)));
+  return {
+    cat: 'lie', title: 'Deux plans : accélération', calc: true,
+    statement: [`Deux blocs reliés par une corde passant sur une poulie au sommet de deux plans lisses : m₁ = ${m1} kg sur la pente α = ${al}°, m₂ = ${m2} kg sur la pente β = ${be}°.`, `Quelle est l'accélération et dans quel sens ? ${GTXT}`],
+    diagram: 'twoInclines', diagramData: { al, be, m1: m1 + ' kg', m2: m2 + ' kg' },
+    correct, options, why,
+    steps: [`Côté m₂ : m₂g·sin${be}° = ${nf(m2 * G * SIN[be])} N. Côté m₁ : m₁g·sin${al}° = ${nf(m1 * G * SIN[al])} N.`, `a = (${nf(m2 * G * SIN[be])} − ${nf(m1 * G * SIN[al])}) / ${m1 + m2} = ${nf(a)} m/s² → ${correct}.`],
+    tip: 'Même logique qu\'Atwood, en remplaçant chaque poids par sa composante le long de la pente.'
+  };
+}
+
+// ============================================================
+// 5. POULIE MOBILE (cas 21 à 25)
+// ============================================================
+function genMobileForce() {
+  const M = randInt(2, 30) * 2, a = randInt(1, 4);
+  const cases = [['est maintenue immobile', 0], ['monte à vitesse constante', 0], [`monte avec une accélération de ${a} m/s²`, 1], [`descend avec une accélération de ${a} m/s²`, -1]];
+  const [txt, s] = randChoice(cases);
+  const T = M * (G + s * a) / 2;
+  const correct = N(T);
+  const cands = [
+    [N(2 * T), 'Deux brins soutiennent la poulie : chacun porte la moitié.'],
+    [N(M * G / 2), s === 0 ? 'Correct seulement sans accélération.' : 'Accélération oubliée.'],
+    s === 0 ? [N(M * G / 4), 'On ne divise qu\'une fois par 2 (deux brins).'] : [N(M * (G - s * a) / 2), 'Signe de l\'accélération inversé.']
+  ];
+  const { options, why } = mkOpts(correct, '2T − Mg = M·a (a positif vers le haut).', cands, fbN(T));
+  return {
+    cat: 'mob', title: 'Poulie mobile', calc: false,
+    statement: [`Une charge de ${M} kg est accrochée à une poulie mobile. La corde est fixée au plafond d'un côté ; on tire l'autre brin vers le haut. La charge ${txt}.`, `Quelle force F faut-il exercer ? ${GTXT}`],
+    diagram: 'mobile', diagramData: { m: M + ' kg' },
+    correct, options, why,
+    steps: ['Deux brins tendus (tension T chacun) soutiennent la poulie : force totale 2T vers le haut.', s === 0 ? `a = 0 : 2T = Mg → T = ${M * G}/2 = ${N(T)}.` : `2T − Mg = M·a → T = M(g ${s > 0 ? '+' : '−'} a)/2 = ${M} × ${G + s * a} / 2 = ${N(T)}.`, 'F = T (même corde).'],
+    tip: 'Poulie mobile : effort divisé par 2, mais on tire deux fois plus de corde.'
+  };
+}
+
+function genLongueurCorde() {
+  const kind = randChoice(['d', 'v', 'a']);
+  const x = kind === 'd' ? randInt(1, 30) * 10 : randInt(1, 12) / 2 * (kind === 'v' ? 1 : 1);
+  const unit = kind === 'd' ? ' cm' : (kind === 'v' ? ' m/s' : ' m/s²');
+  const word = kind === 'd' ? ['monte de', 'longueur de corde tirée'] : (kind === 'v' ? ['monte à', 'vitesse du brin libre'] : ['accélère vers le haut à', 'accélération du brin libre']);
+  const fromLoad = Math.random() < 0.5;
+  let st, val, inv;
+  if (fromLoad) { st = `La charge ${word[0]} ${nf(x)}${unit}. Quelle est la ${word[1]} ?`; val = 2 * x; inv = x / 2; }
+  else {
+    const q = kind === 'd' ? 'On tire' : (kind === 'v' ? 'On tire le brin libre à' : 'Le brin libre accélère à');
+    st = kind === 'd' ? `On tire ${nf(x)}${unit} de corde. De combien la charge monte-t-elle ?` : `${q} ${nf(x)}${unit}. Quelle est la ${kind === 'v' ? 'vitesse' : 'accélération'} de la charge ?`;
+    val = x / 2; inv = 2 * x;
+  }
+  const correct = nf(val) + unit;
+  const cands = [[nf(inv) + unit, 'Rapport inversé : c\'est le brin libre qui va deux fois plus loin (et vite) que la charge.'], [nf(x) + unit, 'Avec une poulie mobile, les deux ne bougent pas de la même quantité.'], [nf(fromLoad ? 4 * x : x / 4) + unit, 'Le facteur est 2, pas 4 (un seul étage de poulie mobile).']];
+  const { options, why } = mkOpts(correct, 'Δx libre = 2·Δx charge (et de même pour v et a).', cands, k => nf(val * (1 + 0.3 * k)) + unit);
+  return {
+    cat: 'mob', title: 'Corde et poulie mobile', calc: false,
+    statement: ['Une charge pend d\'une poulie mobile ; la corde est fixée au plafond d\'un côté, le brin libre est tiré vers le haut.', st],
+    diagram: 'mobile', diagramData: { m: 'M' },
+    correct, options, why,
+    steps: ['Si la charge monte de h, chacun des deux brins qui la portent raccourcit de h.', 'Toute cette corde (2h) sort par le brin libre : Δx libre = 2·Δx charge.', `Ici : ${correct}. Même facteur 2 pour les vitesses et les accélérations.`],
+    tip: 'Démultiplication : force ÷ 2, longueur de corde × 2. Le travail ne change pas.'
+  };
+}
+
+function genTravailPoulie() {
+  const M = randInt(2, 20) * 2, h = randInt(1, 10);
+  const ask = randChoice(['W', 'F', 'L']);
+  let correct, cands, w0, st;
+  const W = M * G * h;
+  if (ask === 'W') {
+    st = 'Quel travail l\'opérateur fournit-il ?'; correct = nf(W) + ' J'; w0 = 'Le travail fourni = gain d\'énergie potentielle Mgh.';
+    cands = [[nf(W / 2) + ' J', 'La force est divisée par 2 mais la corde tirée est doublée : le travail reste Mgh.'], [nf(2 * W) + ' J', 'Pas de doublement : W = F × 2h = (Mg/2) × 2h = Mgh.'], [nf(M * h) + ' J', 'g oublié.']];
+  } else if (ask === 'F') {
+    st = 'Quelle force l\'opérateur exerce-t-il ?'; correct = N(M * G / 2); w0 = 'F × 2h = Mgh → F = Mg/2.';
+    cands = [[N(M * G), 'Deux brins portent la charge : F = Mg/2.'], [N(M * G / 4), 'On divise par 2 une seule fois.'], [N(M * G * h / 2), 'Une force ne dépend pas de la hauteur.']];
+  } else {
+    st = 'Quelle longueur de corde l\'opérateur doit-il tirer ?'; correct = nf(2 * h) + ' m'; w0 = 'Le brin libre se déplace de 2h.';
+    cands = [[nf(h) + ' m', 'Avec une poulie mobile, il faut tirer deux fois la hauteur.'], [nf(h / 2) + ' m', 'Rapport inversé.'], [nf(4 * h) + ' m', 'Le facteur est 2.']];
+  }
+  const { options, why } = mkOpts(correct, w0, cands, k => correct.replace(/^[\d,]+/, nf(parseFloat(correct.replace(',', '.')) * (1 + 0.3 * k))));
+  return {
+    cat: 'mob', title: 'Travail avec une poulie mobile', calc: false,
+    statement: [`Avec une poulie mobile (deux brins), on soulève une charge de ${M} kg de ${h} m à vitesse constante.`, `${st} ${GTXT}`],
+    diagram: 'mobile', diagramData: { m: M + ' kg' },
+    correct, options, why,
+    steps: [`F = Mg/2 = ${N(M * G / 2)}.`, `Corde tirée : 2h = ${2 * h} m.`, `W = F × 2h = ${nf(M * G / 2)} × ${2 * h} = ${nf(W)} J = Mgh.`],
+    tip: 'Une poulie ne fait jamais gagner de travail : elle échange de la force contre de la longueur.'
+  };
+}
+
+// ============================================================
+// 6. CONTRAINTES ET APPLICATIONS (cas 26 à 30)
+// ============================================================
+function genContrainteSigne() {
+  const aL = randInt(1, 8) * 1;
+  const redirect = Math.random() < 0.5;
+  const dir = redirect ? 'vers le bas' : 'vers le haut';
+  const correct = `Monte à ${A(aL / 2)}`;
+  const cands = [
+    [`Descend à ${A(aL / 2)}`, redirect ? 'Avec la poulie de renvoi, tirer le brin libre vers le bas fait monter la charge (a libre = −2·a charge).' : 'Tirer le brin vers le haut fait monter la charge.'],
+    [`Monte à ${A(2 * aL)}`, 'Rapport inversé : la charge va deux fois moins vite que le brin libre.'],
+    [`Monte à ${A(aL)}`, 'La poulie mobile divise par 2.']
+  ];
+  const { options, why } = mkOpts(correct, redirect ? 'x libre + 2·x charge = constante (axes vers le bas) → a libre = −2·a charge.' : 'a libre = 2·a charge.', cands, k => `Monte à ${A(aL / 2 + k)}`);
+  return {
+    cat: 'app', title: redirect ? 'Poulie mobile + renvoi' : 'Accélérations liées', calc: false,
+    statement: [redirect ? 'Une charge pend d\'une poulie mobile. Le brin libre remonte vers une poulie fixe de renvoi, puis redescend vers l\'opérateur.' : 'Une charge pend d\'une poulie mobile ; le brin libre est tiré directement vers le haut.', `Le brin libre accélère ${dir} à ${A(aL)}. Que fait la charge ?`],
+    diagram: redirect ? 'redirect' : 'mobile', diagramData: { m: 'M' },
+    correct, options, why,
+    steps: redirect ? ['Avec des axes orientés vers le bas : x libre + 2·x charge = constante.', 'En dérivant deux fois : a libre = −2·a charge.', `Brin libre vers le bas à ${A(aL)} → charge vers le haut à ${A(aL / 2)}.`] : [`a libre = 2·a charge → a charge = ${aL}/2 = ${A(aL / 2)}, vers le haut.`],
+    tip: 'Le renvoi change seulement le sens de traction ; le facteur 2 vient de la poulie mobile.'
+  };
+}
+
+function genPlateforme() {
+  const M = randInt(6, 12) * 10, a = randChoice([0, 0, 0.5, 1, 1.5, 2]);
+  const T = M * (G + a) / 2;
+  const correct = N(T);
+  const cands = [
+    [N(M * (G + a)), 'La corde tire deux fois vers le haut sur le système (sur les mains et sur la plateforme) : 2T.'],
+    a > 0 ? [N(M * G / 2), 'Accélération oubliée.'] : [N(M * G / 4), 'On divise par 2 une seule fois.'],
+    [N(M * (G + a) / 4), 'Deux brins seulement, donc division par 2.']
+  ];
+  const { options, why } = mkOpts(correct, '2T − Mg = M·a avec M = personne + plateforme.', cands, fbN(T));
+  return {
+    cat: 'app', title: 'Se hisser sur une plateforme', calc: false,
+    statement: [`Une personne debout sur une plateforme (masse totale personne + plateforme : ${M} kg) tire sur une corde passant sur une poulie fixe au plafond ; l'autre extrémité est attachée à la plateforme.`, `${a === 0 ? 'Elle se hisse à vitesse constante.' : `Elle s'élève avec une accélération de ${nf(a)} m/s².`} Quelle force exerce-t-elle sur la corde ? ${GTXT}`],
+    diagram: 'platform', diagramData: {},
+    correct, options, why,
+    steps: ['Système = personne + plateforme. La corde le tire deux fois vers le haut : par les mains et par l\'attache : 2T.', `2T − Mg = M·a → T = M(g + a)/2 = ${M} × ${nf(G + a)} / 2 = ${N(T)}.`],
+    tip: 'On peut se hisser avec seulement la moitié de son poids (plus plateforme).'
+  };
+}
+
+function genBalance() {
+  const m = randInt(5, 9) * 10, mB = randInt(1, 4) * 10;
+  const T = mB * G, Nn = m * G - T;
+  const correct = N(Nn);
+  const cands = [[N(m * G + T), 'La corde tire la personne vers le haut : la réaction de la balance diminue.'], [N(m * G), 'La traction de la corde est oubliée.'], [N(T), 'Ça, c\'est la tension de la corde.']];
+  const { options, why } = mkOpts(correct, 'N + T = mg → N = mg − T, avec T = mB·g (bloc immobile).', cands, fbN(Nn));
+  return {
+    cat: 'app', title: 'Indication d\'une balance', calc: false,
+    statement: [`Une personne de ${m} kg est debout sur une balance. Elle tient une corde qui passe sur une poulie fixe au plafond et soutient un bloc de ${mB} kg, immobile.`, `Quelle force indique la balance ? ${GTXT}`],
+    diagram: 'scale', diagramData: { m: m + ' kg', mB: mB + ' kg' },
+    correct, options, why,
+    steps: [`Bloc immobile : T = mB·g = ${T} N.`, 'Personne à l\'équilibre : N (balance, vers le haut) + T (corde, vers le haut) = mg.', `N = ${m * G} − ${T} = ${N(Nn)} (soit l'équivalent de ${nf(Nn / G)} kg affichés).`],
+    tip: 'Tirer vers le bas sur une corde au-dessus de soi allège la balance.'
+  };
+}
+
+// ============================================================
+// 7. FORMULES (identification) + fiche
+// ============================================================
+const FORMULES = [
+  { g: 'Tension et sens du mouvement', d: 'Masse suspendue, support qui monte en accélérant (a)', f: 'T = m(g + a)', w: ['T = m(g − a)', 'T = mg', 'T = m·a'] },
+  { g: 'Tension et sens du mouvement', d: 'Masse suspendue, support qui descend en accélérant (a < g)', f: 'T = m(g − a)', w: ['T = m(g + a)', 'T = mg', 'T = m(a − g)'] },
+  { g: 'Tension et sens du mouvement', d: 'Masse levée ou descendue à vitesse constante', f: 'T = mg', w: ['T = m(g + v)', 'T = m(g − v)', 'T = mg/2'] },
+  { g: 'Cordes inclinées (angles depuis l\'horizontale)', d: 'Deux brins symétriques à θ de l\'horizontale', f: '2T·sinθ = mg', w: ['2T·cosθ = mg', 'T·sinθ = mg', '2T = mg·sinθ'] },
+  { g: 'Cordes inclinées (angles depuis l\'horizontale)', d: 'Deux brins symétriques à 30° de l\'horizontale', f: 'T = mg', w: ['T = mg/2', 'T = mg/√3', 'T = 2mg'] },
+  { g: 'Cordes inclinées (angles depuis l\'horizontale)', d: 'Deux brins symétriques à 60° de l\'horizontale', f: 'T = mg/√3', w: ['T = mg', 'T = mg/2', 'T = 2mg/√3'] },
+  { g: 'Cordes inclinées (angles depuis l\'horizontale)', d: 'Brin incliné de θ + brin horizontal', f: 'T₁·sinθ = mg et T₂ = T₁·cosθ', w: ['T₁·cosθ = mg et T₂ = T₁·sinθ', 'T₁ = mg et T₂ = mg·cosθ', 'T₁·sinθ = mg et T₂ = T₁·sinθ'] },
+  { g: 'Cordes inclinées (angles depuis l\'horizontale)', d: 'Deux brins inégaux α et β', f: 'T₁cosα = T₂cosβ et T₁sinα + T₂sinβ = mg', w: ['T₁sinα = T₂sinβ et T₁cosα + T₂cosβ = mg', 'T₁ = T₂ et T₁sinα + T₂sinβ = mg', 'T₁cosα = T₂cosβ et T₁ + T₂ = mg'] },
+  { g: 'Poulies fixes', d: 'Poulie fixe, charge tenue immobile par F', f: 'F = T = mg', w: ['F = mg/2', 'F = 2mg', 'F = T/2'] },
+  { g: 'Poulies fixes', d: 'Poulie fixe, charge montée avec une accélération a', f: 'F = m(g + a)', w: ['F = m(g + a)/2', 'F = m·a', 'F = m(g − a)'] },
+  { g: 'Poulies fixes', d: 'Atwood (m₂ > m₁) : accélération', f: 'a = (m₂ − m₁)g / (m₁ + m₂)', w: ['a = (m₂ − m₁)g / m₂', 'a = (m₁ + m₂)g / (m₂ − m₁)', 'a = (m₂ − m₁)g'] },
+  { g: 'Poulies fixes', d: 'Atwood : tension', f: 'T = 2m₁m₂g / (m₁ + m₂)', w: ['T = m₁m₂g / (m₁ + m₂)', 'T = (m₁ + m₂)g / 2', 'T = (m₂ − m₁)g'] },
+  { g: 'Poulies fixes', d: 'Atwood, masses égales', f: 'a = 0 et T = mg', w: ['a = 0 et T = 2mg', 'a = g/2 et T = mg/2', 'a = g et T = 0'] },
+  { g: 'Masses liées', d: 'Table lisse (m₁) + masse pendante (m₂) : accélération', f: 'a = m₂g / (m₁ + m₂)', w: ['a = m₂g / m₁', 'a = m₁g / (m₁ + m₂)', 'a = g'] },
+  { g: 'Masses liées', d: 'Table lisse + masse pendante : tension', f: 'T = m₁m₂g / (m₁ + m₂)', w: ['T = m₂g', 'T = 2m₁m₂g / (m₁ + m₂)', 'T = m₁g'] },
+  { g: 'Masses liées', d: 'Plan incliné θ (m₁) + masse pendante (m₂), m₂ vers le bas positif', f: 'a = g(m₂ − m₁sinθ) / (m₁ + m₂)', w: ['a = g(m₂ − m₁cosθ) / (m₁ + m₂)', 'a = g(m₂ − m₁) / (m₁ + m₂)', 'a = g(m₂sinθ − m₁) / (m₁ + m₂)'] },
+  { g: 'Masses liées', d: 'Deux plans inclinés α (m₁) et β (m₂), m₂ vers le bas positif', f: 'a = g(m₂sinβ − m₁sinα) / (m₁ + m₂)', w: ['a = g(m₂cosβ − m₁cosα) / (m₁ + m₂)', 'a = g(m₁sinα − m₂sinβ) / (m₁ + m₂)', 'a = g(m₂sinβ − m₁sinα)'] },
+  { g: 'Masses liées', d: 'Deux plans inclinés : condition d\'équilibre', f: 'm₁sinα = m₂sinβ', w: ['m₁cosα = m₂cosβ', 'm₁sinβ = m₂sinα', 'm₁ = m₂'] },
+  { g: 'Poulie mobile', d: 'Poulie mobile au repos : effort F', f: 'F = Mg/2', w: ['F = Mg', 'F = 2Mg', 'F = Mg/4'] },
+  { g: 'Poulie mobile', d: 'Poulie mobile, charge qui monte avec a', f: '2T − Mg = M·a', w: ['T − Mg = M·a', '2T + Mg = M·a', '2T − Mg = 2M·a'] },
+  { g: 'Poulie mobile', d: 'Poulie mobile, charge qui descend avec a', f: 'Mg − 2T = M·a', w: ['2T − Mg = M·a', 'Mg − T = M·a', 'Mg − 2T = 2M·a'] },
+  { g: 'Poulie mobile', d: 'Poulie mobile : déplacements', f: 'Δx libre = 2·Δx charge', w: ['Δx libre = Δx charge / 2', 'Δx libre = Δx charge', 'Δx libre = 4·Δx charge'] },
+  { g: 'Poulie mobile', d: 'Poulie mobile : vitesses', f: 'v libre = 2·v charge', w: ['v libre = v charge / 2', 'v libre = v charge', 'v libre = 4·v charge'] },
+  { g: 'Contraintes et applications', d: 'Levage à vitesse constante avec deux brins (charge monte de h)', f: 'F·(2h) = Mgh', w: ['F·h = Mgh', 'F·(h/2) = Mgh', 'F·(2h) = 2Mgh'] },
+  { g: 'Contraintes et applications', d: 'Poulie mobile + poulie de renvoi (axes vers le bas)', f: 'a libre = −2·a charge', w: ['a libre = 2·a charge', 'a libre = −a charge / 2', 'a libre = a charge'] },
+  { g: 'Contraintes et applications', d: 'Personne qui se hisse sur sa plateforme (M = personne + plateforme)', f: '2T − Mg = M·a', w: ['T − Mg = M·a', '2T + Mg = M·a', '2T − Mg = 2M·a'] },
+  { g: 'Contraintes et applications', d: 'Personne sur une balance tirant une corde vers le bas (T < mg)', f: 'N = mg − T', w: ['N = mg + T', 'N = mg', 'N = T − mg'] }
+];
+
+function genFormule() {
+  const it = randChoice(FORMULES);
+  const options = shuffle([it.f].concat(it.w));
+  const why = {}; why[it.f] = 'Formule correcte pour cette configuration.';
+  return {
+    cat: 'form', title: 'Quelle formule ?', calc: false,
+    statement: [`Situation : <b>${it.d}</b>.`, 'Quelle relation est correcte ?'],
+    correct: it.f, options, why,
+    steps: [`${it.d} → ${it.f}.`, `Famille : ${it.g}.`],
+    tip: 'Pour retrouver une formule : liste les forces, choisis un sens positif, écris ΣF = m·a.'
+  };
+}
+
+const GEN_LIST = {
+  tens: [genTensionMouvement, genTensionMouvement, genAccDepuisTension, genCableMax],
+  ang: [genSymetrique, genSymetrique, genCordeHorizontale, genAnglesInegaux, genPlusTendu],
+  fix: [genPoulieFixe, genAtwoodA, genAtwoodT, genAtwoodCinematique, genAttachePoulie],
+  lie: [genTable, genTable, genPlanPendante, genDeuxPlans],
+  mob: [genMobileForce, genMobileForce, genLongueurCorde, genTravailPoulie],
+  app: [genContrainteSigne, genPlateforme, genBalance],
+  form: [genFormule]
+};
+
+
+// ================= Schémas SVG =================
+const INK = '#4B5560', TXT = '#1C2530', RED = '#D14B3D', BLUE = '#CFE3F0', ORANGE = '#F6C9A8', WOOD = '#C9B98F', PUL = '#9CC3DC';
+function defs() { return `<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="${RED}"/></marker></defs>`; }
+function ceil(x, y, w) { return `<rect x="${x}" y="${y}" width="${w}" height="8" fill="${WOOD}" stroke="${INK}" stroke-width="1"/>`; }
+function box(x, y, w, h, fill, l1, l2) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="${INK}" stroke-width="1.5"/>` +
+    `<text x="${x + w / 2}" y="${y + (l2 ? h / 2 - 2 : h / 2 + 4)}" text-anchor="middle" font-size="12" font-style="italic" fill="${TXT}">${l1}</text>` +
+    (l2 ? `<text x="${x + w / 2}" y="${y + h / 2 + 12}" text-anchor="middle" font-size="10" fill="${TXT}">${l2}</text>` : '');
+}
+function pulley(cx, cy, r) { return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PUL}" stroke="${INK}" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="3" fill="${INK}"/>`; }
+function arrow(x1, y1, x2, y2) { return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${RED}" stroke-width="2.5" marker-end="url(#ah)"/>`; }
+function rope(d) { return `<path d="${d}" fill="none" stroke="${INK}" stroke-width="2"/>`; }
+function svgWrap(w, h, inner) { return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,sans-serif">${defs()}${inner}</svg>`; }
+function rotBox(cx, cy, ang, w, h, fill, label) {
+  return `<g transform="translate(${cx},${cy}) rotate(${-ang})"><rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="${INK}" stroke-width="1.5"/><text x="0" y="4" text-anchor="middle" font-size="11" font-style="italic" fill="${TXT}">${label}</text></g>`;
+}
+const R = Math.PI / 180;
+
+function svgHang(d) {
+  let a = '';
+  if (d.dir === 'up') a = arrow(170, 120, 170, 78) + `<text x="180" y="100" font-size="14" font-style="italic" fill="${RED}">${d.label}</text>`;
+  if (d.dir === 'down') a = arrow(170, 76, 170, 118) + `<text x="180" y="100" font-size="14" font-style="italic" fill="${RED}">${d.label}</text>`;
+  return svgWrap(240, 140, ceil(70, 10, 100) + rope('M120,18 L120,76') + box(95, 76, 50, 44, BLUE, 'm', d.m) + a);
+}
+
+function svgStrings(d) {
+  const K = { x: 200, y: 95 }, DY = 75, MAX = 175;
+  let out = '';
+  function end(ang, sign) {
+    const t = Math.tan(ang * R);
+    const dx = Math.min(MAX, DY / t), dy = dx * t;
+    const ex = K.x + sign * dx, ey = K.y - dy;
+    const anchor = dy >= DY - 0.5 ? '' : `<rect x="${ex - 4}" y="${ey - 10}" width="8" height="20" fill="${WOOD}" stroke="${INK}"/>`;
+    const mx = (K.x + ex) / 2, my = (K.y + ey) / 2;
+    const lab = `<text x="${mx + (sign < 0 ? -14 : 14)}" y="${my - 4}" text-anchor="${sign < 0 ? 'end' : 'start'}" font-size="12" fill="${TXT}">${sign < 0 ? 'T₁' : 'T₂'}</text>`;
+    return rope(`M${K.x},${K.y} L${ex},${ey}`) + anchor + lab;
+  }
+  out += ceil(10, 12, 380);
+  out += end(d.a1, -1);
+  if (d.mode === 'horiz') {
+    out += rope(`M${K.x},${K.y} L380,${K.y}`) + `<rect x="380" y="70" width="10" height="50" fill="${WOOD}" stroke="${INK}"/>`;
+    out += `<text x="300" y="${K.y - 6}" font-size="12" fill="${TXT}">T₂</text>`;
+  } else {
+    out += end(d.a2, 1);
+  }
+  if (d.ref === 'v') {
+    out += `<line x1="${K.x}" y1="${K.y}" x2="${K.x}" y2="${K.y - 70}" stroke="${INK}" stroke-dasharray="4,3"/>`;
+    out += `<text x="${K.x - 10}" y="${K.y - 48}" text-anchor="end" font-size="12" fill="${RED}">${d.lab1}</text>`;
+    if (d.mode !== 'horiz') out += `<text x="${K.x + 10}" y="${K.y - 48}" font-size="12" fill="${RED}">${d.lab2}</text>`;
+  } else {
+    out += `<line x1="${K.x - 80}" y1="${K.y}" x2="${K.x}" y2="${K.y}" stroke="${INK}" stroke-dasharray="4,3"/>`;
+    out += `<text x="${K.x - 52}" y="${K.y - 6}" text-anchor="end" font-size="12" fill="${RED}">${d.lab1}</text>`;
+    if (d.mode !== 'horiz') {
+      out += `<line x1="${K.x}" y1="${K.y}" x2="${K.x + 80}" y2="${K.y}" stroke="${INK}" stroke-dasharray="4,3"/>`;
+      out += `<text x="${K.x + 52}" y="${K.y - 6}" font-size="12" fill="${RED}">${d.lab2}</text>`;
+    }
+  }
+  out += rope(`M${K.x},${K.y} L${K.x},${K.y + 8}`) + box(K.x - 25, K.y + 8, 50, 40, BLUE, 'm', d.m === 'm' ? '' : d.m);
+  return svgWrap(400, 155, out);
+}
+
+function svgAtwood(d) {
+  return svgWrap(300, 170, ceil(110, 6, 80) + rope('M150,14 L150,32') + rope('M126,52 L126,96') + rope('M174,52 L174,118') +
+    pulley(150, 52, 24) + box(104, 96, 44, 38, BLUE, 'm₁', d.m1) + box(152, 118, 44, 38, ORANGE, 'm₂', d.m2));
+}
+
+function svgFixed(d) {
+  return svgWrap(300, 170, ceil(110, 6, 80) + rope('M150,14 L150,32') + rope('M130,52 L130,120') + rope('M170,52 L170,100') +
+    pulley(150, 52, 20) + arrow(118, 92, 118, 130) + `<text x="102" y="118" font-size="14" font-style="italic" fill="${RED}">F</text>` +
+    box(146, 100, 48, 40, BLUE, 'm', d.m));
+}
+
+function svgTable(d) {
+  return svgWrap(300, 175, `<rect x="20" y="82" width="210" height="9" fill="${WOOD}" stroke="${INK}"/>` +
+    `<rect x="35" y="91" width="9" height="70" fill="${WOOD}" stroke="${INK}"/><rect x="200" y="91" width="9" height="70" fill="${WOOD}" stroke="${INK}"/>` +
+    box(55, 46, 56, 36, BLUE, 'm₁', d.m1) + rope('M111,64 L236,64') + rope('M248,76 L248,118') + pulley(236, 76, 12) +
+    box(226, 118, 44, 36, ORANGE, 'm₂', d.m2));
+}
+
+function svgIncline(d) {
+  const th = d.th, H = 95, B = H / Math.tan(th * R), xr = 200, x0 = xr - B, yb = 145;
+  const c = Math.cos(th * R), s = Math.sin(th * R);
+  const t = 0.5, px = x0 + t * B, py = yb - t * H;
+  const cx = px - 14 * s, cy = py - 14 * c;
+  const fx = cx + 22 * c, fy = cy - 22 * s;
+  const pc = { x: xr + 10, y: yb - H - 8 }, r = 10;
+  return svgWrap(290, 170, `<path d="M${x0},${yb} L${xr},${yb} L${xr},${yb - H} Z" fill="#EAD9B5" stroke="${INK}" stroke-width="1.5"/>` +
+    rope(`M${fx},${fy} L${pc.x - r * s},${pc.y - r * c}`) + pulley(pc.x, pc.y, r) + rope(`M${pc.x + r},${pc.y} L${pc.x + r},${yb - 34}`) +
+    rotBox(cx, cy, th, 44, 26, BLUE, 'm₁') + box(pc.x + r - 18, yb - 34, 36, 32, ORANGE, 'm₂', '') +
+    `<text x="${x0}" y="${yb + 16}" font-size="12" fill="${RED}">θ = ${th}°</text>` +
+    `<text x="${pc.x + r + 24}" y="${yb - 14}" font-size="10" fill="${TXT}">${d.m2}</text><text x="${cx - 26}" y="${cy - 22}" text-anchor="end" font-size="10" fill="${TXT}">${d.m1}</text>`);
+}
+
+function svgTwoInclines(d) {
+  const H = 90, ax = 170, ay = 30, yb = ay + H;
+  const xl = ax - H / Math.tan(d.al * R), xr = ax + H / Math.tan(d.be * R);
+  function blk(ang, side, fill, lab) {
+    const c = Math.cos(ang * R), s = Math.sin(ang * R);
+    const bx = side < 0 ? xl : xr, px = bx + 0.4 * (ax - bx), py = yb - 0.4 * H;
+    const cx = px - side * 13 * s, cy = py - 13 * c;
+    const fx = cx - side * 20 * c, fy = cy - 20 * s;
+    return rope(`M${fx},${fy} L${ax - side * 7 * s},${ay - 6 - 7 * c}`) + rotBox(cx, cy, -side * ang, 38, 24, fill, lab);
+  }
+  return svgWrap(340, 165, `<path d="M${xl},${yb} L${xr},${yb} L${ax},${ay} Z" fill="#EAD9B5" stroke="${INK}" stroke-width="1.5"/>` +
+    blk(d.al, -1, BLUE, 'm₁') + blk(d.be, 1, ORANGE, 'm₂') + pulley(ax, ay - 6, 8) +
+    `<text x="${xl}" y="${yb + 16}" font-size="12" fill="${RED}">α = ${d.al}°</text>` +
+    `<text x="${xr}" y="${yb + 16}" text-anchor="end" font-size="12" fill="${RED}">β = ${d.be}°</text>` +
+    `<text x="${ax}" y="${yb + 34}" text-anchor="middle" font-size="10" fill="${TXT}">m₁ = ${d.m1} · m₂ = ${d.m2}</text>`);
+}
+
+function svgMobile(d) {
+  return svgWrap(220, 170, ceil(40, 8, 60) + rope('M70,16 L70,84 A22,22 0 0 0 114,84 L114,24') + pulley(92, 84, 22) +
+    arrow(126, 70, 126, 26) + `<text x="134" y="52" font-size="14" font-style="italic" fill="${RED}">F</text>` +
+    rope('M92,106 L92,120') + box(68, 120, 48, 38, BLUE, 'M', d.m === 'M' ? '' : d.m));
+}
+
+function svgRedirect(d) {
+  return svgWrap(240, 175, ceil(40, 8, 140) + rope('M70,16 L70,94 A22,22 0 0 0 114,94 L114,40 A18,18 0 0 1 150,40 L150,120') +
+    rope('M132,16 L132,22') + pulley(132, 40, 18) + pulley(92, 94, 22) +
+    arrow(162, 92, 162, 132) + `<text x="168" y="118" font-size="12" font-style="italic" fill="${RED}">a libre</text>` +
+    rope('M92,116 L92,126') + box(68, 126, 48, 36, BLUE, 'M', ''));
+}
+
+function svgPlatform() {
+  return svgWrap(260, 170, ceil(100, 6, 100) + rope('M150,14 L150,10') + pulley(150, 30, 20) + rope('M130,30 L130,82') + rope('M170,30 L170,140') +
+    `<circle cx="115" cy="76" r="8" fill="none" stroke="${TXT}" stroke-width="2"/>` +
+    `<path d="M115,84 L115,114 M115,92 L130,82 M115,114 L107,140 M115,114 L123,140" fill="none" stroke="${TXT}" stroke-width="2"/>` +
+    `<rect x="90" y="140" width="96" height="9" fill="${WOOD}" stroke="${INK}"/>` +
+    arrow(205, 140, 205, 104) + `<text x="212" y="126" font-size="14" font-style="italic" fill="${RED}">a</text>` +
+    `<text x="138" y="164" text-anchor="middle" font-size="10" fill="${TXT}">M = personne + plateforme</text>`);
+}
+
+function svgScale(d) {
+  return svgWrap(260, 170, ceil(100, 4, 100) + pulley(150, 28, 18) + rope('M132,28 L132,82') + rope('M168,28 L168,104') +
+    `<circle cx="117" cy="68" r="8" fill="none" stroke="${TXT}" stroke-width="2"/>` +
+    `<path d="M117,76 L117,108 M117,84 L132,82 M117,108 L110,134 M117,108 L124,134" fill="none" stroke="${TXT}" stroke-width="2"/>` +
+    `<rect x="92" y="134" width="52" height="11" rx="2" fill="#E7E3D6" stroke="${INK}"/><text x="118" y="160" text-anchor="middle" font-size="10" fill="${TXT}">balance</text>` +
+    box(150, 104, 40, 34, ORANGE, 'bloc', d.mB) + `<text x="60" y="100" font-size="10" fill="${TXT}">${d.m}</text>`);
+}
+
+const DIAGRAMS = { hang: svgHang, strings: svgStrings, atwood: svgAtwood, fixed: svgFixed, table: svgTable, incline: svgIncline, twoInclines: svgTwoInclines, mobile: svgMobile, redirect: svgRedirect, platform: svgPlatform, scale: svgScale };
+
+// ================= Catégories =================
+const CATS = [
+  { key: 'all', label: 'Tout', icon: '🎲', color: '#0B4F6C' },
+  { key: 'tens', label: 'Tension', icon: '⬆️', color: '#1A7F8E' },
+  { key: 'ang', label: 'Cordes inclinées', icon: '📐', color: '#2E86AB' },
+  { key: 'fix', label: 'Poulies fixes', icon: '🛞', color: '#D14B3D' },
+  { key: 'lie', label: 'Masses liées', icon: '🔗', color: '#2C6FBF' },
+  { key: 'mob', label: 'Poulie mobile', icon: '🪝', color: '#E07A1F' },
+  { key: 'app', label: 'Applications', icon: '🧗', color: '#3C6E47' },
+  { key: 'form', label: 'Formules', icon: '🧾', color: '#6B5CA5' }
+];
+const CAT_META = Object.fromEntries(CATS.map(c => [c.key, c]));
+const GEN_BY_CAT = Object.assign({}, GEN_LIST);
+GEN_BY_CAT.all = Object.entries(GEN_LIST).filter(([k]) => k !== 'form').map(([, v]) => v).flat().concat([genFormule, genFormule, genFormule]);
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+const GOOD_MSGS = ['Bien joué !', 'Exact !', 'Parfait !', "C'est ça !", 'Très bien !', 'Nickel !'];
+const BAD_MSGS = ['Pas tout à fait.', 'Presque !', 'Regarde la correction ci-dessous.', 'Pas cette fois-ci.'];
+
+const state = { cat: 'all', qCount: 0, score: 0, total: 0, streak: 0, current: null, answered: false, history: [], pos: -1 };
+
+function pickGenerator() {
+  const pool = GEN_BY_CAT[state.cat];
+  return randChoice(pool);
+}
+
+function setAccentColor(color) {
+  document.documentElement.style.setProperty('--tabcolor', color);
+}
+
+function newQuestion() {
+  const gen = pickGenerator();
+  state.current = gen();
+  state.qCount++;
+  state.answered = false;
+  state.history.push({ q: state.current, num: state.qCount, chosen: null });
+  state.pos = state.history.length - 1;
+  render();
+}
+
+function showEntry(pos) {
+  state.pos = pos;
+  const e = state.history[pos];
+  state.current = e.q;
+  state.answered = e.chosen !== null;
+  render();
+}
+
+function goPrev() {
+  if (state.pos > 0) showEntry(state.pos - 1);
+}
+
+function goNext() {
+  if (state.pos < state.history.length - 1) showEntry(state.pos + 1);
+  else newQuestion();
+}
+
+function escHtml(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function buildExplanation(q) {
+  let steps = q.steps;
+  if (!steps && q.explanation) {
+    steps = q.explanation.replace(/\.\s+(?=[A-ZÀ-Ý])/g, '.\u0001').split('\u0001');
+  }
+  steps = steps || [];
+  let h = '<div class="exp-title">Raisonnement</div><ol>' + steps.map(t => '<li>' + escHtml(t) + '</li>').join('') + '</ol>';
+  if (q.tip) h += '<div class="tip">💡 <b>À retenir :</b> ' + escHtml(q.tip) + '</div>';
+  return h;
+}
+function render() {
+  const q = state.current;
+  const meta = CAT_META[q.cat] || CAT_META.all;
+  setAccentColor(meta.color);
+  document.getElementById('catIcon').textContent = meta.icon;
+  document.getElementById('qtitle').textContent = q.title;
+  const entry = state.history[state.pos];
+  document.getElementById('qnum').textContent = 'Question ' + entry.num + ' · ' + meta.label;
+  document.getElementById('prevBtn').disabled = state.pos <= 0;
+  document.getElementById('reviewNote').classList.toggle('show', entry.chosen !== null);
+
+  const badge = document.getElementById('calcBadge');
+  if (q.calc) { badge.textContent = '\ud83e\uddee Calculatrice'; badge.className = 'badge calc'; }
+  else { badge.textContent = '\u270f\ufe0f Calcul mental'; badge.className = 'badge mental'; }
+
+  document.getElementById('statement').innerHTML = q.statement.map(l => `<p>${l}</p>`).join('');
+
+  const diagEl = document.getElementById('diagram');
+  diagEl.innerHTML = (q.diagram && DIAGRAMS[q.diagram]) ? DIAGRAMS[q.diagram](q.diagramData) : '';
+
+  const fb = document.getElementById('feedbackBanner');
+  fb.className = 'feedback-banner';
+  fb.textContent = '';
+
+  const optEl = document.getElementById('options');
+  optEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const row = document.createElement('div');
+    row.className = 'option';
+    row.innerHTML = `<span class="letter">${LETTERS[i]}</span><span class="opt-text">${opt}</span><span class="mark"></span>`;
+    row.addEventListener('click', () => selectOption(i, row));
+    optEl.appendChild(row);
+  });
+
+  const exp = document.getElementById('explanation');
+  exp.classList.remove('show');
+  exp.innerHTML = buildExplanation(q);
+
+  if (entry.chosen !== null) showAnswer(entry.chosen, false);
+
+  document.getElementById('cardBody').style.animation = 'none';
+  void document.getElementById('cardBody').offsetWidth;
+  document.getElementById('cardBody').style.animation = '';
+
+  updateScoreDisplay();
+}
+
+function spawnSparkles(x, y) {
+  const emojis = ['✨', '⭐', '🎉'];
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = emojis[randInt(0, emojis.length - 1)];
+    s.style.left = x + 'px';
+    s.style.top = y + 'px';
+    s.style.setProperty('--dx', (randInt(-40, 40)) + 'px');
+    s.style.setProperty('--rot', (randInt(-60, 60)) + 'deg');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1000);
+  }
+}
+
+function selectOption(i, row) {
+  if (state.answered) return;
+  state.answered = true;
+  state.history[state.pos].chosen = i;
+  const isCorrect = state.current.options[i] === state.current.correct;
+  state.total++;
+  if (isCorrect) { state.score++; state.streak++; } else { state.streak = 0; }
+  showAnswer(i, true);
+  updateScoreDisplay();
+}
+
+// Affiche la correction ; live=false lors d'un retour en arrière (pas d'animation ni de nouveau message aléatoire)
+function showAnswer(i, live) {
+  const q = state.current;
+  const row = document.querySelectorAll('#options .option')[i];
+  const isCorrect = q.options[i] === q.correct;
+
+  const rows = document.querySelectorAll('#options .option');
+  rows.forEach((r, idx) => {
+    r.classList.add('disabled');
+    const text = q.options[idx];
+    const markEl = r.querySelector('.mark');
+    if (q.why && q.why[text] && !r.querySelector('.opt-note')) { const n = document.createElement('div'); n.className = 'opt-note'; n.textContent = (text === q.correct ? '✓ ' : '✕ ') + q.why[text]; r.appendChild(n); }
+    if (text === q.correct) { r.classList.add('correct'); markEl.textContent = '✓'; }
+  });
+  if (!isCorrect) {
+    row.classList.add('wrong');
+    row.querySelector('.mark').textContent = '✕';
+  } else if (live) {
+    const rect = row.getBoundingClientRect();
+    spawnSparkles(rect.left + 30, rect.top + rect.height / 2);
+  }
+
+  const fb = document.getElementById('feedbackBanner');
+  fb.classList.add('show', isCorrect ? 'good' : 'bad');
+  fb.textContent = live
+    ? (isCorrect ? '✅ ' : '❌ ') + randChoice(isCorrect ? GOOD_MSGS : BAD_MSGS)
+    : (isCorrect ? '✅ Tu avais trouvé la bonne réponse.' : '❌ Tu avais répondu ' + LETTERS[i] + '.');
+
+  document.getElementById('explanation').classList.add('show');
+}
+
+function updateScoreDisplay() {
+  document.getElementById('scorePct').textContent = state.score + '/' + state.total;
+  const ring = document.getElementById('ringProgress');
+  const circumference = 138;
+  const frac = state.total ? state.score / state.total : 0;
+  ring.setAttribute('stroke-dashoffset', String(circumference * (1 - frac)));
+  ring.setAttribute('stroke', frac >= 0.7 ? '#3FBF8F' : frac >= 0.4 ? '#E8B84B' : '#D14B3D');
+
+  const streakEl = document.getElementById('streak');
+  if (state.streak >= 2) {
+    streakEl.textContent = '🔥 x' + state.streak;
+    streakEl.classList.add('show');
+  } else {
+    streakEl.classList.remove('show');
+  }
+}
+
+function buildTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  CATS.forEach(c => {
+    const b = document.createElement('div');
+    b.className = 'tab' + (c.key === state.cat ? ' active' : '');
+    if (c.key === state.cat) b.style.setProperty('--tabcolor', c.color);
+    b.innerHTML = `<span class="ic">${c.icon}</span><span>${c.label}</span>`;
+    b.addEventListener('click', () => {
+      state.cat = c.key;
+      buildTabs();
+      newQuestion();
+    });
+    tabsEl.appendChild(b);
+  });
+}
+
+document.getElementById('nextBtn').addEventListener('click', goNext);
+document.getElementById('prevBtn').addEventListener('click', goPrev);
+document.getElementById('scoreBox').addEventListener('click', () => {
+  state.score = 0; state.total = 0; state.streak = 0; updateScoreDisplay();
+});
+
+buildTabs();
+newQuestion();
+
+
+function buildFiche() {
+  const groups = {};
+  FORMULES.forEach(f => { (groups[f.g] = groups[f.g] || []).push(f); });
+  let h = '';
+  for (const [g, items] of Object.entries(groups)) {
+    h += '<h3>' + g + '</h3>' + items.map(f => '<div class="frow"><span class="fd">' + f.d + '</span><span class="ff">' + f.f + '</span></div>').join('');
+  }
+  h += '<p class="sheet-note">Hypothèses : cordes sans masse et inextensibles, poulies sans masse ni frottement, surfaces lisses. Angles mesurés depuis l\'horizontale. g = 10 m/s² dans les exercices.</p>';
+  document.getElementById('ficheBody').innerHTML = h;
+}
+buildFiche();
+document.getElementById('ficheBtn').addEventListener('click', () => document.getElementById('fiche').classList.add('show'));
+document.getElementById('ficheClose').addEventListener('click', () => document.getElementById('fiche').classList.remove('show'));
+document.getElementById('fiche').addEventListener('click', e => { if (e.target.id === 'fiche') e.target.classList.remove('show'); });
+
+</script>
+<script>
+(function () {
+  var sub = document.querySelector('.toolbar .sub');
+  var tag = null;
+  function show(text, ok) {
+    if (!sub) return;
+    if (!tag) { tag = document.createElement('span'); sub.appendChild(tag); }
+    tag.className = 'offline-state' + (ok ? '' : ' wait');
+    tag.textContent = text;
+  }
+  if (location.protocol === 'file:') { show('· fichier local : fonctionne déjà hors ligne', true); return; }
+  if (!('serviceWorker' in navigator)) { return; }
+  navigator.serviceWorker.register('sw.js', { scope: './' }).then(function () {
+    show('· préparation hors ligne…', false);
+    return navigator.serviceWorker.ready;
+  }).then(function () {
+    show('· ✓ disponible hors ligne', true);
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>
