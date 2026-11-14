@@ -39,7 +39,9 @@ export function isInZone(p: LatLon, s: PublicSettings): boolean {
 
 export function travelQuote(p: LatLon, s: Settings): TravelQuote {
   const roadKm = haversineKm({ lat: s.base_lat, lon: s.base_lon }, p) * s.road_factor;
-  const raw = s.fee_fixed_cents + Math.max(0, roadKm - s.fee_free_km) * s.fee_per_km_cents;
+  // Carburant de l'aller-retour (le pro rentre au point de départ après chaque RDV)
+  const billedKm = Math.max(0, roadKm - s.fee_free_km) * (s.round_trip ? 2 : 1);
+  const raw = s.fee_fixed_cents + (billedKm * s.fuel_l_per_100km) / 100 * s.fuel_price_cents;
   return {
     in_zone: isInZone(p, s),
     distance_km: Math.round(roadKm * 10) / 10,

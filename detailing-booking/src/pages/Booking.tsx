@@ -517,7 +517,7 @@ export function BookingPage() {
                 {quote && quote.in_zone && (
                   <div className="result-card good">
                     <strong>Adresse desservie</strong>
-                    <span>Environ {String(quote.distance_km).replace('.', ',')} km de route · frais de déplacement : {quote.fee_cents ? formatPrice(quote.fee_cents) : 'offerts'}</span>
+                    <span>Environ {String(quote.distance_km).replace('.', ',')} km de route · frais de déplacement (carburant aller-retour) : {quote.fee_cents ? formatPrice(quote.fee_cents) : 'offerts'}</span>
                   </div>
                 )}
                 <ZoneMap

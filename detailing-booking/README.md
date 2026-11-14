@@ -45,9 +45,13 @@ Un complément manuel couvre les modèles 2000-2010 retirés avant 2011, les mod
 
 ```
 distance estimée = distance à vol d'oiseau (point de départ → client) × 1,3
-frais            = forfait fixe + (distance estimée − km offerts) × prix/km, arrondi à l'euro supérieur
 ```
-Point de départ : rue de la République, 28320 Gas. Valeurs par défaut : forfait 0 €, 10 km offerts, 0,50 €/km. Exemples : Épernon offert, Chartres 8 €, Versailles 23 €, Paris 34 €.
+Point de départ : rue de la République, 28320 Gas. Les frais compensent le carburant de l'aller-retour (retour à Gas après chaque RDV) :
+
+```
+frais = (distance aller estimée − 10 km offerts) × 2 × consommation / 100 × prix du litre, arrondi à l'euro supérieur
+```
+Valeurs par défaut, à ajuster dans Paramètres : 8 L/100 km, 1,80 €/L (soit 0,29 € par km d'éloignement). Exemples : Épernon offert, Rambouillet 3 €, Chartres 5 €, Versailles 14 €, Paris 20 €.
 
 ### Zone d'intervention
 
@@ -117,7 +121,7 @@ src/pages/Admin.tsx        Espace pro
 - [ ] Prix et durées réels des formules.
 - [ ] Valider les prix Intérieur et Extérieur par catégorie (déduits du Complet).
 - [ ] Atelier : adresse, puis activation dans Paramètres.
-- [ ] Grille de frais de déplacement (0,50 €/km au-delà de 10 km par défaut).
+- [ ] Consommation réelle du véhicule et prix du carburant (8 L/100 km et 1,80 €/L par défaut).
 - [ ] E-mails de confirmation (client + pro) via Resend et une Edge Function Supabase.
 - [ ] Anti-spam du formulaire (Cloudflare Turnstile).
 - [ ] Acompte en ligne (Stripe), si souhaité. Actuellement : paiement sur place.

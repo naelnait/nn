@@ -40,12 +40,16 @@ export interface Settings {
   base_lat: number;
   base_lon: number;
   fee_fixed_cents: number;
-  fee_per_km_cents: number;
   fee_free_km: number;
   road_factor: number;
+  /** Frais calculés sur l'aller-retour (retour au point de départ après chaque RDV). */
+  round_trip: boolean;
+  fuel_l_per_100km: number;
+  /** Prix du litre de carburant, en centimes. */
+  fuel_price_cents: number;
 }
 
-export type PrivateSettingKey = 'base_lat' | 'base_lon' | 'fee_fixed_cents' | 'fee_per_km_cents' | 'fee_free_km' | 'road_factor';
+export type PrivateSettingKey = 'base_lat' | 'base_lon' | 'fee_fixed_cents' | 'fee_free_km' | 'road_factor' | 'round_trip' | 'fuel_l_per_100km' | 'fuel_price_cents';
 export type PublicSettings = Omit<Settings, PrivateSettingKey>;
 
 export interface VehicleCategory {

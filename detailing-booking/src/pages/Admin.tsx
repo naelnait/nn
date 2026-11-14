@@ -617,12 +617,16 @@ function SettingsForm() {
         <AddressInput value={null} placeholder="Adresse de départ" onChange={point('base_lat', 'base_lon')} />
         <div className="row">
           <div><label>Forfait fixe (€)</label><input {...num('fee_fixed_cents', 100)} min={0} step={0.5} /></div>
-          <div><label>Prix par km (€)</label><input {...num('fee_per_km_cents', 100)} min={0} step={0.05} /></div>
-          <div><label>Km offerts</label><input {...num('fee_free_km')} min={0} step={1} /></div>
+          <div><label>Consommation (L/100 km)</label><input {...num('fuel_l_per_100km')} min={0} max={40} step={0.1} /></div>
+          <div><label>Prix du litre (€)</label><input {...num('fuel_price_cents', 100)} min={0} max={10} step={0.01} /></div>
+          <div><label>Km offerts (par trajet)</label><input {...num('fee_free_km')} min={0} step={1} /></div>
           <div><label>Coef. route / vol d'oiseau</label><input {...num('road_factor')} min={1} step={0.05} /></div>
         </div>
+        <label className="check"><input type="checkbox" checked={s.round_trip} onChange={(e) => setS({ ...s, round_trip: e.target.checked })} /> Compter l'aller-retour (retour au point de départ après chaque RDV)</label>
         <p className="hint">
-          Frais = {formatPrice(s.fee_fixed_cents)} + (distance estimée − {s.fee_free_km} km) × {formatPrice(s.fee_per_km_cents)}/km, arrondi à l'euro supérieur.
+          Frais = carburant : (distance estimée − {s.fee_free_km} km){s.round_trip ? ' × 2 (aller-retour)' : ''} × {String(s.fuel_l_per_100km).replace('.', ',')} L/100 km × {formatPrice(s.fuel_price_cents)}/L
+          {s.fee_fixed_cents ? ` + forfait ${formatPrice(s.fee_fixed_cents)}` : ''}, arrondi à l'euro supérieur, soit
+          {' '}{(((s.round_trip ? 2 : 1) * s.fuel_l_per_100km * s.fuel_price_cents) / 10000).toFixed(2).replace('.', ',')} € par km d'éloignement.
           La distance estimée = vol d'oiseau × {s.road_factor}.
         </p>
       </fieldset>

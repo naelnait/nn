@@ -98,17 +98,17 @@ end $$;
 do $$
 declare c jsonb := public.get_public_config();
 begin
-  if c->'settings' ? 'base_lat' or c->'settings' ? 'fee_per_km_cents' then
+  if c->'settings' ? 'base_lat' or c->'settings' ? 'fuel_price_cents' or c->'settings' ? 'round_trip' then
     raise exception 'ÉCHEC: données privées exposées';
   end if;
   if jsonb_array_length(c->'services') <> 3 then raise exception 'ÉCHEC: 3 formules attendues'; end if;
 end $$;
--- 17. Devis de déplacement Versailles depuis Gas : ~42,5 km x 1,3 = 55,2 km -> (55,2 - 10) x 0,50 € = 22,60 € -> 23 €
+-- 17. Carburant aller-retour Gas -> Versailles : (55,2 - 10) x 2 = 90,5 km x 8 L/100 x 1,80 € = 13,03 € -> 14 €
 do $$
 declare q jsonb := public.quote_travel(48.8049, 2.1204);
 begin
   if not (q->>'in_zone')::boolean then raise exception 'ÉCHEC: Versailles devrait être dans la zone'; end if;
-  if (q->>'fee_cents')::int <> 2300 or (q->>'distance_km')::numeric <> 55.2 then
+  if (q->>'fee_cents')::int <> 1400 or (q->>'distance_km')::numeric <> 55.2 then
     raise exception 'ÉCHEC: frais inattendus %', q;
   end if;
   if (public.quote_travel(48.1173, -1.6778)->>'in_zone')::boolean then
@@ -227,6 +227,12 @@ do $$ begin
   end if;
   if (select count(*) from public.vehicle_categories) <> 4 then
     raise exception 'ÉCHEC: 4 catégories attendues';
+  end if;
+  if (select (public.quote_travel(48.4439, 1.489)->>'fee_cents')::int) <> 500 then
+    raise exception 'ÉCHEC: Chartres aller-retour attendu à 5 €';
+  end if;
+  if (select (public.quote_travel(48.61, 1.6744)->>'fee_cents')::int) <> 0 then
+    raise exception 'ÉCHEC: Épernon doit rester offert';
   end if;
   if (select base_lat from public.settings) <> 48.566873 then
     raise exception 'ÉCHEC: point de départ attendu à Gas';

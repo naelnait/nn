@@ -40,12 +40,21 @@ create table if not exists public.settings (
   -- Point de départ du pro (privé, jamais exposé aux clients) : rue de la République, 28320 Gas
   base_lat           double precision not null default 48.566873,
   base_lon           double precision not null default 1.667562,
-  -- Frais de déplacement = fixe + (distance aller estimée - km offerts) x tarif/km
+  -- Frais de déplacement = carburant de l'aller-retour depuis le point de départ :
+  -- fixe + (2 x distance - 2 x km offerts) x consommation / 100 x prix du litre
   fee_fixed_cents    int     not null default 0    check (fee_fixed_cents >= 0),
-  fee_per_km_cents   int     not null default 50   check (fee_per_km_cents >= 0),
   fee_free_km        double precision not null default 10 check (fee_free_km >= 0),
+  round_trip         boolean not null default true,
+  fuel_l_per_100km   double precision not null default 8   check (fuel_l_per_100km between 0 and 40),
+  fuel_price_cents   int     not null default 180  check (fuel_price_cents between 0 and 1000),
   road_factor        double precision not null default 1.3 check (road_factor >= 1)
 );
+-- Migration : passage du tarif kilométrique au calcul carburant aller-retour
+alter table public.settings add column if not exists round_trip boolean not null default true;
+alter table public.settings add column if not exists fuel_l_per_100km double precision not null default 8;
+alter table public.settings add column if not exists fuel_price_cents int not null default 180;
+alter table public.settings drop column if exists fee_per_km_cents;
+
 insert into public.settings (id) values (1) on conflict (id) do nothing;
 -- Point de départ réel (ne remplace que l'ancienne valeur par défaut)
 update public.settings set base_lat = 48.566873, base_lon = 1.667562
@@ -253,7 +262,10 @@ declare
 begin
   dist_zone := public.distance_to_segment_km(p_lat, p_lon, s.zone_a_lat, s.zone_a_lon, s.zone_b_lat, s.zone_b_lon);
   road_km   := public.haversine_km(s.base_lat, s.base_lon, p_lat, p_lon) * s.road_factor;
-  fee := (ceil((s.fee_fixed_cents + greatest(0, road_km - s.fee_free_km) * s.fee_per_km_cents) / 100.0) * 100)::int;
+  -- Carburant : km facturés (aller-retour si round_trip) x litres/km x prix du litre
+  fee := (ceil((s.fee_fixed_cents
+               + greatest(0, road_km - s.fee_free_km) * (case when s.round_trip then 2 else 1 end)
+                 * s.fuel_l_per_100km / 100.0 * s.fuel_price_cents) / 100.0) * 100)::int;
   return jsonb_build_object(
     'in_zone',     dist_zone <= s.zone_width_km,
     'distance_km', round(road_km::numeric, 1),
@@ -269,7 +281,7 @@ create or replace function public.get_public_config() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'settings', (select to_jsonb(s) - 'base_lat' - 'base_lon' - 'fee_fixed_cents'
-                                    - 'fee_per_km_cents' - 'fee_free_km' - 'road_factor'
+                                    - 'fee_free_km' - 'road_factor' - 'round_trip' - 'fuel_l_per_100km' - 'fuel_price_cents'
                  from public.settings s where id = 1),
     'services', coalesce((select jsonb_agg(to_jsonb(v) order by v.sort, v.name)
                           from public.services v where v.active), '[]'::jsonb),

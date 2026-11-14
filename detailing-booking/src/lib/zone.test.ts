@@ -20,9 +20,12 @@ describe('zone et frais', () => {
     expect(travelQuote({ lat: 48.566873, lon: 1.667562 }, s).fee_cents).toBe(0); // départ : Gas
     expect(travelQuote({ lat: 48.61, lon: 1.6744 }, s).fee_cents).toBe(0); // Épernon, dans les 10 km offerts
     const v = travelQuote({ lat: 48.8049, lon: 2.1204 }, s);
-    expect(v.fee_cents).toBe(2300); // 55,2 km - 10 offerts = 45,2 x 0,50 € = 22,60 € arrondi à 23 €
+    // Carburant aller-retour : (55,2 - 10) x 2 = 90,5 km x 8 L/100 km x 1,80 €/L = 13,03 € -> 14 €
+    expect(v.fee_cents).toBe(1400);
     expect(v.distance_km).toBe(55.2);
-    expect(travelQuote({ lat: 48.4439, lon: 1.489 }, s).fee_cents).toBe(800); // Chartres
+    expect(travelQuote({ lat: 48.4439, lon: 1.489 }, s).fee_cents).toBe(500); // Chartres
+    expect(travelQuote({ lat: 48.8566, lon: 2.3522 }, s).fee_cents).toBe(2000); // Paris
+    expect(travelQuote({ lat: 48.8049, lon: 2.1204 }, { ...s, round_trip: false }).fee_cents).toBe(700); // aller seul
   });
 });
 

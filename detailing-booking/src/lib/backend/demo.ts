@@ -17,7 +17,7 @@ interface DemoDb {
 }
 
 // v3 : grille de prix par catégorie (4 catégories), départ à Gas (les données démo antérieures sont abandonnées)
-const KEY = 'detailing-demo-db-v3';
+const KEY = 'detailing-demo-db-v4';
 const SESSION_KEY = 'detailing-demo-admin';
 export const DEMO_ADMIN = { email: 'admin@demo.fr', password: 'demo' };
 
@@ -45,9 +45,11 @@ export const DEFAULT_SETTINGS: Settings = {
   base_lat: 48.566873,
   base_lon: 1.667562,
   fee_fixed_cents: 0,
-  fee_per_km_cents: 50,
   fee_free_km: 10,
   road_factor: 1.3,
+  round_trip: true,
+  fuel_l_per_100km: 8,
+  fuel_price_cents: 180,
 };
 
 function uuid(): string {
@@ -136,8 +138,8 @@ export function createDemoBackend(): Backend {
     async getPublicConfig() {
       await delay();
       const db = load();
-      const { base_lat, base_lon, fee_fixed_cents, fee_per_km_cents, fee_free_km, road_factor, ...pub } = db.settings;
-      void [base_lat, base_lon, fee_fixed_cents, fee_per_km_cents, fee_free_km, road_factor];
+      const { base_lat, base_lon, fee_fixed_cents, fee_free_km, road_factor, round_trip, fuel_l_per_100km, fuel_price_cents, ...pub } = db.settings;
+      void [base_lat, base_lon, fee_fixed_cents, fee_free_km, road_factor, round_trip, fuel_l_per_100km, fuel_price_cents];
       return {
         settings: pub,
         services: db.services.filter((s) => s.active).sort((a, b) => a.sort - b.sort),
