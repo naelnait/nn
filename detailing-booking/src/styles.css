@@ -8,9 +8,9 @@
   --text: #0c0d12;
   --muted: #6b7180;
   --line: #e4e7ec;
-  --accent: #1f6bff;
-  --accent-press: #1658d6;
-  --accent-soft: rgba(31, 107, 255, .1);
+  --accent: #1d5c40;
+  --accent-press: #164a33;
+  --accent-soft: rgba(29, 92, 64, .1);
   --on-accent: #ffffff;
   --ok: #10915a;
   --ok-soft: rgba(16, 145, 90, .1);
@@ -41,9 +41,10 @@
     --text: #f3f4f6;
     --muted: #9399a6;
     --line: #262a32;
-    --accent: #4d8bff;
-    --accent-press: #3a76ea;
-    --accent-soft: rgba(77, 139, 255, .16);
+    --accent: #52b088;
+    --accent-press: #63c197;
+    --on-accent: #06170f;
+    --accent-soft: rgba(82, 176, 136, .18);
     --ok: #34c77f;
     --ok-soft: rgba(52, 199, 127, .14);
     --danger: #ff5a5f;
@@ -63,9 +64,10 @@
   --text: #f3f4f6;
   --muted: #9399a6;
   --line: #262a32;
-  --accent: #4d8bff;
-  --accent-press: #3a76ea;
-  --accent-soft: rgba(77, 139, 255, .16);
+  --accent: #52b088;
+  --accent-press: #63c197;
+    --on-accent: #06170f;
+  --accent-soft: rgba(82, 176, 136, .18);
   --ok: #34c77f;
   --ok-soft: rgba(52, 199, 127, .14);
   --danger: #ff5a5f;
@@ -378,7 +380,7 @@ button { font: inherit; color: inherit; }
   position: relative; overflow: hidden; border-radius: 26px; padding: 22px 20px 18px; margin: 8px 0 22px;
   color: var(--hero-fg); background-color: var(--hero-bg);
   background-image:
-    radial-gradient(120% 90% at 100% 0%, rgba(31, 107, 255, .38), transparent 55%),
+    radial-gradient(120% 90% at 100% 0%, rgba(46, 131, 93, .45), transparent 55%),
     repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 6px),
     repeating-linear-gradient(-45deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 6px);
   box-shadow: var(--shadow-lg); animation: fade-up .5s var(--ease) both;
@@ -391,8 +393,8 @@ button { font: inherit; color: inherit; }
 @keyframes sheen { to { transform: translateX(100%); } }
 .hero-card .title { color: var(--hero-fg); margin-bottom: 6px; }
 .hero-sub { color: var(--hero-muted); margin: 0; max-width: 32ch; }
-.eyebrow.light { color: #8fb4ff; }
-.car-art { display: block; width: 100%; max-width: 420px; margin: 6px auto 2px; color: #6f9bff; overflow: visible; }
+.eyebrow.light { color: #8fd1b0; }
+.car-art { display: block; width: 100%; max-width: 420px; margin: 6px auto 2px; color: #6fbf98; overflow: visible; }
 .car-body { stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
 .car-line { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
 .car-wheel circle, .car-wheel path { fill: var(--hero-bg); stroke: currentColor; stroke-width: 1.8; }
@@ -407,7 +409,7 @@ button { font: inherit; color: inherit; }
   display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; padding: 6px 10px; border-radius: 999px;
   background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .1); color: var(--hero-fg);
 }
-.badges svg { color: #8fb4ff; }
+.badges svg { color: #8fd1b0; }
 
 /* Tuiles détaillées */
 .tile { grid-template-columns: 48px 1fr auto; position: relative; overflow: hidden; }
