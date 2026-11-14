@@ -1,6 +1,6 @@
 // Champ texte avec suggestions locales (marques, modèles). La saisie libre reste possible.
 import { useState } from 'react';
-import { searchList } from '../lib/vehicles';
+import { searchList, vehicleKey } from '../lib/vehicles';
 
 interface Props {
   id: string;
@@ -13,12 +13,18 @@ interface Props {
   emptyHint?: string;
   /** Libellé au-dessus du champ (formulaires de l'espace pro) au lieu du libellé flottant. */
   plain?: boolean;
+  /** Saisie reconnue (marque ou modèle du catalogue, y compris variantes) : affiche une coche, pas d'avertissement. */
+  isKnown?: (v: string) => boolean;
 }
 
-export function Combo({ id, label, value, onChange, options, disabled, required, emptyHint, plain }: Props) {
+export function Combo({ id, label, value, onChange, options, disabled, required, emptyHint, plain, isKnown }: Props) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const items = searchList(options, value, 8).filter((o) => o.label !== value);
+  // La saisie exacte reste dans la liste : elle n'est retirée que si c'est la seule suggestion
+  const found = searchList(options, value, 8);
+  const exact = found.some((o) => vehicleKey(o.label) === vehicleKey(value));
+  const items = exact && found.length === 1 ? [] : found;
+  const known = value.trim().length > 0 && (exact || !!isKnown?.(value));
 
   const pick = (v: string) => {
     onChange(v);
@@ -63,7 +69,8 @@ export function Combo({ id, label, value, onChange, options, disabled, required,
           ))}
         </ul>
       )}
-      {open && !disabled && value.trim().length > 0 && items.length === 0 && emptyHint && <p className="fine">{emptyHint}</p>}
+      {known && !plain && <span className="combo-ok" aria-label="Reconnu">✓</span>}
+      {open && !disabled && !known && value.trim().length > 0 && items.length === 0 && emptyHint && <p className="fine">{emptyHint}</p>}
     </div>
   );
 }

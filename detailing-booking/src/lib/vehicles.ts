@@ -2,12 +2,14 @@
 // Données : src/data/vehicles.json, généré par scripts/build_vehicle_catalog.py à partir des fichiers
 // ADEME/UTAC (data.gouv.fr) des véhicules particuliers commercialisés en France, plus un complément manuel.
 import catalog from '../data/vehicles.json';
+import aliases from '../data/brand_aliases.json';
 import type { ServicePrice, VehicleCategory } from './types';
 
 /** Quatre catégories tarifaires. Les berlines et breaks comptent comme citadines, les monospaces comme SUV. */
 export type CategoryCode = 'moto' | 'citadine' | 'suv' | 'utilitaire';
 
 const CATALOG = catalog as Record<string, Record<string, CategoryCode[]>>;
+const ALIASES = aliases as unknown as Record<string, [string, string]>;
 
 export const DEFAULT_VEHICLE_CATEGORIES: VehicleCategory[] = [
   { code: 'moto', label: 'Moto / scooter', sort: 0 },
@@ -71,9 +73,45 @@ export function modelsOf(brand: string): { key: string; label: string }[] {
     .sort((a, b) => a.label.localeCompare(b.label, 'fr', { numeric: true }));
 }
 
+/** Marque du catalogue correspondant à la saisie (« Mercedes-Benz » -> MERCEDES), ou null. */
+export function canonicalBrand(brand: string): string | null {
+  const k = vehicleKey(brand);
+  if (CATALOG[k]) return k;
+  const a = ALIASES[k];
+  return a && CATALOG[a[0]] ? a[0] : null;
+}
+
+/** Forme de comparaison d'un modèle, identique à public.vehicle_model_norm côté serveur. */
+function modelNorm(s: string): string {
+  return vehicleKey(s).replace(/-/g, ' ').replace(/\./g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Reconnaît un modèle saisi librement, comme public.vehicle_resolve côté serveur :
+ * variantes de marque, « A 180 » -> Classe A, « 320d » -> Série 3, puis nom complet
+ * ou en retirant les mots de fin (« 308 SW » -> 308, « Golf 7 GTI » -> Golf).
+ */
+export function resolveVehicle(brand: string, model: string): { brand: string; model: string; categories: CategoryCode[] } | null {
+  const b = canonicalBrand(brand);
+  if (!b) return null;
+  let m = modelNorm(model);
+  const alias = ALIASES[vehicleKey(brand)];
+  if (alias && alias[1] && !m.startsWith(alias[1])) m = `${alias[1]} ${m}`.trim();
+  if (b === 'MERCEDES' && /^[A-Z] ?[0-9]/.test(m)) m = `CLASSE ${m[0]}`;
+  else if (b === 'BMW' && /^[1-8][0-9][0-9]/.test(m)) m = `SERIE ${m[0]}`;
+  const models = CATALOG[b];
+  const tokens = m.split(' ').filter(Boolean);
+  for (let n = tokens.length; n >= 1; n--) {
+    const cand = tokens.slice(0, n).join(' ');
+    const key = Object.keys(models).find((k) => modelNorm(k) === cand);
+    if (key) return { brand: b, model: key, categories: models[key] };
+  }
+  return null;
+}
+
 /** Catégories admises pour un modèle du catalogue (la première est la plus courante), ou null s'il est inconnu. */
 export function lookupVehicle(brand: string, model: string): CategoryCode[] | null {
-  return CATALOG[vehicleKey(brand)]?.[vehicleKey(model)] ?? null;
+  return resolveVehicle(brand, model)?.categories ?? null;
 }
 
 /** Même nom vendu en version voiture (VP) et camionnette (CTTE) : la carte grise tranche. */

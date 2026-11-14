@@ -400,7 +400,7 @@ button { font: inherit; color: inherit; }
 .hero-card .title { color: var(--hero-fg); margin-bottom: 6px; }
 .hero-sub { color: var(--hero-muted); margin: 0; max-width: 32ch; }
 .eyebrow.light { color: #6fd6a3; }
-.car-art { display: block; width: 100%; max-width: 440px; margin: 4px auto 0; overflow: visible; animation: car-in .9s var(--ease) both; }
+.car-art { display: block; width: 100%; max-width: 360px; margin: 6px auto 0; overflow: visible; animation: car-in .9s var(--ease) both; }
 @keyframes car-in { from { transform: translateX(-24px); opacity: 0; } }
 .car-wheel { animation: wheel-in .9s var(--ease) both; }
 @keyframes wheel-in { from { transform: rotate(-260deg); } }
@@ -550,6 +550,8 @@ button { font: inherit; color: inherit; }
    Véhicule et tarifs
    ========================================================================= */
 .combo { position: relative; }
+.combo-ok { position: absolute; right: 16px; top: 19px; color: var(--accent-fg); font-weight: 700; pointer-events: none; }
+.combo input { padding-right: 40px; }
 .combo .address-list { z-index: 40; }
 .combo.plain { min-width: 0; }
 .genre-card {

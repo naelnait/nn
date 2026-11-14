@@ -107,6 +107,13 @@ create table if not exists public.vehicle_catalog (
   primary key (brand, model)
 );
 
+-- Variantes de nom de marque (« Mercedes-Benz », « VW », « Range Rover »…) -> marque du catalogue
+create table if not exists public.vehicle_brand_alias (
+  alias        text primary key,
+  brand        text not null,
+  model_prefix text not null default ''
+);
+
 -- Prix d'une formule pour une catégorie de véhicule. Sans ligne : prix de la formule (services.price_cents).
 create table if not exists public.service_prices (
   service_id  uuid not null references public.services(id) on delete cascade,
@@ -329,6 +336,51 @@ language sql immutable as $$
     'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN')), '\s+', ' ', 'g'));
 $$;
 
+-- Forme de comparaison d'un modèle : tirets et points ignorés (« T-Roc » = « T ROC », « ID.3 » = « ID3 »).
+create or replace function public.vehicle_model_norm(p text) returns text
+language sql immutable as $$
+  select regexp_replace(replace(replace(public.vehicle_key(p), '-', ' '), '.', ''), '\s+', ' ', 'g');
+$$;
+
+-- Reconnaît marque et modèle saisis librement : variantes de marque, « A 180 » -> Classe A,
+-- « 320d » -> Série 3, puis nom complet ou en retirant les mots de fin (« 308 SW » -> 308).
+create or replace function public.vehicle_resolve(p_brand text, p_model text,
+  out brand text, out model text, out categories text[])
+language plpgsql stable security definer set search_path = public as $$
+declare
+  a      public.vehicle_brand_alias;
+  m      text;
+  toks   text[];
+  n      int;
+begin
+  brand := public.vehicle_key(p_brand);
+  m := public.vehicle_model_norm(p_model);
+  select * into a from public.vehicle_brand_alias va where va.alias = vehicle_resolve.brand;
+  if found then
+    brand := a.brand;
+    if a.model_prefix <> '' and m not like a.model_prefix || '%' then
+      m := btrim(a.model_prefix || ' ' || m);
+    end if;
+  end if;
+  if brand = 'MERCEDES' and m ~ '^[A-Z] ?[0-9]' then
+    m := 'CLASSE ' || left(m, 1);
+  elsif brand = 'BMW' and m ~ '^[1-8][0-9][0-9]' then
+    m := 'SERIE ' || left(m, 1);
+  end if;
+  toks := string_to_array(m, ' ');
+  for n in reverse coalesce(array_length(toks, 1), 0) .. 1 loop
+    select c.model, c.categories into model, categories
+    from public.vehicle_catalog c
+    where c.brand = vehicle_resolve.brand
+      and public.vehicle_model_norm(c.model) = array_to_string(toks[1:n], ' ')
+    limit 1;
+    exit when found;
+  end loop;
+  if model is null then
+    model := public.vehicle_key(p_model);
+  end if;
+end $$;
+
 -- Prix d'une formule pour une catégorie de véhicule (grille service_prices, sinon prix de la formule).
 drop function if exists public.vehicle_price_cents(int, int);
 create or replace function public.vehicle_price_cents(p_service_id uuid, p_category text) returns int
@@ -405,8 +457,8 @@ begin
   end if;
 
   -- Véhicule : marque et modèle obligatoires, catégorie cohérente avec le catalogue
-  p_vehicle_brand := public.vehicle_key(p_vehicle_brand);
-  p_vehicle_model := public.vehicle_key(p_vehicle_model);
+  select r.brand, r.model, r.categories into p_vehicle_brand, p_vehicle_model, v_cats
+  from public.vehicle_resolve(p_vehicle_brand, p_vehicle_model) r;
   p_vehicle_genre := upper(btrim(coalesce(p_vehicle_genre, '')));
   if p_vehicle_brand = '' or p_vehicle_model = '' then
     raise exception 'VEHICLE_REQUIRED';
@@ -418,7 +470,6 @@ begin
   if not found then
     raise exception 'INVALID_INPUT';
   end if;
-  select categories into v_cats from public.vehicle_catalog where brand = p_vehicle_brand and model = p_vehicle_model;
   if v_cats is not null and not p_admin then
     if 'utilitaire' = any(v_cats) and cardinality(v_cats) > 1 then
       -- Même nom en version voiture (VP) et camionnette (CTTE) : la carte grise tranche (case J.1)
@@ -584,6 +635,7 @@ alter table public.admins        enable row level security;
 alter table public.vehicle_categories enable row level security;
 alter table public.vehicle_catalog    enable row level security;
 alter table public.service_prices     enable row level security;
+alter table public.vehicle_brand_alias enable row level security;
 
 drop policy if exists admin_all on public.settings;
 create policy admin_all on public.settings      for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -599,13 +651,16 @@ drop policy if exists admin_all on public.vehicle_categories;
 create policy admin_all on public.vehicle_categories for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_all on public.service_prices;
 create policy admin_all on public.service_prices     for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists admin_all on public.vehicle_brand_alias;
+create policy admin_all on public.vehicle_brand_alias for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_all on public.vehicle_catalog;
 create policy admin_all on public.vehicle_catalog    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_self on public.admins;
 create policy admin_self on public.admins       for select to authenticated using (user_id = auth.uid());
 
 revoke all on all tables in schema public from anon;
-grant select, insert, update, delete on public.vehicle_categories, public.vehicle_catalog, public.service_prices to authenticated;
+grant select, insert, update, delete on public.vehicle_categories, public.vehicle_catalog, public.service_prices,
+  public.vehicle_brand_alias to authenticated;
 grant select, insert, update, delete on public.settings, public.services, public.opening_hours,
   public.closures, public.bookings to authenticated;
 grant select on public.admins to authenticated;

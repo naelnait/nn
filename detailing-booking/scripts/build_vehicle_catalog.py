@@ -261,11 +261,73 @@ MANUAL = [
     ('ZEEKR', '001', ['citadine']), ('ZEEKR', '7X', ['suv']), ('ZEEKR', 'X', ['suv']), ('HONGQI', 'E-HS9', ['suv']), ('CHERY', 'TIGGO 7', ['suv']),
     ('CHERY', 'TIGGO 8', ['suv']), ('SMART', '#3', ['suv']), ('SMART', '#5', ['suv']), ('FIREFLY', 'FIREFLY', ['citadine']),
     ('XEV', 'YOYO', ['citadine']), ('MOBILIZE', 'DUO', ['citadine']),
+    # Marques passées entre les mailles (vendues en France depuis 2000)
+    ('ABARTH', '500', ['citadine']), ('ABARTH', '595', ['citadine']), ('ABARTH', '695', ['citadine']), ('ABARTH', '500E', ['citadine']),
+    ('ABARTH', '600E', ['suv']), ('ABARTH', '124 SPIDER', ['citadine']), ('ABARTH', 'PUNTO', ['citadine']), ('ABARTH', 'GRANDE PUNTO', ['citadine']),
+    ('GENESIS', 'G70', ['citadine']), ('GENESIS', 'G80', ['citadine']), ('GENESIS', 'GV60', ['suv']), ('GENESIS', 'GV70', ['suv']), ('GENESIS', 'GV80', ['suv']),
+    ('SSANGYONG', 'TIVOLI', ['suv']), ('SSANGYONG', 'XLV', ['suv']), ('SSANGYONG', 'TORRES', ['suv']), ('SSANGYONG', 'MUSSO', ['utilitaire']),
+    ('GREAT WALL', 'STEED', ['utilitaire']), ('GREAT WALL', 'WINGLE', ['utilitaire']), ('GREAT WALL', 'HOVER', ['suv']),
+    ('MAHINDRA', 'GOA', ['utilitaire']), ('MAHINDRA', 'XUV500', ['suv']), ('MAHINDRA', 'KUV100', ['citadine']),
+    ('PROTON', 'GEN-2', ['citadine']), ('PROTON', 'PERSONA', ['citadine']), ('PROTON', 'SATRIA NEO', ['citadine']), ('PROTON', 'SAVVY', ['citadine']),
+    ('HUMMER', 'H2', ['suv']), ('HUMMER', 'H3', ['suv']), ('RAM', '1500', ['utilitaire']), ('DODGE', 'RAM', ['utilitaire']),
+    ('MCLAREN', '570S', ['citadine']), ('MCLAREN', '720S', ['citadine']), ('MCLAREN', '750S', ['citadine']), ('MCLAREN', 'ARTURA', ['citadine']), ('MCLAREN', 'GT', ['citadine']),
+    ('BUGATTI', 'VEYRON', ['citadine']), ('BUGATTI', 'CHIRON', ['citadine']), ('SKYWELL', 'ET5', ['suv']),
+    ('FORD', 'MUSTANG', ['citadine']), ('CHEVROLET', 'CAMARO', ['citadine']), ('CHEVROLET', 'CORVETTE', ['citadine']), ('CHEVROLET', 'SPARK', ['citadine']),
+    ('TOYOTA', 'GR86', ['citadine']), ('TOYOTA', 'GT86', ['citadine']), ('TOYOTA', 'SUPRA', ['citadine']), ('TOYOTA', 'GR YARIS', ['citadine']),
+    ('NISSAN', '350Z', ['citadine']), ('NISSAN', '370Z', ['citadine']), ('NISSAN', 'GT-R', ['citadine']), ('HONDA', 'S2000', ['citadine']), ('HONDA', 'NSX', ['citadine']),
+    ('MG', 'ZS EV', ['suv']), ('MG', 'EHS', ['suv']), ('MG', 'MG4 XPOWER', ['citadine']),
+    # Modèles 2015-2025 des grandes marques absents des éditions ADEME disponibles
+    ('MERCEDES', 'GLC', ['suv']), ('MERCEDES', 'GLE', ['suv']), ('MERCEDES', 'GLS', ['suv']), ('MERCEDES', 'EQE', ['citadine']),
+    ('MERCEDES', 'EQS', ['citadine']), ('MERCEDES', 'EQV', ['utilitaire']), ('MERCEDES', 'EQT', ['suv', 'utilitaire']),
+    ('MERCEDES', 'AMG GT', ['citadine']), ('MERCEDES', 'CLASSE X', ['utilitaire']), ('MERCEDES', 'CLE', ['citadine']),
+    ('BMW', 'X7', ['suv']), ('BMW', 'XM', ['suv']), ('BMW', 'IX2', ['suv']), ('BMW', 'I5', ['citadine']), ('BMW', 'I7', ['citadine']),
+    ('BMW', 'Z3', ['citadine']), ('BMW', 'M2', ['citadine']), ('AUDI', 'Q8', ['suv']), ('AUDI', 'Q6 E-TRON', ['suv']),
+    ('AUDI', 'Q8 E-TRON', ['suv']), ('AUDI', 'A6 E-TRON', ['citadine']), ('VOLKSWAGEN', 'TAYRON', ['suv']),
+    ('PEUGEOT', '108', ['citadine']), ('PEUGEOT', 'E-308', ['citadine']), ('PEUGEOT', 'E-408', ['citadine']),
+    ('PEUGEOT', 'E-RIFTER', ['suv', 'utilitaire']), ('PEUGEOT', 'E-PARTNER', ['utilitaire']), ('PEUGEOT', 'E-EXPERT', ['utilitaire']),
+    ('RENAULT', 'ALASKAN', ['utilitaire']), ('CITROEN', 'C4 CACTUS', ['citadine']), ('CITROEN', 'C4 SPACETOURER', ['suv']),
+    ('CITROEN', 'E-C4', ['citadine']), ('CITROEN', 'E-BERLINGO', ['suv', 'utilitaire']), ('CITROEN', 'E-JUMPY', ['utilitaire']),
+    ('TOYOTA', 'PROACE VERSO', ['utilitaire']), ('TOYOTA', 'HIGHLANDER', ['suv']), ('TOYOTA', 'MIRAI', ['citadine']),
+    ('TOYOTA', 'COROLLA CROSS', ['suv']), ('HYUNDAI', 'I10', ['citadine']), ('HYUNDAI', 'I20', ['citadine']), ('HYUNDAI', 'I30', ['citadine']),
+    ('HYUNDAI', 'I40', ['citadine']), ('HYUNDAI', 'IX35', ['suv']), ('HYUNDAI', 'IONIQ', ['citadine']), ('HYUNDAI', 'NEXO', ['suv']),
+    ('HYUNDAI', 'STARIA', ['utilitaire']), ('HYUNDAI', 'H-1', ['utilitaire']), ('KIA', 'E-NIRO', ['suv']), ('KIA', 'E-SOUL', ['citadine']),
+    ('KIA', 'STINGER', ['citadine']), ('KIA', 'PV5', ['utilitaire']), ('NISSAN', 'E-NV200', ['suv', 'utilitaire']),
+    ('FORD', 'TOURNEO CUSTOM', ['utilitaire']), ('FORD', 'E-TRANSIT', ['utilitaire']), ('FORD', 'CAPRI', ['suv']), ('FORD', 'EDGE', ['suv']),
+    ('FORD', 'BRONCO', ['suv']), ('FORD', 'KA+', ['citadine']), ('OPEL', 'ZAFIRA LIFE', ['utilitaire']), ('FIAT', '500E', ['citadine']),
+    ('FIAT', 'E-DUCATO', ['utilitaire']), ('FIAT', 'E-DOBLO', ['suv', 'utilitaire']), ('FIAT', 'TALENTO', ['utilitaire']),
+    ('FIAT', 'FULLBACK', ['utilitaire']), ('FIAT', 'QUBO', ['suv', 'utilitaire']), ('VOLVO', 'EX40', ['suv']), ('VOLVO', 'EC40', ['suv']),
+    ('VOLVO', 'EX90', ['suv']), ('VOLVO', 'C40', ['suv']), ('VOLVO', 'V90', ['citadine']), ('VOLVO', 'S90', ['citadine']),
+    ('MAZDA', 'CX-3', ['suv']), ('SUZUKI', 'ACROSS', ['suv']), ('SUZUKI', 'BALENO', ['citadine']), ('JEEP', 'GLADIATOR', ['utilitaire']),
+    ('LAND ROVER', 'RANGE ROVER VELAR', ['suv']), ('LAND ROVER', 'DISCOVERY SPORT', ['suv']), ('JAGUAR', 'E-PACE', ['suv']),
+    ('JAGUAR', 'F-PACE', ['suv']), ('JAGUAR', 'I-PACE', ['suv']), ('JAGUAR', 'XE', ['citadine']), ('MINI', 'COOPER', ['citadine']),
+    ('MINI', 'PACEMAN', ['suv']), ('LEXUS', 'ES', ['citadine']), ('LEXUS', 'RZ', ['suv']), ('LEXUS', 'LC', ['citadine']),
+    ('LEXUS', 'LM', ['utilitaire']), ('ALFA ROMEO', 'TONALE', ['suv']), ('ALFA ROMEO', 'JUNIOR', ['suv']),
+    ('MITSUBISHI', 'ECLIPSE CROSS', ['suv']), ('SUBARU', 'OUTBACK', ['suv']), ('SUBARU', 'CROSSTREK', ['suv']),
+    # Petits utilitaires et véhicules de livraison
+    ('MAN', 'TGE', ['utilitaire']), ('RENAULT TRUCKS', 'MASTER', ['utilitaire']), ('PIAGGIO', 'PORTER', ['utilitaire']), ('PIAGGIO', 'APE', ['utilitaire']),
+    ('GOUPIL', 'G4', ['utilitaire']), ('GOUPIL', 'G5', ['utilitaire']), ('GOUPIL', 'G6', ['utilitaire']),
     # Voitures sans permis, très répandues en France
     ('AIXAM', 'CITY', ['citadine']), ('AIXAM', 'COUPE', ['citadine']), ('AIXAM', 'CROSSOVER', ['citadine']), ('AIXAM', 'MINAUTO', ['citadine']),
     ('LIGIER', 'JS50', ['citadine']), ('LIGIER', 'JS60', ['citadine']), ('LIGIER', 'MYLI', ['citadine']), ('MICROCAR', 'M.GO', ['citadine']),
-    ('CHATENET', 'CH46', ['citadine']), ('CITROEN', 'AMI', ['citadine']),
+    ('CHATENET', 'CH46', ['citadine']), ('CITROEN', 'AMI', ['citadine']), ('MICROLINO', 'MICROLINO', ['citadine']),
+    ('BELLIER', 'B8', ['citadine']), ('BELLIER', 'DIVANE', ['citadine']), ('BELLIER', 'OPALE', ['citadine']),
+    ('CASALINI', 'M14', ['citadine']), ('CASALINI', 'M20', ['citadine']), ('LIGIER', 'JS50 ELEC', ['citadine']),
 ]
+# Variantes de nom de marque saisies par les clients -> (marque du catalogue, préfixe ajouté au modèle)
+ALIASES = {
+    'MERCEDES-BENZ': ('MERCEDES', ''), 'MERCEDES BENZ': ('MERCEDES', ''), 'BENZ': ('MERCEDES', ''), 'MERCO': ('MERCEDES', ''),
+    'VW': ('VOLKSWAGEN', ''), 'VOLKS': ('VOLKSWAGEN', ''), 'B.M.W.': ('BMW', ''), 'BMW ALPINA': ('BMW', ''),
+    'ALFA': ('ALFA ROMEO', ''), 'ALFAROMEO': ('ALFA ROMEO', ''), 'LAND-ROVER': ('LAND ROVER', ''), 'LANDROVER': ('LAND ROVER', ''),
+    'RANGE ROVER': ('LAND ROVER', 'RANGE ROVER'), 'RANGE': ('LAND ROVER', 'RANGE ROVER'), 'ROLLS ROYCE': ('ROLLS-ROYCE', ''), 'ROLLS': ('ROLLS-ROYCE', ''),
+    'KGM': ('SSANGYONG', ''), 'SSANG YONG': ('SSANGYONG', ''), 'SSANG-YONG': ('SSANGYONG', ''), 'KG MOBILITY': ('SSANGYONG', ''),
+    'DS AUTOMOBILES': ('DS', ''), 'CITROEN DS': ('DS', ''), 'MORRIS GARAGES': ('MG', ''), 'M.G.': ('MG', ''), 'MG MOTOR': ('MG', ''),
+    'BYD AUTO': ('BYD', ''), 'LYNK AND CO': ('LYNK & CO', ''), 'LYNK&CO': ('LYNK & CO', ''), 'LYNK': ('LYNK & CO', ''),
+    'GWM': ('GREAT WALL', ''), 'GREAT WALL MOTORS': ('GREAT WALL', ''), 'GWM ORA': ('ORA', ''), 'TESLA MOTORS': ('TESLA', ''),
+    'MINI COOPER': ('MINI', ''), 'COOPER': ('MINI', ''), 'FIAT PROFESSIONAL': ('FIAT', ''), 'RENAULT TRUCK': ('RENAULT TRUCKS', ''),
+    'CHEVY': ('CHEVROLET', ''), 'DAEWOO CHEVROLET': ('CHEVROLET', ''), 'ASTON': ('ASTON MARTIN', ''), 'LAMBO': ('LAMBORGHINI', ''),
+    'VOLVO CARS': ('VOLVO', ''), 'TOYOTA GR': ('TOYOTA', ''), 'CUPRA SEAT': ('CUPRA', ''), 'SMART EQ': ('SMART', ''),
+}
+
 ORDER = ['citadine', 'suv', 'utilitaire']
 TO4 = {'berline': 'citadine', 'monospace': 'suv'}
 # Catégories retenues par modèle : la plus fréquente d'abord (catégorie par défaut)
@@ -291,6 +353,8 @@ print(f'{len(out)} marques, {total} modèles', file=sys.stderr)
 
 with open(os.path.join(ROOT, 'src/data/vehicles.json'), 'w') as f:
     json.dump(out, f, ensure_ascii=False, separators=(',', ':'))
+with open(os.path.join(ROOT, 'src/data/brand_aliases.json'), 'w') as f:
+    json.dump({a: list(v) for a, v in sorted(ALIASES.items())}, f, ensure_ascii=False, separators=(',', ':'))
 
 def q(s):
     return "'" + s.replace("'", "''") + "'"
@@ -299,6 +363,9 @@ with open(os.path.join(ROOT, 'supabase/vehicle_catalog.sql'), 'w') as f:
     f.write('-- Généré par scripts/build_vehicle_catalog.py : ne pas modifier à la main.\n')
     f.write('-- Sources : ADEME / UTAC (data.gouv.fr) + complément manuel. À exécuter après schema.sql.\n')
     f.write('delete from public.vehicle_catalog;\n')
+    f.write('delete from public.vehicle_brand_alias;\n')
+    f.write('insert into public.vehicle_brand_alias (alias, brand, model_prefix) values\n'
+            + ',\n'.join(f'({q(a)},{q(b)},{q(px)})' for a, (b, px) in sorted(ALIASES.items())) + ';\n')
     rows = [f'({q(b)},{q(m)},array[{",".join(q(c) for c in cs)}])' for b, ms in out.items() for m, cs in ms.items()]
     for i in range(0, len(rows), 500):
         f.write('insert into public.vehicle_catalog (brand, model, categories) values\n' + ',\n'.join(rows[i:i + 500]) + ';\n')

@@ -11,7 +11,7 @@ import { ZoneMap } from '../components/ZoneMap';
 import { DayTimeline } from '../components/DayTimeline';
 import { AnimatedPrice, Barcode, CarSilhouette } from '../components/Decor';
 import { Combo } from '../components/Combo';
-import { CAR_BRANDS, CATEGORY_EXAMPLES, MOTO_BRANDS, displayBrand, displayModel, gridPrice, modelsOf, resolveCategory, vehicleKey } from '../lib/vehicles';
+import { CAR_BRANDS, CATEGORY_EXAMPLES, MOTO_BRANDS, displayBrand, displayModel, canonicalBrand, gridPrice, modelsOf, resolveCategory, resolveVehicle, vehicleKey } from '../lib/vehicles';
 import { parseHHMM } from '../lib/time';
 import type { OpeningHour, VehicleCategory } from '../lib/types';
 
@@ -184,7 +184,8 @@ export function BookingPage() {
   const vehicleCategory = vehRes.category;
   const category = config?.vehicle_categories.find((c) => c.code === vehicleCategory) ?? null;
   const vehicleReady = veh.brand.trim().length > 0 && veh.model.trim().length > 0 && !!category;
-  const vehicleName = `${vehRes.known ? displayBrand(vehicleKey(veh.brand)) : veh.brand.trim()} ${vehRes.known ? displayModel(vehicleKey(veh.model)) : veh.model.trim()}`;
+  const resolved = veh.kind === 'car' ? resolveVehicle(veh.brand, veh.model) : null;
+  const vehicleName = resolved ? `${displayBrand(resolved.brand)} ${displayModel(resolved.model)}` : `${veh.brand.trim()} ${veh.model.trim()}`;
   const priceFor = (s: { id: string; price_cents: number }, code: string | null) => gridPrice(config?.prices ?? [], s.id, code, s.price_cents);
   const servicePrice = service ? priceFor(service, vehicleCategory) : 0;
 
@@ -215,8 +216,8 @@ export function BookingPage() {
         email: form.email,
         phone: form.phone,
         vehicle_category: vehicleCategory ?? '',
-        vehicle_brand: vehicleKey(veh.brand),
-        vehicle_model: vehicleKey(veh.model),
+        vehicle_brand: resolved?.brand ?? vehicleKey(veh.brand),
+        vehicle_model: resolved?.model ?? vehicleKey(veh.model),
         vehicle_genre: vehRes.needsGenre ? veh.genre : '',
         address: location === 'home' ? address?.label ?? '' : '',
         lat: location === 'home' ? address?.lat ?? null : null,
@@ -422,10 +423,12 @@ export function BookingPage() {
             <div className="fields">
               <Combo id="brand" label="Marque" required value={veh.brand}
                      options={veh.kind === 'moto' ? MOTO_BRANDS.map((b) => ({ key: b, label: b })) : CAR_BRANDS}
+                     isKnown={(v) => veh.kind === 'car' && canonicalBrand(v) !== null}
                      onChange={(v) => setVeh({ ...veh, brand: v, model: '', chosen: '', genre: '' })}
                      emptyHint="Marque absente de la liste : vous pouvez la saisir librement." />
               <Combo id="model" label="Modèle" required value={veh.model} disabled={!veh.brand.trim()}
-                     options={veh.kind === 'moto' ? [] : modelsOf(veh.brand)}
+                     options={veh.kind === 'moto' ? [] : modelsOf(canonicalBrand(veh.brand) ?? veh.brand)}
+                     isKnown={(v) => veh.kind === 'car' && resolveVehicle(veh.brand, v) !== null}
                      onChange={(v) => setVeh({ ...veh, model: v, chosen: '', genre: '' })}
                      emptyHint="Modèle absent de la liste : saisissez-le, puis choisissez la catégorie ci-dessous." />
             </div>

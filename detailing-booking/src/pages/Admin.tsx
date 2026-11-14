@@ -6,7 +6,7 @@ import { BookingError, type Booking, type Closure, type LocationType, type Openi
 import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, CategoryIcon, ServiceIcon, Spray, Stopwatch, Wrench } from '../components/Icons';
 import { ZoneMap } from '../components/ZoneMap';
 import { Combo } from '../components/Combo';
-import { CAR_BRANDS, DEFAULT_VEHICLE_CATEGORIES, displayBrand, displayModel, lookupVehicle, modelsOf, vehicleKey } from '../lib/vehicles';
+import { CAR_BRANDS, DEFAULT_VEHICLE_CATEGORIES, displayBrand, displayModel, canonicalBrand, lookupVehicle, modelsOf, resolveVehicle, vehicleKey } from '../lib/vehicles';
 import { TZ, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, zonedTime } from '../lib/time';
 
 type Tab = 'planning' | 'closures' | 'services' | 'hours' | 'settings';
@@ -297,7 +297,8 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
         await backend.createBooking({
           service_id: f.serviceId, location_type: f.location, start,
           customer_name: f.name, email: f.email, phone: f.phone,
-          vehicle_category: category, vehicle_brand: vehicleKey(f.brand), vehicle_model: vehicleKey(f.model), vehicle_genre: '',
+          vehicle_category: category, vehicle_brand: resolveVehicle(f.brand, f.model)?.brand ?? vehicleKey(f.brand),
+          vehicle_model: resolveVehicle(f.brand, f.model)?.model ?? vehicleKey(f.model), vehicle_genre: '',
           address: address?.label ?? '', lat: address?.lat ?? null, lon: address?.lon ?? null, notes: f.notes,
         }, { admin: true });
         onDone();
@@ -336,7 +337,7 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
       </div>
       <div className="row veh-row">
         <Combo plain id="m-brand" label="Marque" required value={f.brand} options={CAR_BRANDS} onChange={(v) => setF({ ...f, brand: v, model: '', category: '' })} />
-        <Combo plain id="m-model" label="Modèle" required value={f.model} options={modelsOf(f.brand)} onChange={(v) => setF({ ...f, model: v, category: '' })} />
+        <Combo plain id="m-model" label="Modèle" required value={f.model} options={modelsOf(canonicalBrand(f.brand) ?? f.brand)} onChange={(v) => setF({ ...f, model: v, category: '' })} />
         <div>
           <label htmlFor="m-cat">Catégorie tarifaire</label>
           <select id="m-cat" value={f.category || lookupVehicle(f.brand, f.model)?.[0] || ''} onChange={(e) => setF({ ...f, category: e.target.value })}>

@@ -35,11 +35,11 @@ Quatre catégories. Le client choisit la marque et le modèle (obligatoires) ; l
 
 Les prix du Complet ont été fournis. Ceux d'Intérieur et d'Extérieur appliquent le même écart entre catégories, à partir de 80 € et 70 € pour une citadine : à valider.
 
-**Classement des modèles** : `src/data/vehicles.json` (805 modèles, 88 marques) est généré par `scripts/build_vehicle_catalog.py` à partir des fichiers officiels ADEME/UTAC « véhicules particuliers commercialisés en France » (data.gouv.fr) :
+**Classement des modèles** : `src/data/vehicles.json` (959 modèles, 105 marques) est généré par `scripts/build_vehicle_catalog.py` à partir des fichiers officiels ADEME/UTAC « véhicules particuliers commercialisés en France » (data.gouv.fr) :
 - éditions 2012, 2013, 2014 et courante, d'après le champ *Carrosserie* : berline, break, coupé, cabriolet → citadine ; TS terrains/chemins, monospace, combispace, minispace → SUV ; minibus → utilitaire ;
 - édition 2011 (sans carrosserie) : modèles encore vendus en 2011, classés par mots-clés.
 
-Un complément manuel couvre les modèles 2000-2010 retirés avant 2011, les modèles récents (2015-2025) dont les marques chinoises vendues en France (BYD, MG, Leapmotor, Xpeng, Zeekr, Omoda, Jaecoo, Lynk & Co, Seres, Voyah, Chery…), les voitures sans permis et les utilitaires immatriculés en camionnette. Quand un même nom existe en version voiture et utilitaire (Kangoo, Berlingo, Partner, Caddy…), le client indique le **genre de la carte grise (case J.1)** : VP → SUV, CTTE → utilitaire. Le serveur refuse une catégorie incohérente avec le modèle ; un modèle absent du catalogue est accepté avec la catégorie choisie et signalé « à vérifier » dans le planning.
+Un complément manuel couvre les modèles 2000-2010 retirés avant 2011, les modèles récents (2015-2025) dont les marques chinoises vendues en France (BYD, MG, Leapmotor, Xpeng, Zeekr, Omoda, Jaecoo, Lynk & Co, Seres, Voyah, Chery…), les voitures sans permis et les utilitaires immatriculés en camionnette. La saisie libre est rattachée au catalogue, côté site comme côté serveur : variantes de marque (« Mercedes-Benz », « VW », « Range Rover », « KGM »…), « A 180 » → Classe A, « 320d » → Série 3, et précisions retirées en fin de nom (« 308 SW » → 308, « Golf 7 GTI » → Golf). Quand un même nom existe en version voiture et utilitaire (Kangoo, Berlingo, Partner, Caddy…), le client indique le **genre de la carte grise (case J.1)** : VP → SUV, CTTE → utilitaire. Le serveur refuse une catégorie incohérente avec le modèle ; un modèle absent du catalogue est accepté avec la catégorie choisie et signalé « à vérifier » dans le planning.
 
 ### Calcul des frais de déplacement
 

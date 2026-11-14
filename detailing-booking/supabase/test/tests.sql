@@ -208,9 +208,19 @@ select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '3 days', cat => 'suv', brand => 'Citroen', model => 'Berlingo', genre => 'VP'), null);
 -- Accents et casse : « citroën  c3 » est reconnu comme CITROEN C3 (citadine), donc contrôlé
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'utilitaire', brand => 'citroën', model => '  c3 '), 'VEHICLE_MISMATCH');
+-- Variantes de marque et précisions de modèle reconnues (donc contrôlées)
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'Mercedes-Benz', model => 'GLE 350d'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'Range Rover', model => 'Evoque'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'MG', model => 'ZS EV Luxury'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'KGM', model => 'Torres'), 'VEHICLE_MISMATCH');
 -- Marques chinoises et modèles anciens reconnus
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'BYD', model => 'Atto 3'), 'VEHICLE_MISMATCH');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'Peugeot', model => '206'), null);
+-- Réservations avec saisie libre : le modèle est rattaché au catalogue
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(8, 30) + interval '16 days', cat => 'citadine', brand => 'VW', model => 'Golf 7 GTI'), null);
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '16 days', cat => 'citadine', brand => 'peugeot', model => '308 SW'), null);
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(8, 30) + interval '17 days', cat => 'citadine', brand => 'BMW', model => '320d'), null);
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '17 days', cat => 'citadine', brand => 'Mercedes-Benz', model => 'A 180 d'), null);
 reset role;
 do $$ begin
   if (select vehicle_verified from public.bookings where vehicle_model = 'MT-07') then
@@ -218,6 +228,18 @@ do $$ begin
   end if;
   if not (select vehicle_verified from public.bookings where vehicle_model = '3008') then
     raise exception 'ÉCHEC: un modèle du catalogue doit être marqué vérifié';
+  end if;
+  if not exists (select 1 from public.bookings where vehicle_brand = 'VOLKSWAGEN' and vehicle_model = 'GOLF' and vehicle_verified) then
+    raise exception 'ÉCHEC: « VW Golf 7 GTI » doit être rattaché à VOLKSWAGEN GOLF';
+  end if;
+  if not exists (select 1 from public.bookings where vehicle_model = 'SERIE 3' and vehicle_verified) then
+    raise exception 'ÉCHEC: « BMW 320d » doit être rattaché à SERIE 3';
+  end if;
+  if not exists (select 1 from public.bookings where vehicle_brand = 'MERCEDES' and vehicle_model = 'CLASSE A' and vehicle_verified) then
+    raise exception 'ÉCHEC: « Mercedes-Benz A 180 d » doit être rattaché à MERCEDES CLASSE A';
+  end if;
+  if not exists (select 1 from public.bookings where vehicle_model = '308' and vehicle_verified) then
+    raise exception 'ÉCHEC: « 308 SW » doit être rattaché à 308';
   end if;
   if (select vehicle from public.bookings where vehicle_model = '3008') <> 'PEUGEOT 3008' then
     raise exception 'ÉCHEC: marque/modèle mal enregistrés';
