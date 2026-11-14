@@ -3,15 +3,16 @@ import { backend } from '../lib/backend';
 import { AddressInput } from '../components/AddressInput';
 import type { AddressSuggestion } from '../lib/geocode';
 import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type Settings } from '../lib/types';
+import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, Spray, Stopwatch, Wrench } from '../components/Icons';
 import { TZ, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, zonedTime } from '../lib/time';
 
 type Tab = 'planning' | 'closures' | 'services' | 'hours' | 'settings';
-const TABS: [Tab, string][] = [
-  ['planning', 'Planning'],
-  ['closures', 'Indisponibilités'],
-  ['services', 'Formules'],
-  ['hours', 'Horaires'],
-  ['settings', 'Paramètres'],
+const TABS: [Tab, string, typeof Wrench][] = [
+  ['planning', 'Planning', Clipboard],
+  ['closures', 'Indisponibilités', Cone],
+  ['services', 'Formules', Spray],
+  ['hours', 'Horaires', Gauge],
+  ['settings', 'Paramètres', Wrench],
 ];
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -40,9 +41,9 @@ export function AdminPage() {
   return (
     <AdminShell onLogout={async () => { await backend.signOut(); setState('out'); }}>
       <nav className="tabs" role="tablist">
-        {TABS.map(([id, label]) => (
+        {TABS.map(([id, label, TabIcon]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
-            {label}
+            <TabIcon size={18} /> {label}
           </button>
         ))}
       </nav>
@@ -59,7 +60,7 @@ function AdminShell({ children, onLogout }: { children: React.ReactNode; onLogou
   return (
     <div className="page admin">
       <header className="admin-bar">
-        <strong>Espace pro</strong>
+        <strong className="brand"><span className="brand-icon"><Wrench size={18} /></span> Espace pro</strong>
         <span className="spacer" />
         <a href="/">Voir le site</a>
         {onLogout && <button type="button" className="btn small" onClick={onLogout}>Déconnexion</button>}
@@ -92,7 +93,9 @@ function Login({ onDone }: { onDone: () => void }) {
         setBusy(false);
       }
     }}>
-      <h2>Connexion</h2>
+      <span className="login-icon"><Garage size={30} /></span>
+      <h2>Accès atelier</h2>
+      <p className="hint">Réservé au professionnel.</p>
       <label htmlFor="em">E-mail</label>
       <input id="em" type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
       <label htmlFor="pw">Mot de passe</label>
@@ -147,7 +150,13 @@ function Planning() {
       </div>
       {adding && <ManualBooking onDone={() => { setAdding(false); void load(); }} />}
       {error && <p className="alert error">{error}</p>}
-      {groups.size === 0 && <p className="muted card">Aucun rendez-vous à venir.</p>}
+      {groups.size === 0 && (
+        <div className="card empty-state">
+          <CarLift size={48} />
+          <strong>Le pont est libre</strong>
+          <span className="muted">Aucun rendez-vous à venir.</span>
+        </div>
+      )}
       {[...groups.entries()].map(([k, list]) => (
         <div key={k} className="day-group">
           <h3>{formatDate(new Date(list[0].start_at))}</h3>
@@ -232,7 +241,7 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
         setBusy(false);
       }
     }}>
-      <h3>RDV pris par téléphone</h3>
+      <h3 className="with-icon"><Clipboard size={20} /> RDV pris par téléphone</h3>
       <p className="hint">Les horaires et la zone ne sont pas imposés ici, mais un chevauchement reste impossible.</p>
       <div className="row">
         <div>
@@ -294,7 +303,7 @@ function Closures() {
           await load();
         } catch (err) { setError(errMsg(err)); }
       }}>
-        <h3>Bloquer une période</h3>
+        <h3 className="with-icon"><Cone size={20} /> Bloquer une période</h3>
         <p className="hint">Congés, rendez-vous perso… Aucun client ne pourra réserver sur cette période. Les RDV déjà pris ne sont pas annulés.</p>
         <div className="row">
           <div><label htmlFor="c-s">Début</label><input id="c-s" type="datetime-local" required value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} /></div>
@@ -304,7 +313,13 @@ function Closures() {
         {error && <p className="alert error">{error}</p>}
         <button type="submit" className="btn primary">Bloquer</button>
       </form>
-      {list.length === 0 && <p className="muted">Aucune période bloquée.</p>}
+      {list.length === 0 && (
+        <div className="card empty-state">
+          <Cone size={44} />
+          <strong>Route dégagée</strong>
+          <span className="muted">Aucune période bloquée.</span>
+        </div>
+      )}
       {list.map((c) => (
         <div key={c.id} className="card line">
           <span>
@@ -434,7 +449,7 @@ function SettingsForm() {
       try { await backend.saveSettings(s); setMsg({ ok: true, text: 'Paramètres enregistrés.' }); } catch (err) { setMsg({ ok: false, text: errMsg(err) }); }
     }}>
       <fieldset className="card">
-        <legend>Entreprise</legend>
+        <legend className="with-icon"><Garage size={20} /> Entreprise</legend>
         <div className="row">
           <div><label>Nom affiché</label><input value={s.business_name} onChange={(e) => setS({ ...s, business_name: e.target.value })} /></div>
           <div><label>Téléphone</label><input value={s.phone} onChange={(e) => setS({ ...s, phone: e.target.value })} /></div>
@@ -443,7 +458,7 @@ function SettingsForm() {
       </fieldset>
 
       <fieldset className="card">
-        <legend>Réservations et temps tampon</legend>
+        <legend className="with-icon"><Stopwatch size={20} /> Réservations et temps tampon</legend>
         <div className="row">
           <div><label>Pas des créneaux (min)</label><input {...num('slot_step_min')} min={5} max={240} step={5} /></div>
           <div><label>Délai minimum avant RDV (h)</label><input {...num('min_notice_hours')} min={0} /></div>
@@ -457,14 +472,14 @@ function SettingsForm() {
       </fieldset>
 
       <fieldset className="card">
-        <legend>Lieux d'intervention</legend>
+        <legend className="with-icon"><MapPin size={20} /> Lieux d'intervention</legend>
         <label className="check"><input type="checkbox" checked={s.home_enabled} onChange={(e) => setS({ ...s, home_enabled: e.target.checked })} /> Service à domicile</label>
         <label className="check"><input type="checkbox" checked={s.atelier_enabled} onChange={(e) => setS({ ...s, atelier_enabled: e.target.checked })} /> Atelier</label>
         {s.atelier_enabled && (<><label>Adresse de l'atelier</label><input value={s.atelier_address} onChange={(e) => setS({ ...s, atelier_address: e.target.value })} /></>)}
       </fieldset>
 
       <fieldset className="card">
-        <legend>Zone d'intervention à domicile</legend>
+        <legend className="with-icon"><Route size={20} /> Zone d'intervention à domicile</legend>
         <p className="hint">Zone = tout ce qui est à moins de X km de la ligne entre le point A et le point B.</p>
         <div className="row">
           <div><label>Point A : {s.zone_a_label}</label><AddressInput value={null} placeholder="Changer le point A" onChange={point('zone_a_lat', 'zone_a_lon', 'zone_a_label')} /></div>
@@ -474,7 +489,7 @@ function SettingsForm() {
       </fieldset>
 
       <fieldset className="card">
-        <legend>Frais de déplacement</legend>
+        <legend className="with-icon"><FuelPump size={20} /> Frais de déplacement</legend>
         <label>Point de départ (privé, non affiché) — actuellement {s.base_lat.toFixed(4)}, {s.base_lon.toFixed(4)}</label>
         <AddressInput value={null} placeholder="Adresse de départ" onChange={point('base_lat', 'base_lon')} />
         <div className="row">

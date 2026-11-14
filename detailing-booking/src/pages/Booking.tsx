@@ -6,6 +6,7 @@ import { bufferAfter, checkSlot, daySlots, rulesFrom } from '../lib/slots';
 import { addDays, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, sameDay, weekdayOf, zonedTime, type DayKey } from '../lib/time';
 import { BookingError, type BookingResult, type Interval, type LocationType, type PublicConfig, type Service, type TravelQuote } from '../lib/types';
 import { buildIcs, downloadIcs } from '../lib/ics';
+import { Car, CarKey, ChevronLeft, Flag, Garage, Gauge, Home, MapPin, ServiceIcon, VehicleIcon, Wheel, Wrench } from '../components/Icons';
 
 const VEHICLE_TYPES = ['Voiture', 'SUV / 4x4', 'Utilitaire', 'Moto', 'Autre'];
 const STEPS = ['Prestation', 'Lieu', 'Créneau', 'Coordonnées'] as const;
@@ -205,10 +206,11 @@ export function BookingPage() {
     return (
       <AppFrame>
         <div className="pane success">
-          <svg className="check" viewBox="0 0 52 52" aria-hidden="true">
+          <svg className="success-check" viewBox="0 0 52 52" aria-hidden="true">
             <circle cx="26" cy="26" r="24" />
             <path d="M15 27 l7 7 l15 -16" />
           </svg>
+          <p className="eyebrow center"><Flag size={15} /> Réservation confirmée</p>
           <h1 className="title center">C'est réservé !</h1>
           <p className="subtitle center">{formatDate(confirmed.start)}<br />{formatTime(confirmed.start)} – {formatTime(confirmed.end)}</p>
           <div className="sheet">
@@ -247,10 +249,13 @@ export function BookingPage() {
       top={
         step === 0 ? undefined : <div className="topbar">
           <button type="button" className={`round-btn${step === 0 ? ' hidden' : ''}`} aria-label="Retour" onClick={() => go(step - 1)} tabIndex={step === 0 ? -1 : 0}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+            <ChevronLeft size={20} />
           </button>
-          <div className="progress" aria-label={`Étape ${step + 1} sur ${STEPS.length} : ${STEPS[step]}`}>
-            {STEPS.map((s, i) => <span key={s} className={i <= step ? 'on' : ''} />)}
+          <div className="road" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}
+               aria-label={`Étape ${step + 1} sur ${STEPS.length} : ${STEPS[step]}`}>
+            <span className="road-done" style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }} />
+            <span className="road-car" style={{ left: `${(step / (STEPS.length - 1)) * 100}%` }}><Car size={22} /></span>
+            <span className="road-flag"><Flag size={14} /></span>
           </div>
           <span className="step-count">{step + 1}/{STEPS.length}</span>
         </div>
@@ -271,7 +276,7 @@ export function BookingPage() {
       <div key={step} className={`pane slide-${dir}`}>
         {step === 0 && (
           <>
-            <p className="eyebrow">{settings.business_name}</p>
+            <p className="eyebrow"><Wrench size={15} /> {settings.business_name}</p>
             <h1 className="title">Quelle prestation&nbsp;?</h1>
             <p className="subtitle">Nettoyage et detailing auto & moto, à domicile.</p>
             <div className="list">
@@ -279,7 +284,7 @@ export function BookingPage() {
               {config.services.map((s, i) => (
                 <button key={s.id} type="button" className={`tile${s.id === serviceId ? ' selected' : ''}`} style={{ animationDelay: `${i * 50}ms` }}
                         aria-pressed={s.id === serviceId} onClick={() => pickService(s)}>
-                  <span className="tile-icon" aria-hidden="true">{serviceIcon(s.name)}</span>
+                  <span className="tile-icon"><ServiceIcon name={s.name} size={26} /></span>
                   <span className="tile-main">
                     <span className="tile-title">{s.name}</span>
                     {s.description && <span className="tile-sub">{s.description}</span>}
@@ -295,20 +300,23 @@ export function BookingPage() {
 
         {step === 1 && (
           <>
+            <span className="title-badge"><MapPin size={22} /></span>
             <h1 className="title">Où intervient-on&nbsp;?</h1>
             <p className="subtitle">Zone desservie : {zoneText}.</p>
             {settings.home_enabled && settings.atelier_enabled && (
               <div className="segmented" role="radiogroup">
                 <span className={`segmented-thumb ${location}`} aria-hidden="true" />
-                <button type="button" role="radio" aria-checked={location === 'home'} onClick={() => { setLocation('home'); setSlot(null); }}>À domicile</button>
-                <button type="button" role="radio" aria-checked={location === 'atelier'} onClick={() => { setLocation('atelier'); setSlot(null); }}>À l'atelier</button>
+                <button type="button" role="radio" aria-checked={location === 'home'} onClick={() => { setLocation('home'); setSlot(null); }}>
+                  <Home size={18} /> À domicile</button>
+                <button type="button" role="radio" aria-checked={location === 'atelier'} onClick={() => { setLocation('atelier'); setSlot(null); }}>
+                  <Garage size={18} /> À l'atelier</button>
               </div>
             )}
             {location === 'home' ? (
               <>
                 <label htmlFor="address" className="sr-only">Adresse d'intervention</label>
                 <AddressInput id="address" value={address} onChange={setAddress} placeholder="Rechercher votre adresse" />
-                {quoteLoading && <div className="result-card loading"><span className="spinner" /> Vérification de l'adresse…</div>}
+                {quoteLoading && <div className="result-card loading"><Wheel size={20} className="spin" /> Vérification de l'adresse…</div>}
                 {quote && !quote.in_zone && (
                   <div className="result-card bad">
                     <strong>Hors zone</strong>
@@ -330,6 +338,7 @@ export function BookingPage() {
 
         {step === 2 && service && (
           <>
+            <span className="title-badge"><Gauge size={22} /></span>
             <h1 className="title">Quand&nbsp;?</h1>
             <p className="subtitle">{service.name} · {formatDuration(service.duration_min)}</p>
             <DayStrip days={days} selected={day} onSelect={(d) => { setDay(d); setSlot(null); }} />
@@ -354,6 +363,7 @@ export function BookingPage() {
 
         {step === 3 && service && slot && (
           <>
+            <span className="title-badge"><CarKey size={22} /></span>
             <h1 className="title">Vos coordonnées</h1>
             <p className="subtitle">{formatDate(slot)} à {formatTime(slot)}</p>
             <form ref={formRef} onSubmit={submit} className="fields" noValidate={false}>
@@ -373,7 +383,7 @@ export function BookingPage() {
               <div className="chips" role="radiogroup" aria-label="Type de véhicule">
                 {VEHICLE_TYPES.map((v) => (
                   <button key={v} type="button" role="radio" aria-checked={form.vehicleType === v}
-                          className={`chip-btn${form.vehicleType === v ? ' on' : ''}`} onClick={() => setForm({ ...form, vehicleType: v })}>{v}</button>
+                          className={`chip-btn${form.vehicleType === v ? ' on' : ''}`} onClick={() => setForm({ ...form, vehicleType: v })}><VehicleIcon type={v} size={18} /> {v}</button>
                 ))}
               </div>
               <Field id="vehicle" label="Marque et modèle (facultatif)">
@@ -396,18 +406,6 @@ export function BookingPage() {
       </div>
     </AppFrame>
   );
-}
-
-function serviceIcon(name: string) {
-  const n = name.toLowerCase();
-  const common = { viewBox: '0 0 24 24', 'aria-hidden': true } as const;
-  if (n.includes('intérieur') || n.includes('interieur')) {
-    return <svg {...common}><path d="M7 4h6a3 3 0 0 1 3 3v6H8a3 3 0 0 1-3-3V6a2 2 0 0 1 2-2z" /><path d="M8 13l-1 7h9l2-7" /></svg>;
-  }
-  if (n.includes('extérieur') || n.includes('exterieur')) {
-    return <svg {...common}><path d="M12 3s5 5.5 5 9.5A5 5 0 0 1 7 12.5C7 8.5 12 3 12 3z" /></svg>;
-  }
-  return <svg {...common}><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z" /></svg>;
 }
 
 function DayStrip({ days, selected, onSelect }: { days: { day: DayKey; count: number }[]; selected: DayKey | null; onSelect: (d: DayKey) => void }) {
@@ -457,6 +455,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 function Skeleton() {
   return (
     <div className="pane" aria-busy="true" aria-label="Chargement">
+      <div className="loader"><Wheel size={44} className="spin" /></div>
       <div className="sk sk-line short" />
       <div className="sk sk-title" />
       <div className="sk sk-line" />
