@@ -62,7 +62,7 @@ function AdminShell({ children, onLogout }: { children: React.ReactNode; onLogou
       <header className="admin-bar">
         <strong className="brand"><span className="brand-icon"><Wrench size={18} /></span> Espace pro</strong>
         <span className="spacer" />
-        <a href="/">Voir le site</a>
+        <a href="#">Voir le site</a>
         {onLogout && <button type="button" className="btn small" onClick={onLogout}>Déconnexion</button>}
       </header>
       <main className="container wide">{children}</main>
@@ -114,6 +114,7 @@ function Planning() {
   const [showPast, setShowPast] = useState(false);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -189,11 +190,17 @@ function Planning() {
                     {b.travel_fee_cents > 0 && <> + {formatPrice(b.travel_fee_cents)} déplacement</>}
                     {' = '}<strong>{formatPrice(b.total_cents)}</strong>
                   </span>
-                  {b.status === 'confirmed' && (
-                    <button type="button" className="btn small danger" onClick={async () => {
-                      if (!confirm(`Annuler le RDV de ${b.customer_name} ? Le créneau sera de nouveau réservable.`)) return;
-                      try { await backend.cancelBooking(b.id); await load(); } catch (e) { setError(errMsg(e)); }
-                    }}>Annuler</button>
+                  {b.status === 'confirmed' && confirmId !== b.id && (
+                    <button type="button" className="btn small danger" onClick={() => setConfirmId(b.id)}>Annuler</button>
+                  )}
+                  {b.status === 'confirmed' && confirmId === b.id && (
+                    <span className="confirm-row">
+                      <span className="muted">Libérer ce créneau ?</span>
+                      <button type="button" className="btn small" onClick={() => setConfirmId(null)}>Non</button>
+                      <button type="button" className="btn small danger" onClick={async () => {
+                        try { await backend.cancelBooking(b.id); setConfirmId(null); await load(); } catch (e) { setError(errMsg(e)); }
+                      }}>Oui, annuler</button>
+                    </span>
                   )}
                 </div>
               </div>

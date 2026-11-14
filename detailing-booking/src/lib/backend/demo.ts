@@ -98,11 +98,13 @@ function busyOf(db: DemoDb): Interval[] {
   ];
 }
 
+let memoryAdmin = false;
+
 function isSessionAdmin(): boolean {
   try {
-    return sessionStorage.getItem(SESSION_KEY) === '1';
+    return sessionStorage.getItem(SESSION_KEY) === '1' || memoryAdmin;
   } catch {
-    return false;
+    return memoryAdmin;
   }
 }
 
@@ -219,11 +221,13 @@ export function createDemoBackend(): Backend {
       if (email.trim().toLowerCase() !== DEMO_ADMIN.email || password !== DEMO_ADMIN.password) {
         throw new Error('Identifiants incorrects.');
       }
-      sessionStorage.setItem(SESSION_KEY, '1');
+      memoryAdmin = true;
+      try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* stockage bloqué */ }
     },
 
     async signOut() {
-      sessionStorage.removeItem(SESSION_KEY);
+      memoryAdmin = false;
+      try { sessionStorage.removeItem(SESSION_KEY); } catch { /* stockage bloqué */ }
     },
 
     async isAdmin() {

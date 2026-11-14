@@ -1,3 +1,4 @@
+import { searchDemoPlaces } from './demoPlaces';
 // Autocomplétion d'adresse via le service public de géocodage (IGN Géoplateforme, gratuit, sans clé).
 export interface AddressSuggestion {
   label: string;
@@ -7,8 +8,13 @@ export interface AddressSuggestion {
 
 const ENDPOINT = 'https://data.geopf.fr/geocodage/search';
 
+export const USE_DEMO_PLACES = import.meta.env.VITE_TEST_LINK === '1';
+
 export async function searchAddress(query: string, signal?: AbortSignal): Promise<AddressSuggestion[]> {
   const q = query.trim();
+  if (USE_DEMO_PLACES) {
+    return searchDemoPlaces(q);
+  }
   if (q.length < 3) return [];
   const url = `${ENDPOINT}?q=${encodeURIComponent(q)}&limit=5&autocomplete=1&index=address`;
   const res = await fetch(url, { signal });

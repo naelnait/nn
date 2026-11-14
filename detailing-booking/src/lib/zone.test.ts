@@ -22,3 +22,17 @@ describe('zone et frais', () => {
     expect(v.distance_km).toBe(36.2);
   });
 });
+
+import { searchDemoPlaces } from './demoPlaces';
+describe('communes du lien de test', () => {
+  it('trouve une commune et garde la rue saisie', () => {
+    expect(searchDemoPlaces('ramb')[0].label).toBe('78120 Rambouillet');
+    expect(searchDemoPlaces('12 rue de la Paix, Chartres')[0].label).toBe('12 rue de la Paix, 28000 Chartres');
+    expect(searchDemoPlaces('saint cyr l ecole')[0].label).toContain("Saint-Cyr-l'École");
+  });
+  it('classe les communes de la liste dans ou hors zone', () => {
+    const inZone = (n: string) => isInZone(searchDemoPlaces(n)[0], DEFAULT_SETTINGS);
+    expect(['Paris', 'Versailles', 'Rambouillet', 'Maintenon', 'Chartres'].every(inZone)).toBe(true);
+    expect(['Lyon', 'Rouen', 'Orléans', 'Le Mans', 'Meaux'].some(inZone)).toBe(false);
+  });
+});

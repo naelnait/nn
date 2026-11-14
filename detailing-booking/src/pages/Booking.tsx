@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
 import { AddressInput } from '../components/AddressInput';
-import type { AddressSuggestion } from '../lib/geocode';
+import { USE_DEMO_PLACES, type AddressSuggestion } from '../lib/geocode';
 import { bufferAfter, checkSlot, daySlots, rulesFrom } from '../lib/slots';
 import { addDays, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, sameDay, weekdayOf, zonedTime, type DayKey } from '../lib/time';
 import { BookingError, type BookingResult, type Interval, type LocationType, type PublicConfig, type Service, type TravelQuote } from '../lib/types';
 import { buildIcs, downloadIcs } from '../lib/ics';
 import { Car, CarKey, ChevronLeft, Flag, Garage, Gauge, Home, MapPin, ServiceIcon, VehicleIcon, Wheel, Wrench } from '../components/Icons';
 
+/** Build « lien de test » (page hébergée sur claude.ai) : pas de téléchargement de fichier possible. */
+const IS_TEST_LINK = import.meta.env.VITE_TEST_LINK === '1';
 const VEHICLE_TYPES = ['Voiture', 'SUV / 4x4', 'Utilitaire', 'Moto', 'Autre'];
 const STEPS = ['Prestation', 'Lieu', 'Créneau', 'Coordonnées'] as const;
 const WD = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
@@ -221,15 +223,15 @@ export function BookingPage() {
           </div>
           <p className="fine center">Paiement sur place après la prestation. Pour modifier ou annuler{settings.phone ? <>, appelez le <a href={`tel:${settings.phone.replace(/\s/g, '')}`}>{settings.phone}</a></> : ', contactez-nous'}.</p>
           <div className="stack">
-            <button type="button" className="btn primary block" onClick={() => downloadIcs('rendez-vous.ics', buildIcs({
+            {!IS_TEST_LINK && <button type="button" className="btn primary block" onClick={() => downloadIcs('rendez-vous.ics', buildIcs({
               id: confirmed.id,
               start: confirmed.start,
               end: confirmed.end,
               title: `${settings.business_name} — ${confirmed.serviceName}`,
               location: confirmed.location,
               description: `Total : ${formatPrice(confirmed.total_cents)}${settings.phone ? `\nContact : ${settings.phone}` : ''}`,
-            }))}>Ajouter à mon agenda</button>
-            <button type="button" className="btn ghost block" onClick={reset}>Nouvelle réservation</button>
+            }))}>Ajouter à mon agenda</button>}
+            <button type="button" className={`btn block ${IS_TEST_LINK ? 'primary' : 'ghost'}`} onClick={reset}>Nouvelle réservation</button>
           </div>
         </div>
       </AppFrame>
@@ -316,6 +318,7 @@ export function BookingPage() {
               <>
                 <label htmlFor="address" className="sr-only">Adresse d'intervention</label>
                 <AddressInput id="address" value={address} onChange={setAddress} placeholder="Rechercher votre adresse" />
+                {USE_DEMO_PLACES && !address && <p className="fine">Version de test : tapez une ville (Versailles, Rambouillet, Chartres… ou Lyon pour tester le hors zone).</p>}
                 {quoteLoading && <div className="result-card loading"><Wheel size={20} className="spin" /> Vérification de l'adresse…</div>}
                 {quote && !quote.in_zone && (
                   <div className="result-card bad">
@@ -471,7 +474,7 @@ function AppFrame({ children, top, bottom, toast }: { children: React.ReactNode;
       <main className="app-main">{children}</main>
       {bottom}
       <div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">{toast}</div>
-      {!top && <footer className="app-footer"><a href="/admin">Espace pro</a></footer>}
+      {!top && <footer className="app-footer"><a href="#admin">Espace pro</a></footer>}
     </div>
   );
 }
