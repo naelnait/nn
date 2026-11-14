@@ -3,7 +3,8 @@ import { backend } from '../lib/backend';
 import { AddressInput } from '../components/AddressInput';
 import type { AddressSuggestion } from '../lib/geocode';
 import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type Settings } from '../lib/types';
-import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, Spray, Stopwatch, Wrench } from '../components/Icons';
+import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, ServiceIcon, Spray, Stopwatch, VehicleIcon, Wrench } from '../components/Icons';
+import { ZoneMap } from '../components/ZoneMap';
 import { TZ, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, zonedTime } from '../lib/time';
 
 type Tab = 'planning' | 'closures' | 'services' | 'hours' | 'settings';
@@ -21,6 +22,16 @@ function parseLocal(v: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(v);
   if (!m) return null;
   return zonedTime({ year: +m[1], month: +m[2], day: +m[3] }, +m[4] * 60 + +m[5], TZ);
+}
+
+/** « dans 3 h », « demain à 09:30 »… */
+function relativeTime(d: Date): string {
+  const diff = d.getTime() - Date.now();
+  const k = dayKeyString(dayKeyOf(d, TZ));
+  if (diff < 3_600_000) return `dans ${Math.max(1, Math.round(diff / 60_000))} min`;
+  if (k === dayKeyString(dayKeyOf(new Date(), TZ))) return `aujourd'hui à ${formatTime(d)} (dans ${Math.round(diff / 3_600_000)} h)`;
+  if (k === dayKeyString(dayKeyOf(new Date(Date.now() + 86_400_000), TZ))) return `demain à ${formatTime(d)}`;
+  return `${formatDate(d)} à ${formatTime(d)}`;
 }
 
 function errMsg(e: unknown): string {
@@ -139,8 +150,31 @@ function Planning() {
     groups.set(k, [...(groups.get(k) ?? []), b]);
   }
 
+  // Indicateurs des 7 prochains jours
+  const nowT = Date.now();
+  const week = bookings.filter((b) => b.status === 'confirmed' && new Date(b.start_at).getTime() >= nowT && new Date(b.start_at).getTime() < nowT + 7 * 86_400_000);
+  const next = bookings.find((b) => b.status === 'confirmed' && new Date(b.start_at).getTime() >= nowT);
+  const weekRevenue = week.reduce((s, b) => s + b.total_cents, 0);
+  const weekKm = week.reduce((s, b) => s + (b.distance_km ?? 0), 0);
+  const weekHours = week.reduce((s, b) => s + (new Date(b.end_at).getTime() - new Date(b.start_at).getTime()) / 3_600_000, 0);
+  const todayKey = dayKeyString(dayKeyOf(new Date(), TZ));
+  const tomorrowKey = dayKeyString(dayKeyOf(new Date(nowT + 86_400_000), TZ));
+
   return (
     <section>
+      <div className="kpis">
+        <div className="kpi"><span className="kpi-icon"><Clipboard size={18} /></span><span className="kpi-label">RDV sur 7 jours</span><strong>{week.length}</strong></div>
+        <div className="kpi"><span className="kpi-icon"><FuelPump size={18} /></span><span className="kpi-label">CA prévu sur 7 jours</span><strong>{formatPrice(weekRevenue)}</strong></div>
+        <div className="kpi"><span className="kpi-icon"><Stopwatch size={18} /></span><span className="kpi-label">Heures de travail</span><strong>{formatDuration(Math.round(weekHours * 60))}</strong></div>
+        <div className="kpi"><span className="kpi-icon"><Route size={18} /></span><span className="kpi-label">Km estimés (aller)</span><strong>{Math.round(weekKm)} km</strong></div>
+      </div>
+      {next && (
+        <div className="next-up">
+          <span className="next-label">Prochain RDV</span>
+          <strong>{relativeTime(new Date(next.start_at))}</strong>
+          <span className="muted">{next.service_name} · {next.customer_name}{next.address ? ` · ${next.address}` : ''}</span>
+        </div>
+      )}
       <div className="toolbar">
         <button type="button" className="btn primary" onClick={() => setAdding((v) => !v)}>
           {adding ? 'Fermer' : '+ Ajouter un RDV'}
@@ -160,7 +194,14 @@ function Planning() {
       )}
       {[...groups.entries()].map(([k, list]) => (
         <div key={k} className="day-group">
-          <h3>{formatDate(new Date(list[0].start_at))}</h3>
+          <h3>
+            {k === todayKey && <span className="day-chip today">Aujourd'hui</span>}
+            {k === tomorrowKey && <span className="day-chip">Demain</span>}
+            <span>{formatDate(new Date(list[0].start_at))}</span>
+            <span className="day-sum">
+              {list.filter((b) => b.status === 'confirmed').length} RDV · {formatPrice(list.filter((b) => b.status === 'confirmed').reduce((s, b) => s + b.total_cents, 0))}
+            </span>
+          </h3>
           {list.map((b) => (
             <article key={b.id} className={`booking${b.status === 'cancelled' ? ' cancelled' : ''}`}>
               <div className="booking-time">
@@ -170,25 +211,25 @@ function Planning() {
               </div>
               <div className="booking-body">
                 <div className="booking-head">
+                  <span className="booking-svc"><ServiceIcon name={b.service_name} size={18} /></span>
                   <strong>{b.service_name}</strong>
                   <span className="tag">{b.location_type === 'home' ? 'Domicile' : 'Atelier'}</span>
                   {b.source === 'admin' && <span className="tag">Ajouté manuellement</span>}
                   {b.status === 'cancelled' && <span className="tag danger">Annulé</span>}
                 </div>
                 <div>{b.customer_name} · <a href={`tel:${b.phone.replace(/\s/g, '')}`}>{b.phone}</a>{b.email && <> · <a href={`mailto:${b.email}`}>{b.email}</a></>}</div>
-                {(b.vehicle_type || b.vehicle) && <div className="muted">{[b.vehicle_type, b.vehicle].filter(Boolean).join(' — ')}</div>}
+                {(b.vehicle_type || b.vehicle) && <div className="muted with-icon small"><VehicleIcon type={b.vehicle_type} size={16} /> {[b.vehicle_type, b.vehicle].filter(Boolean).join(' — ')}</div>}
                 {b.address && (
-                  <div>
-                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.address)}`} target="_blank" rel="noreferrer">{b.address}</a>
-                    {b.distance_km != null && <span className="muted"> · ~{b.distance_km} km</span>}
+                  <div className="addr-row">
+                    <span className="muted with-icon small"><MapPin size={16} /> {b.address}{b.distance_km != null && b.distance_km >= 1 && <> · ~{String(b.distance_km).replace('.', ',')} km</>}</span>
+                    <a className="chip-link" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.address)}`} target="_blank" rel="noreferrer"><Route size={14} /> Itinéraire</a>
                   </div>
                 )}
                 {b.notes && <div className="notes">{b.notes}</div>}
                 <div className="booking-foot">
                   <span>
-                    {formatPrice(b.price_cents)}
-                    {b.travel_fee_cents > 0 && <> + {formatPrice(b.travel_fee_cents)} déplacement</>}
-                    {' = '}<strong>{formatPrice(b.total_cents)}</strong>
+                    {b.travel_fee_cents > 0 && <>{formatPrice(b.price_cents)} + {formatPrice(b.travel_fee_cents)} déplacement = </>}
+                    <strong>{formatPrice(b.total_cents)}</strong>
                   </span>
                   {b.status === 'confirmed' && confirmId !== b.id && (
                     <button type="button" className="btn small danger" onClick={() => setConfirmId(b.id)}>Annuler</button>
@@ -488,6 +529,8 @@ function SettingsForm() {
       <fieldset className="card">
         <legend className="with-icon"><Route size={20} /> Zone d'intervention à domicile</legend>
         <p className="hint">Zone = tout ce qui est à moins de X km de la ligne entre le point A et le point B.</p>
+        <ZoneMap a={{ lat: s.zone_a_lat, lon: s.zone_a_lon, label: s.zone_a_label }} b={{ lat: s.zone_b_lat, lon: s.zone_b_lon, label: s.zone_b_label }}
+                 widthKm={s.zone_width_km} base={{ lat: s.base_lat, lon: s.base_lon }} />
         <div className="row">
           <div><label>Point A : {s.zone_a_label}</label><AddressInput value={null} placeholder="Changer le point A" onChange={point('zone_a_lat', 'zone_a_lon', 'zone_a_label')} /></div>
           <div><label>Point B : {s.zone_b_label}</label><AddressInput value={null} placeholder="Changer le point B" onChange={point('zone_b_lat', 'zone_b_lon', 'zone_b_label')} /></div>

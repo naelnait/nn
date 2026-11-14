@@ -6,7 +6,12 @@ import { bufferAfter, checkSlot, daySlots, rulesFrom } from '../lib/slots';
 import { addDays, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, sameDay, weekdayOf, zonedTime, type DayKey } from '../lib/time';
 import { BookingError, type BookingResult, type Interval, type LocationType, type PublicConfig, type Service, type TravelQuote } from '../lib/types';
 import { buildIcs, downloadIcs } from '../lib/ics';
-import { Car, CarKey, ChevronLeft, Flag, Garage, Gauge, Home, MapPin, ServiceIcon, VehicleIcon, Wheel, Wrench } from '../components/Icons';
+import { Car, CarKey, ChevronLeft, Clipboard, Flag, Garage, Gauge, Home, MapPin, Route, ServiceIcon, Spray, Stopwatch, VehicleIcon, Wheel, Wrench } from '../components/Icons';
+import { ZoneMap } from '../components/ZoneMap';
+import { DayTimeline } from '../components/DayTimeline';
+import { AnimatedPrice, Barcode, CarSilhouette } from '../components/Decor';
+import { parseHHMM } from '../lib/time';
+import type { OpeningHour } from '../lib/types';
 
 /** Build « lien de test » (page hébergée sur claude.ai) : pas de téléchargement de fichier possible. */
 const IS_TEST_LINK = import.meta.env.VITE_TEST_LINK === '1';
@@ -15,11 +20,49 @@ const STEPS = ['Prestation', 'Lieu', 'Créneau', 'Coordonnées'] as const;
 const WD = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
+const WD_LONG = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+/** « Lun – Sam · 08:30 – 18:30 » : regroupe les jours consécutifs aux horaires identiques. */
+function summarizeHours(hours: OpeningHour[]): string[] {
+  const byDay = new Map<number, string>();
+  for (let d = 1; d <= 7; d++) {
+    const r = hours.filter((h) => h.weekday === d).sort((a, b) => parseHHMM(a.open_time) - parseHHMM(b.open_time));
+    if (r.length) byDay.set(d, r.map((h) => `${h.open_time} – ${h.close_time}`).join(', '));
+  }
+  const out: string[] = [];
+  let d = 1;
+  while (d <= 7) {
+    const v = byDay.get(d);
+    if (!v) { d++; continue; }
+    let e = d;
+    while (e < 7 && byDay.get(e + 1) === v) e++;
+    out.push(`${WD_LONG[d - 1]}${e > d ? ` – ${WD_LONG[e - 1]}` : ''} · ${v.replace(/:00/g, 'h').replace(/:(\d\d)/g, 'h$1')}`);
+    d = e + 1;
+  }
+  return out;
+}
+
+/** Éléments inclus, tirés de la description de la formule. */
+function includedItems(description: string): string[] {
+  return description
+    .split(/[,+.]/)
+    .map((x) => x.trim())
+    .filter((x) => x.length > 1)
+    .map((x) => x.charAt(0).toUpperCase() + x.slice(1))
+    .slice(0, 5);
+}
+
+function shortRef(id: string): string {
+  return id.replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
 interface Confirmed extends BookingResult {
   serviceName: string;
   start: Date;
   end: Date;
   location: string;
+  isHome: boolean;
+  vehicle: string;
 }
 
 export function BookingPage() {
@@ -171,6 +214,8 @@ export function BookingPage() {
         start: slot,
         end: new Date(slot.getTime() + service.duration_min * 60_000),
         location: location === 'home' ? address?.label ?? '' : settings?.atelier_address || 'Atelier',
+        isHome: location === 'home',
+        vehicle: [form.vehicleType, form.vehicle].filter(Boolean).join(' · '),
       });
       window.scrollTo({ top: 0 });
     } catch (err) {
@@ -215,11 +260,30 @@ export function BookingPage() {
           <p className="eyebrow center"><Flag size={15} /> Réservation confirmée</p>
           <h1 className="title center">C'est réservé !</h1>
           <p className="subtitle center">{formatDate(confirmed.start)}<br />{formatTime(confirmed.start)} – {formatTime(confirmed.end)}</p>
-          <div className="sheet">
-            <Row label="Prestation" value={confirmed.serviceName} />
-            <Row label="Lieu" value={confirmed.location} />
-            {confirmed.travel_fee_cents > 0 && <Row label="Déplacement" value={formatPrice(confirmed.travel_fee_cents)} />}
-            <Row label="Total" value={formatPrice(confirmed.total_cents)} strong />
+          <div className="ticket">
+            <div className="ticket-head">
+              <span className="ticket-kicker"><Clipboard size={16} /> Bon d'intervention</span>
+              <span className="ticket-ref">N° {shortRef(confirmed.id)}</span>
+            </div>
+            <div className="ticket-body">
+              <Row label="Prestation" value={confirmed.serviceName} />
+              <Row label="Véhicule" value={confirmed.vehicle} />
+              <Row label="Lieu" value={confirmed.location} />
+              {confirmed.travel_fee_cents > 0 && <Row label="Déplacement" value={formatPrice(confirmed.travel_fee_cents)} />}
+            </div>
+            <div className="ticket-perf" aria-hidden="true" />
+            <div className="ticket-foot">
+              <div className="sheet-row strong"><span>Total à régler sur place</span><span>{formatPrice(confirmed.total_cents)}</span></div>
+              <Barcode seed={confirmed.id} />
+            </div>
+          </div>
+          <div className="prep">
+            <p className="section-label"><Wrench size={15} /> À prévoir pour le jour J</p>
+            <ul>
+              <li>Le véhicule accessible et ses clés disponibles</li>
+              {confirmed.isHome && <li>Un point d'eau et une prise électrique à proximité, si possible</li>}
+              <li>L'habitacle vidé de vos objets personnels</li>
+            </ul>
           </div>
           <p className="fine center">Paiement sur place après la prestation. Pour modifier ou annuler{settings.phone ? <>, appelez le <a href={`tel:${settings.phone.replace(/\s/g, '')}`}>{settings.phone}</a></> : ', contactez-nous'}.</p>
           <div className="stack">
@@ -260,6 +324,7 @@ export function BookingPage() {
             <span className="road-flag"><Flag size={14} /></span>
           </div>
           <span className="step-count">{step + 1}/{STEPS.length}</span>
+          <span className="step-name">{STEPS[step]}</span>
         </div>
       }
       bottom={cta && (
@@ -267,7 +332,7 @@ export function BookingPage() {
           {service && (
             <div className="bottombar-info">
               <span>{service.name}{slot ? ` · ${formatTime(slot)}` : ''}</span>
-              <strong>{formatPrice(total)}</strong>
+              <strong><AnimatedPrice cents={total} /></strong>
             </div>
           )}
           <button type="button" className="btn primary block" disabled={cta.disabled} onClick={cta.onClick}>{cta.label}</button>
@@ -278,23 +343,47 @@ export function BookingPage() {
       <div key={step} className={`pane slide-${dir}`}>
         {step === 0 && (
           <>
-            <p className="eyebrow"><Wrench size={15} /> {settings.business_name}</p>
-            <h1 className="title">Quelle prestation&nbsp;?</h1>
-            <p className="subtitle">Nettoyage et detailing auto & moto, à domicile.</p>
+            <section className="hero-card">
+              <div className="hero-copy">
+                <p className="eyebrow light"><Wrench size={15} /> {settings.business_name}</p>
+                <h1 className="title">Quelle prestation&nbsp;?</h1>
+                <p className="hero-sub">Nettoyage et detailing auto & moto, directement chez vous.</p>
+              </div>
+              <CarSilhouette />
+              <ul className="badges">
+                <li><Home size={16} /> À domicile</li>
+                <li><Route size={16} /> {settings.zone_a_label} ↔ {settings.zone_b_label}</li>
+                <li><Spray size={16} /> Paiement sur place</li>
+              </ul>
+            </section>
+            <p className="section-label plain">{config.services.length} formule{config.services.length > 1 ? 's' : ''} · prix fixes</p>
             <div className="list">
               {config.services.length === 0 && <div className="empty">Aucune prestation disponible pour le moment.</div>}
-              {config.services.map((s, i) => (
-                <button key={s.id} type="button" className={`tile${s.id === serviceId ? ' selected' : ''}`} style={{ animationDelay: `${i * 50}ms` }}
-                        aria-pressed={s.id === serviceId} onClick={() => pickService(s)}>
-                  <span className="tile-icon"><ServiceIcon name={s.name} size={26} /></span>
-                  <span className="tile-main">
-                    <span className="tile-title">{s.name}</span>
-                    {s.description && <span className="tile-sub">{s.description}</span>}
-                    <span className="chip">{formatDuration(s.duration_min)}</span>
-                  </span>
-                  <span className="tile-price">{formatPrice(s.price_cents)}</span>
-                </button>
-              ))}
+              {config.services.map((s, i) => {
+                const top = config.services.length > 1 && s.duration_min === Math.max(...config.services.map((x) => x.duration_min));
+                return (
+                  <button key={s.id} type="button" className={`tile${s.id === serviceId ? ' selected' : ''}${top ? ' featured' : ''}`} style={{ animationDelay: `${i * 60}ms` }}
+                          aria-pressed={s.id === serviceId} onClick={() => pickService(s)}>
+                    <span className="tile-icon"><ServiceIcon name={s.name} size={26} /></span>
+                    <span className="tile-main">
+                      {top && <span className="ribbon">La plus complète</span>}
+                      <span className="tile-title">{s.name}</span>
+                      <span className="tile-meta"><Stopwatch size={14} /> {formatDuration(s.duration_min)} de travail</span>
+                    </span>
+                    <span className="tile-price"><small>Prix fixe</small>{formatPrice(s.price_cents)}</span>
+                    {s.description && (
+                      <span className="tile-incl">
+                        {includedItems(s.description).map((x) => <span key={x} className="incl"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" /></svg>{x}</span>)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="info-panel">
+              <div><span className="info-icon"><Gauge size={18} /></span><div><strong>Horaires</strong>{summarizeHours(config.hours).map((l) => <span key={l}>{l}</span>)}</div></div>
+              <div><span className="info-icon"><MapPin size={18} /></span><div><strong>Zone</strong><span>{zoneText}</span></div></div>
+              <div><span className="info-icon"><Stopwatch size={18} /></span><div><strong>Réservation</strong><span>Jusqu'à {settings.max_days_ahead} jours à l'avance, au plus tard {settings.min_notice_hours} h avant.</span></div></div>
             </div>
             {settings.phone && <a className="link-row" href={`tel:${settings.phone.replace(/\s/g, '')}`}>Une question ? {settings.phone}</a>}
           </>
@@ -329,9 +418,15 @@ export function BookingPage() {
                 {quote && quote.in_zone && (
                   <div className="result-card good">
                     <strong>Adresse desservie</strong>
-                    <span>Frais de déplacement : {quote.fee_cents ? formatPrice(quote.fee_cents) : 'offerts'}</span>
+                    <span>Environ {String(quote.distance_km).replace('.', ',')} km de route · frais de déplacement : {quote.fee_cents ? formatPrice(quote.fee_cents) : 'offerts'}</span>
                   </div>
                 )}
+                <ZoneMap
+                  a={{ lat: settings.zone_a_lat, lon: settings.zone_a_lon, label: settings.zone_a_label }}
+                  b={{ lat: settings.zone_b_lat, lon: settings.zone_b_lon, label: settings.zone_b_label }}
+                  widthKm={settings.zone_width_km}
+                  point={address && quote ? { lat: address.lat, lon: address.lon, inZone: quote.in_zone } : null}
+                />
               </>
             ) : (
               <div className="result-card good"><strong>Atelier</strong><span>{settings.atelier_address || 'Adresse communiquée à la confirmation.'}</span></div>
@@ -349,16 +444,30 @@ export function BookingPage() {
             {days.every((d) => d.count === 0) ? (
               <div className="empty">Aucun créneau disponible pour le moment. Appelez-nous{settings.phone ? ` au ${settings.phone}` : ''}.</div>
             ) : (
-              <div key={day ? dayKeyString(day) : 'none'} className="slot-grid">
-                {slots.map((s, i) => (
-                  <button key={s.getTime()} type="button" style={{ animationDelay: `${Math.min(i, 12) * 20}ms` }}
-                          aria-pressed={slot?.getTime() === s.getTime()}
-                          className={`slot${slot?.getTime() === s.getTime() ? ' selected' : ''}`}
-                          onClick={() => setSlot(s)}>
-                    {formatTime(s)}
-                  </button>
-                ))}
-              </div>
+              <>
+                {day && rules && (
+                  <DayTimeline day={day} tz={settings.timezone} hours={config.hours} busy={rules.busy}
+                               selected={slot ? { start: slot, durationMin: service.duration_min, bufferMin: buffer } : null} />
+                )}
+                {[['Matin', slots.filter((x) => Number(formatTime(x).slice(0, 2)) < 12)], ['Après-midi', slots.filter((x) => Number(formatTime(x).slice(0, 2)) >= 12)]].map(([label, list]) =>
+                  (list as Date[]).length > 0 && (
+                    <div key={label as string} className="slot-group">
+                      <p className="slot-group-label">{label as string} <span>{(list as Date[]).length} créneau{(list as Date[]).length > 1 ? 'x' : ''}</span></p>
+                      <div key={day ? dayKeyString(day) : 'none'} className="slot-grid">
+                        {(list as Date[]).map((s, i) => (
+                          <button key={s.getTime()} type="button" style={{ animationDelay: `${Math.min(i, 12) * 20}ms` }}
+                                  aria-pressed={slot?.getTime() === s.getTime()}
+                                  aria-label={`${formatTime(s)} à ${formatTime(new Date(s.getTime() + service.duration_min * 60_000))}`}
+                                  className={`slot${slot?.getTime() === s.getTime() ? ' selected' : ''}`}
+                                  onClick={() => setSlot(s)}>
+                            <span className="slot-start">{formatTime(s)}</span>
+                            <span className="slot-end">→ {formatTime(new Date(s.getTime() + service.duration_min * 60_000))}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </>
             )}
             <p className="live"><i className="live-dot" /> Disponibilités en temps réel</p>
           </>
@@ -395,10 +504,20 @@ export function BookingPage() {
               <Field id="notes" label="Précisions : état, accès, point d'eau… (facultatif)">
                 <textarea id="notes" rows={3} maxLength={2000} placeholder=" " value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </Field>
-              <div className="sheet">
-                <Row label={service.name} value={formatPrice(service.price_cents)} />
-                {location === 'home' && <Row label="Déplacement" value={quote?.fee_cents ? formatPrice(quote.fee_cents) : 'Offert'} />}
-                <Row label="Total" value={formatPrice(total)} strong />
+              <div className="ticket">
+                <div className="ticket-head">
+                  <span className="ticket-kicker"><Clipboard size={16} /> Récapitulatif</span>
+                  <span className="ticket-ref">{formatTime(slot)} → {formatTime(new Date(slot.getTime() + service.duration_min * 60_000))}</span>
+                </div>
+                <div className="ticket-body">
+                  <Row label={`${service.name} · ${formatDuration(service.duration_min)}`} value={formatPrice(service.price_cents)} />
+                  {location === 'home' && <Row label={quote ? `Déplacement · ~${String(quote.distance_km).replace('.', ',')} km` : 'Déplacement'} value={quote?.fee_cents ? formatPrice(quote.fee_cents) : 'Offert'} />}
+                  {location === 'home' && address && <Row label="Adresse" value={address.label} />}
+                </div>
+                <div className="ticket-perf" aria-hidden="true" />
+                <div className="ticket-foot">
+                  <div className="sheet-row strong"><span>Total</span><span><AnimatedPrice cents={total} /></span></div>
+                </div>
               </div>
               <p className="fine">Paiement sur place après la prestation.</p>
               {submitError && <div className="result-card bad" role="alert"><span>{submitError}</span></div>}

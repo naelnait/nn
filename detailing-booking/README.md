@@ -65,6 +65,15 @@ npm run deploy
 ```
 Puis brancher le nom de domaine dans le tableau de bord Cloudflare (Workers → Settings → Domains).
 
+## Versions de l'interface
+
+| Version | Contenu | Où la retrouver |
+|---|---|---|
+| Épurée | Parcours en 4 étapes, style sobre | commit `d681514`, page autonome `versions/epuree.html` |
+| Détaillée (actuelle) | + carte de la zone, frise de la journée, créneaux matin/après-midi avec heure de fin, bon d'intervention, liste « à prévoir », indicateurs de l'espace pro | branche actuelle, page autonome `versions/detaillee.html` |
+
+Les fichiers de `versions/` sont des pages de démonstration autonomes (mode démo, communes intégrées) générées par `npm run build:test-link`.
+
 ## Tests
 
 ```bash
