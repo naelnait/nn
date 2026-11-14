@@ -2,35 +2,40 @@
 // Données : src/data/vehicles.json, généré par scripts/build_vehicle_catalog.py à partir des fichiers
 // ADEME/UTAC (data.gouv.fr) des véhicules particuliers commercialisés en France, plus un complément manuel.
 import catalog from '../data/vehicles.json';
-import type { VehicleCategory } from './types';
+import type { ServicePrice, VehicleCategory } from './types';
 
-export type CategoryCode = 'moto' | 'citadine' | 'berline' | 'suv' | 'monospace' | 'utilitaire';
+/** Quatre catégories tarifaires. Les berlines et breaks comptent comme citadines, les monospaces comme SUV. */
+export type CategoryCode = 'moto' | 'citadine' | 'suv' | 'utilitaire';
 
 const CATALOG = catalog as Record<string, Record<string, CategoryCode[]>>;
 
 export const DEFAULT_VEHICLE_CATEGORIES: VehicleCategory[] = [
-  { code: 'moto', label: 'Moto / scooter', surcharge_pct: -20, sort: 0 },
-  { code: 'citadine', label: 'Citadine', surcharge_pct: 0, sort: 1 },
-  { code: 'berline', label: 'Berline / compacte / break', surcharge_pct: 10, sort: 2 },
-  { code: 'suv', label: 'SUV / 4x4', surcharge_pct: 20, sort: 3 },
-  { code: 'monospace', label: 'Monospace / ludospace', surcharge_pct: 25, sort: 4 },
-  { code: 'utilitaire', label: 'Utilitaire / fourgon', surcharge_pct: 35, sort: 5 },
+  { code: 'moto', label: 'Moto / scooter', sort: 0 },
+  { code: 'citadine', label: 'Citadine', sort: 1 },
+  { code: 'suv', label: 'SUV / 4x4', sort: 2 },
+  { code: 'utilitaire', label: 'Utilitaire / fourgon', sort: 3 },
 ];
+
+/** Grille par défaut, en centimes. Complet : prix fournis ; Intérieur et Extérieur : même écart entre catégories. */
+export const DEFAULT_PRICE_GRID: Record<string, Record<CategoryCode, number>> = {
+  Complet: { moto: 7000, citadine: 14900, suv: 16500, utilitaire: 18900 },
+  'Intérieur': { moto: 3800, citadine: 8000, suv: 8900, utilitaire: 10100 },
+  'Extérieur': { moto: 3300, citadine: 7000, suv: 7800, utilitaire: 8900 },
+};
 
 /** Exemples affichés sous chaque catégorie. */
 export const CATEGORY_EXAMPLES: Record<string, string> = {
   moto: 'Roadster, sportive, trail, scooter',
-  citadine: 'Clio, 208, C3, Polo, Yaris, Twingo',
-  berline: 'Golf, 308, Mégane, Série 3, Octavia break',
-  suv: '3008, Captur, Tiguan, Duster, Model Y',
-  monospace: 'Scénic, Touran, Kangoo et Berlingo en version voiture',
+  citadine: 'Clio, 208, C3, Golf, 308, berlines et breaks',
+  suv: '3008, Captur, Duster, Model Y, monospaces',
   utilitaire: 'Trafic, Transit, Sprinter, Master, Kangoo Van',
 };
 
 /** Marques de deux-roues proposées (modèle en saisie libre). */
 export const MOTO_BRANDS = [
-  'Aprilia', 'BMW Motorrad', 'Ducati', 'Harley-Davidson', 'Honda', 'Husqvarna', 'Kawasaki', 'KTM', 'Kymco',
-  'MV Agusta', 'Peugeot Motocycles', 'Piaggio', 'Royal Enfield', 'Suzuki', 'Sym', 'Triumph', 'Vespa', 'Yamaha',
+  'Aprilia', 'Benelli', 'BMW Motorrad', 'Brixton', 'CFMoto', 'Ducati', 'Harley-Davidson', 'Honda', 'Husqvarna',
+  'Kawasaki', 'KTM', 'Kymco', 'Mash', 'Moto Guzzi', 'MV Agusta', 'Niu', 'Peugeot Motocycles', 'Piaggio', 'QJMotor',
+  'Royal Enfield', 'Silence', 'Super Soco', 'Suzuki', 'Sym', 'Triumph', 'Vespa', 'Voge', 'Yadea', 'Yamaha', 'Zontes',
 ];
 
 /** Clé de comparaison identique à public.vehicle_key côté serveur. */
@@ -73,12 +78,17 @@ export function lookupVehicle(brand: string, model: string): CategoryCode[] | nu
 
 /** Même nom vendu en version voiture (VP) et camionnette (CTTE) : la carte grise tranche. */
 export function needsGenre(cats: CategoryCode[] | null): boolean {
-  return !!cats && cats.includes('monospace') && cats.includes('utilitaire');
+  return !!cats && cats.includes('utilitaire') && cats.length > 1;
 }
 
-/** Prix d'une formule pour une catégorie : majoration puis arrondi à l'euro (comme le serveur). */
-export function vehiclePrice(baseCents: number, pct: number): number {
-  return Math.round((baseCents * (100 + pct)) / 100 / 100) * 100;
+/** Catégorie correspondant au genre de la carte grise (CTTE -> utilitaire, VP -> l'autre catégorie). */
+export function categoryForGenre(cats: CategoryCode[], genre: 'VP' | 'CTTE'): CategoryCode {
+  return genre === 'CTTE' ? 'utilitaire' : cats.find((c) => c !== 'utilitaire') ?? 'citadine';
+}
+
+/** Prix d'une formule pour une catégorie (grille), sinon prix de la formule. */
+export function gridPrice(prices: ServicePrice[], serviceId: string, category: string | null, fallback: number): number {
+  return prices.find((p) => p.service_id === serviceId && p.category === category)?.price_cents ?? fallback;
 }
 
 /** Recherche dans une liste (début de mot prioritaire), insensible aux accents. */
@@ -104,7 +114,7 @@ export function resolveCategory(
     return { category: chosen && chosen !== 'moto' ? chosen : null, allowed: null, known: false, needsGenre: false };
   }
   if (needsGenre(cats)) {
-    return { category: genre ? (genre === 'CTTE' ? 'utilitaire' : 'monospace') : null, allowed: cats, known: true, needsGenre: true };
+    return { category: genre ? categoryForGenre(cats, genre) : null, allowed: cats, known: true, needsGenre: true };
   }
   return { category: cats.includes(chosen as CategoryCode) ? chosen : cats[0], allowed: cats, known: true, needsGenre: false };
 }

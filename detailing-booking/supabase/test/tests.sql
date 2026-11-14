@@ -103,12 +103,12 @@ begin
   end if;
   if jsonb_array_length(c->'services') <> 3 then raise exception 'ÉCHEC: 3 formules attendues'; end if;
 end $$;
--- 17. Devis de déplacement Versailles depuis Rambouillet : ~27 km x 1.3 = ~35 km
+-- 17. Devis de déplacement Versailles depuis Gas : ~42,5 km x 1,3 = 55,2 km -> (55,2 - 10) x 0,50 € = 22,60 € -> 23 €
 do $$
 declare q jsonb := public.quote_travel(48.8049, 2.1204);
 begin
   if not (q->>'in_zone')::boolean then raise exception 'ÉCHEC: Versailles devrait être dans la zone'; end if;
-  if (q->>'fee_cents')::int <> 1400 or (q->>'distance_km')::numeric <> 36.2 then
+  if (q->>'fee_cents')::int <> 2300 or (q->>'distance_km')::numeric <> 55.2 then
     raise exception 'ÉCHEC: frais inattendus %', q;
   end if;
   if (public.quote_travel(48.1173, -1.6778)->>'in_zone')::boolean then
@@ -173,38 +173,44 @@ do $$ begin
 exception when exclusion_violation then null;
 end $$;
 
--- 24. Tarification par véhicule (Complet = 190 €)
+-- 24. Grille de prix par véhicule (Complet : moto 70, citadine 149, SUV 165, utilitaire 189)
 set role anon;
 do $$
-declare cit int; ber int; suv int; uti int; moto int;
+declare cit int; ber int; suv int; mono int; uti int; moto int; inte int;
 begin
   cit  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '2 days'));
-  ber  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '3 days', cat => 'berline', brand => 'Volkswagen', model => 'Golf'));
+  ber  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '3 days', brand => 'Volkswagen', model => 'Golf'));
   suv  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '4 days', cat => 'suv', brand => 'peugeot', model => ' 3008 '));
   uti  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '5 days', cat => 'utilitaire', brand => 'Renault', model => 'Trafic'));
   moto := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '9 days', cat => 'moto', brand => 'Yamaha', model => 'MT-07'));
-  if cit <> 19000 then raise exception 'ÉCHEC: citadine % au lieu de 19000', cit; end if;
-  if ber <> 20900 then raise exception 'ÉCHEC: berline % au lieu de 20900', ber; end if;
-  if suv <> 22800 then raise exception 'ÉCHEC: SUV % au lieu de 22800', suv; end if;
-  if uti <> 25700 then raise exception 'ÉCHEC: utilitaire % au lieu de 25700 (256,50 € arrondi)', uti; end if;
-  if moto <> 15200 then raise exception 'ÉCHEC: moto % au lieu de 15200', moto; end if;
-  if not (uti > suv and suv > cit) then raise exception 'ÉCHEC: ordre utilitaire > SUV > citadine non respecté'; end if;
+  mono := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '10 days', cat => 'suv', brand => 'Renault', model => 'Scenic'));
+  inte := pg_temp.price_of(pg_temp.book('Intérieur', pg_temp.monday(8, 30) + interval '11 days', cat => 'utilitaire', brand => 'Ford', model => 'Transit'));
+  if cit <> 14900 then raise exception 'ÉCHEC: citadine % au lieu de 14900', cit; end if;
+  if ber <> 14900 then raise exception 'ÉCHEC: une berline (Golf) compte comme citadine : % au lieu de 14900', ber; end if;
+  if suv <> 16500 then raise exception 'ÉCHEC: SUV % au lieu de 16500', suv; end if;
+  if uti <> 18900 then raise exception 'ÉCHEC: utilitaire % au lieu de 18900', uti; end if;
+  if moto <> 7000 then raise exception 'ÉCHEC: moto % au lieu de 7000', moto; end if;
+  if mono <> 16500 then raise exception 'ÉCHEC: un monospace (Scénic) compte comme SUV : % au lieu de 16500', mono; end if;
+  if inte <> 10100 then raise exception 'ÉCHEC: Intérieur utilitaire % au lieu de 10100', inte; end if;
 end $$;
+-- Seules 4 catégories existent
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'berline', brand => 'Volkswagen', model => 'Golf'), 'INVALID_INPUT');
 -- 25. Contrôles du véhicule
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'citadine', brand => 'Peugeot', model => '3008'), 'VEHICLE_MISMATCH');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'citadine', brand => 'Renault', model => 'Trafic'), 'VEHICLE_MISMATCH');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', brand => 'Renault', model => ''), 'VEHICLE_REQUIRED');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', brand => '', model => 'Clio'), 'VEHICLE_REQUIRED');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'inconnue'), 'INVALID_INPUT');
--- Kangoo : version voiture (VP) ou camionnette (CTTE) selon la carte grise
-select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'monospace', brand => 'Renault', model => 'Kangoo'), 'VEHICLE_GENRE_REQUIRED');
-select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'monospace', brand => 'Renault', model => 'Kangoo', genre => 'CTTE'), 'VEHICLE_MISMATCH');
+-- Kangoo : version voiture (VP -> SUV) ou camionnette (CTTE -> utilitaire) selon la carte grise
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'suv', brand => 'Renault', model => 'Kangoo'), 'VEHICLE_GENRE_REQUIRED');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'suv', brand => 'Renault', model => 'Kangoo', genre => 'CTTE'), 'VEHICLE_MISMATCH');
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'utilitaire', brand => 'Renault', model => 'Kangoo', genre => 'CTTE'), null);
-select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '3 days', cat => 'monospace', brand => 'Citroen', model => 'Berlingo', genre => 'VP'), null);
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '3 days', cat => 'suv', brand => 'Citroen', model => 'Berlingo', genre => 'VP'), null);
 -- Accents et casse : « citroën  c3 » est reconnu comme CITROEN C3 (citadine), donc contrôlé
 select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'utilitaire', brand => 'citroën', model => '  c3 '), 'VEHICLE_MISMATCH');
--- Clio : citadine ou break (berline) admis
-select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'berline', brand => 'Renault', model => 'Clio'), null);
+-- Marques chinoises et modèles anciens reconnus
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'BYD', model => 'Atto 3'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'citadine', brand => 'Peugeot', model => '206'), null);
 reset role;
 do $$ begin
   if (select vehicle_verified from public.bookings where vehicle_model = 'MT-07') then
@@ -216,8 +222,14 @@ do $$ begin
   if (select vehicle from public.bookings where vehicle_model = '3008') <> 'PEUGEOT 3008' then
     raise exception 'ÉCHEC: marque/modèle mal enregistrés';
   end if;
-  if (select price_cents from public.services where name = 'Complet') <> 19000 then
-    raise exception 'ÉCHEC: le Complet doit valoir 190 €';
+  if (select price_cents from public.services where name = 'Complet') <> 14900 then
+    raise exception 'ÉCHEC: le Complet citadine doit valoir 149 €';
+  end if;
+  if (select count(*) from public.vehicle_categories) <> 4 then
+    raise exception 'ÉCHEC: 4 catégories attendues';
+  end if;
+  if (select base_lat from public.settings) <> 48.566873 then
+    raise exception 'ÉCHEC: point de départ attendu à Gas';
   end if;
 end $$;
 

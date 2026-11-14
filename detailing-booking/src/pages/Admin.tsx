@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { backend } from '../lib/backend';
 import { AddressInput } from '../components/AddressInput';
 import type { AddressSuggestion } from '../lib/geocode';
-import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type Settings, type VehicleCategory } from '../lib/types';
+import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type ServicePrice, type Settings, type VehicleCategory } from '../lib/types';
 import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, CategoryIcon, ServiceIcon, Spray, Stopwatch, Wrench } from '../components/Icons';
 import { ZoneMap } from '../components/ZoneMap';
 import { Combo } from '../components/Combo';
-import { CAR_BRANDS, DEFAULT_VEHICLE_CATEGORIES, displayBrand, displayModel, lookupVehicle, modelsOf, vehicleKey, vehiclePrice } from '../lib/vehicles';
+import { CAR_BRANDS, DEFAULT_VEHICLE_CATEGORIES, displayBrand, displayModel, lookupVehicle, modelsOf, vehicleKey } from '../lib/vehicles';
 import { TZ, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, zonedTime } from '../lib/time';
 
 type Tab = 'planning' | 'closures' | 'services' | 'hours' | 'settings';
@@ -239,9 +239,6 @@ function Planning() {
                 {b.notes && <div className="notes">{b.notes}</div>}
                 <div className="booking-foot">
                   <span>
-                    {b.base_price_cents != null && b.vehicle_surcharge_pct !== 0 && (
-                      <span className="muted">{formatPrice(b.base_price_cents)} {b.vehicle_surcharge_pct > 0 ? '+' : '−'} {Math.abs(b.vehicle_surcharge_pct)} % → </span>
-                    )}
                     {b.travel_fee_cents > 0 && <>{formatPrice(b.price_cents)} + {formatPrice(b.travel_fee_cents)} déplacement = </>}
                     <strong>{formatPrice(b.total_cents)}</strong>
                   </span>
@@ -344,7 +341,7 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
           <label htmlFor="m-cat">Catégorie tarifaire</label>
           <select id="m-cat" value={f.category || lookupVehicle(f.brand, f.model)?.[0] || ''} onChange={(e) => setF({ ...f, category: e.target.value })}>
             <option value="">À choisir</option>
-            {cats.map((c) => <option key={c.code} value={c.code}>{c.label} ({c.surcharge_pct > 0 ? '+' : ''}{c.surcharge_pct} %)</option>)}
+            {cats.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
           </select>
         </div>
       </div>
@@ -435,7 +432,7 @@ function Services() {
         }}>
           <div className="row">
             <div><label>Nom</label><input required value={s.name} onChange={(e) => update(i, { name: e.target.value })} /></div>
-            <div><label>Prix (€)</label><input type="number" min={0} step={1} required value={s.price_cents / 100}
+            <div><label>Prix de référence (€)</label><input type="number" min={0} step={1} required value={s.price_cents / 100}
                    onChange={(e) => update(i, { price_cents: Math.round(Number(e.target.value) * 100) })} /></div>
             <div><label>Durée (min)</label><input type="number" min={15} max={720} step={15} required value={s.duration_min}
                    onChange={(e) => update(i, { duration_min: Number(e.target.value) })} /></div>
@@ -462,34 +459,46 @@ function Services() {
 
 function VehicleTariffs({ services }: { services: Service[] }) {
   const [cats, setCats] = useState<VehicleCategory[]>([]);
+  const [prices, setPrices] = useState<ServicePrice[]>([]);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  useEffect(() => { backend.listVehicleCategories().then(setCats, (e) => setMsg({ ok: false, text: errMsg(e) })); }, []);
-  const set = (code: string, pct: number) => setCats((l) => l.map((c) => (c.code === code ? { ...c, surcharge_pct: pct } : c)));
+  useEffect(() => {
+    Promise.all([backend.listVehicleCategories(), backend.listServicePrices()]).then(
+      ([c, p]) => { setCats(c); setPrices(p); },
+      (e) => setMsg({ ok: false, text: errMsg(e) }),
+    );
+  }, []);
+  const get = (sid: string, code: string) => prices.find((p) => p.service_id === sid && p.category === code)?.price_cents;
+  const set = (sid: string, code: string, euros: number) =>
+    setPrices((l) => [...l.filter((p) => !(p.service_id === sid && p.category === code)), { service_id: sid, category: code, price_cents: Math.round(euros * 100) }]);
   return (
     <form className="card form" onSubmit={async (e) => {
       e.preventDefault();
-      try { await backend.saveVehicleCategories(cats); setMsg({ ok: true, text: 'Tarifs par véhicule enregistrés.' }); } catch (err) { setMsg({ ok: false, text: errMsg(err) }); }
+      try { await backend.saveServicePrices(prices); setMsg({ ok: true, text: 'Grille de prix enregistrée.' }); } catch (err) { setMsg({ ok: false, text: errMsg(err) }); }
     }}>
-      <h3 className="with-icon"><CategoryIcon code="utilitaire" size={20} /> Tarifs selon le véhicule</h3>
-      <p className="hint">Majoration appliquée au prix de chaque formule, arrondie à l'euro. La citadine sert de référence.</p>
+      <h3 className="with-icon"><CategoryIcon code="utilitaire" size={20} /> Prix selon le véhicule</h3>
+      <p className="hint">Prix en euros de chaque formule pour chaque catégorie. Case vide : prix de la formule ci-dessus. Les RDV déjà pris gardent leur prix.</p>
       <div className="tariff-table" role="table">
         <div className="tariff-row head" role="row">
-          <span role="columnheader">Catégorie</span><span role="columnheader">Majoration</span>
+          <span role="columnheader">Catégorie</span>
           {services.map((s) => <span key={s.id} role="columnheader">{s.name}</span>)}
         </div>
         {cats.map((c) => (
           <div key={c.code} className="tariff-row" role="row">
             <span role="cell" className="with-icon small"><CategoryIcon code={c.code} size={16} /> {c.label}</span>
-            <span role="cell" className="pct-input">
-              <input type="number" min={-90} max={300} step={5} value={c.surcharge_pct} aria-label={`Majoration ${c.label}`}
-                     onChange={(e) => set(c.code, Math.round(Number(e.target.value)))} /> %
-            </span>
-            {services.map((s) => <span key={s.id} role="cell" className="num">{formatPrice(vehiclePrice(s.price_cents, c.surcharge_pct))}</span>)}
+            {services.map((s) => {
+              const v = get(s.id, c.code);
+              return (
+                <span key={s.id} role="cell" className="pct-input">
+                  <input type="number" min={0} step={1} value={v != null ? v / 100 : ''} placeholder={String(s.price_cents / 100)}
+                         aria-label={`${s.name}, ${c.label}`} onChange={(e) => set(s.id, c.code, Number(e.target.value))} /> €
+                </span>
+              );
+            })}
           </div>
         ))}
       </div>
       {msg && <p className={`alert ${msg.ok ? 'ok' : 'error'}`}>{msg.text}</p>}
-      <button type="submit" className="btn primary">Enregistrer les tarifs</button>
+      <button type="submit" className="btn primary">Enregistrer la grille</button>
     </form>
   );
 }

@@ -51,9 +51,14 @@ export type PublicSettings = Omit<Settings, PrivateSettingKey>;
 export interface VehicleCategory {
   code: string;
   label: string;
-  /** Majoration du prix de la formule, en % (négative possible). */
-  surcharge_pct: number;
   sort: number;
+}
+
+/** Prix d'une formule pour une catégorie de véhicule. */
+export interface ServicePrice {
+  service_id: string;
+  category: string;
+  price_cents: number;
 }
 
 export interface PublicConfig {
@@ -61,6 +66,7 @@ export interface PublicConfig {
   services: Service[];
   hours: OpeningHour[];
   vehicle_categories: VehicleCategory[];
+  prices: ServicePrice[];
 }
 
 export interface Interval {

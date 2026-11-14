@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Backend } from './types';
-import { BookingError, ERROR_MESSAGES, type Booking, type BookingErrorCode, type Closure, type Service, type Settings, type VehicleCategory } from '../types';
+import { BookingError, ERROR_MESSAGES, type Booking, type BookingErrorCode, type Closure, type Service, type ServicePrice, type Settings, type VehicleCategory } from '../types';
 
 function asBookingError(err: { message: string } | null): Error | null {
   if (!err) return null;
@@ -125,11 +125,15 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
     },
 
     async listVehicleCategories() {
-      return check(await sb.from('vehicle_categories').select('code, label, surcharge_pct, sort').order('sort')) as VehicleCategory[];
+      return check(await sb.from('vehicle_categories').select('code, label, sort').eq('active', true).order('sort')) as VehicleCategory[];
     },
 
-    async saveVehicleCategories(list) {
-      check(await sb.from('vehicle_categories').upsert(list.map(({ code, label, surcharge_pct, sort }) => ({ code, label, surcharge_pct, sort }))));
+    async listServicePrices() {
+      return check(await sb.from('service_prices').select('service_id, category, price_cents')) as ServicePrice[];
+    },
+
+    async saveServicePrices(list) {
+      check(await sb.from('service_prices').upsert(list));
     },
 
     async listHours() {

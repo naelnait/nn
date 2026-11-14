@@ -596,7 +596,7 @@ button { font: inherit; color: inherit; }
 .tag.warn { background: var(--warn-soft); color: var(--warn); }
 .veh-row { align-items: end; }
 .tariff-table { display: grid; gap: 2px; margin-top: 8px; overflow-x: auto; }
-.tariff-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) 110px repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); min-width: 520px; }
+.tariff-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) repeat(3, minmax(110px, 1fr)); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); min-width: 520px; }
 .tariff-row.head { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .tariff-row .num { font-variant-numeric: tabular-nums; font-weight: 600; }
 .pct-input { display: inline-flex; align-items: center; gap: 6px; }

@@ -1,4 +1,4 @@
-import type { Booking, BookingInput, BookingResult, Closure, Interval, OpeningHour, PublicConfig, Service, Settings, TravelQuote, VehicleCategory } from '../types';
+import type { Booking, BookingInput, BookingResult, Closure, Interval, OpeningHour, PublicConfig, Service, ServicePrice, Settings, TravelQuote, VehicleCategory } from '../types';
 
 export interface Backend {
   mode: 'demo' | 'supabase';
@@ -23,7 +23,8 @@ export interface Backend {
   listServices(): Promise<Service[]>;
   saveService(s: Service): Promise<void>;
   listVehicleCategories(): Promise<VehicleCategory[]>;
-  saveVehicleCategories(list: VehicleCategory[]): Promise<void>;
+  listServicePrices(): Promise<ServicePrice[]>;
+  saveServicePrices(list: ServicePrice[]): Promise<void>;
   listHours(): Promise<OpeningHour[]>;
   saveHours(hours: OpeningHour[]): Promise<void>;
 }

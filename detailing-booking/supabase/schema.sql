@@ -37,9 +37,9 @@ create table if not exists public.settings (
   zone_b_lat         double precision not null default 48.4439,
   zone_b_lon         double precision not null default 1.4890,
   zone_width_km      double precision not null default 20 check (zone_width_km > 0),
-  -- Point de départ du pro (privé, jamais exposé aux clients)
-  base_lat           double precision not null default 48.6436,
-  base_lon           double precision not null default 1.8296,
+  -- Point de départ du pro (privé, jamais exposé aux clients) : rue de la République, 28320 Gas
+  base_lat           double precision not null default 48.566873,
+  base_lon           double precision not null default 1.667562,
   -- Frais de déplacement = fixe + (distance aller estimée - km offerts) x tarif/km
   fee_fixed_cents    int     not null default 0    check (fee_fixed_cents >= 0),
   fee_per_km_cents   int     not null default 50   check (fee_per_km_cents >= 0),
@@ -47,6 +47,9 @@ create table if not exists public.settings (
   road_factor        double precision not null default 1.3 check (road_factor >= 1)
 );
 insert into public.settings (id) values (1) on conflict (id) do nothing;
+-- Point de départ réel (ne remplace que l'ancienne valeur par défaut)
+update public.settings set base_lat = 48.566873, base_lon = 1.667562
+where id = 1 and base_lat = 48.6436 and base_lon = 1.8296;
 
 create table if not exists public.services (
   id           uuid primary key default gen_random_uuid(),
@@ -76,7 +79,8 @@ create table if not exists public.closures (
   check (ends_at > starts_at)
 );
 
--- Catégories de véhicule et majoration du prix de la formule (en %, peut être négative)
+-- Catégories tarifaires de véhicule (moto, citadine, suv, utilitaire).
+-- surcharge_pct n'est plus utilisée : les prix sont fixés formule par formule dans service_prices.
 create table if not exists public.vehicle_categories (
   code          text primary key,
   label         text not null,
@@ -92,6 +96,14 @@ create table if not exists public.vehicle_catalog (
   model      text not null,
   categories text[] not null,
   primary key (brand, model)
+);
+
+-- Prix d'une formule pour une catégorie de véhicule. Sans ligne : prix de la formule (services.price_cents).
+create table if not exists public.service_prices (
+  service_id  uuid not null references public.services(id) on delete cascade,
+  category    text not null references public.vehicle_categories(code) on delete cascade,
+  price_cents int  not null check (price_cents >= 0),
+  primary key (service_id, category)
 );
 
 create table if not exists public.bookings (
@@ -154,21 +166,34 @@ insert into public.services (name, description, duration_min, price_cents, sort)
 select * from (values
   ('Intérieur',  'Aspiration, sièges, plastiques, vitres intérieures.', 150, 8000,  1),
   ('Extérieur',  'Lavage, décontamination, jantes, protection.',       150, 7000,  2),
-  ('Complet',    'Intérieur + extérieur.',                              270, 19000, 3)
+  ('Complet',    'Intérieur + extérieur.',                              270, 14900, 3)
 ) as v(name, description, duration_min, price_cents, sort)
 where not exists (select 1 from public.services);
 
--- Passage du Complet de 140 € à 190 € (ne touche pas un prix déjà modifié à la main)
-update public.services set price_cents = 19000 where name = 'Complet' and price_cents = 14000;
+-- Prix de référence du Complet (citadine) : 149 € (ne touche pas un prix déjà modifié à la main)
+update public.services set price_cents = 14900 where name = 'Complet' and price_cents in (14000, 19000);
 
-insert into public.vehicle_categories (code, label, surcharge_pct, sort) values
-  ('moto',       'Moto / scooter',        -20, 0),
-  ('citadine',   'Citadine',                0, 1),
-  ('berline',    'Berline / compacte / break', 10, 2),
-  ('suv',        'SUV / 4x4',              20, 3),
-  ('monospace',  'Monospace / ludospace',  25, 4),
-  ('utilitaire', 'Utilitaire / fourgon',   35, 5)
-on conflict (code) do nothing;
+-- Quatre catégories seulement : berlines et breaks comptent comme citadines, monospaces comme SUV
+delete from public.vehicle_categories where code in ('berline', 'monospace');
+insert into public.vehicle_categories (code, label, sort) values
+  ('moto',       'Moto / scooter',       0),
+  ('citadine',   'Citadine',             1),
+  ('suv',        'SUV / 4x4',            2),
+  ('utilitaire', 'Utilitaire / fourgon', 3)
+on conflict (code) do update set label = excluded.label, sort = excluded.sort;
+update public.vehicle_categories set surcharge_pct = 0;
+
+-- Grille de prix par défaut. Complet : prix fournis. Intérieur et Extérieur : même écart entre
+-- catégories que le Complet, à partir de 80 € et 70 € pour une citadine.
+insert into public.service_prices (service_id, category, price_cents)
+select s.id, p.category, p.price_cents
+from public.services s
+join (values
+  ('Complet',   'moto', 7000), ('Complet',   'citadine', 14900), ('Complet',   'suv', 16500), ('Complet',   'utilitaire', 18900),
+  ('Intérieur', 'moto', 3800), ('Intérieur', 'citadine',  8000), ('Intérieur', 'suv',  8900), ('Intérieur', 'utilitaire', 10100),
+  ('Extérieur', 'moto', 3300), ('Extérieur', 'citadine',  7000), ('Extérieur', 'suv',  7800), ('Extérieur', 'utilitaire',  8900)
+) as p(service_name, category, price_cents) on p.service_name = s.name
+on conflict (service_id, category) do nothing;
 
 insert into public.opening_hours (weekday, open_time, close_time)
 select d, time '08:30', time '18:30' from generate_series(1, 6) as d
@@ -248,9 +273,11 @@ language sql stable security definer set search_path = public as $$
                  from public.settings s where id = 1),
     'services', coalesce((select jsonb_agg(to_jsonb(v) order by v.sort, v.name)
                           from public.services v where v.active), '[]'::jsonb),
-    'vehicle_categories', coalesce((select jsonb_agg(jsonb_build_object(
-                            'code', c.code, 'label', c.label, 'surcharge_pct', c.surcharge_pct, 'sort', c.sort)
+    'vehicle_categories', coalesce((select jsonb_agg(jsonb_build_object('code', c.code, 'label', c.label, 'sort', c.sort)
                           order by c.sort) from public.vehicle_categories c where c.active), '[]'::jsonb),
+    'prices',   coalesce((select jsonb_agg(jsonb_build_object(
+                            'service_id', p.service_id, 'category', p.category, 'price_cents', p.price_cents))
+                          from public.service_prices p join public.services v on v.id = p.service_id and v.active), '[]'::jsonb),
     'hours',    coalesce((select jsonb_agg(jsonb_build_object(
                             'weekday', h.weekday,
                             'open_time', to_char(h.open_time, 'HH24:MI'),
@@ -290,10 +317,13 @@ language sql immutable as $$
     'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN')), '\s+', ' ', 'g'));
 $$;
 
--- Prix d'une formule pour une catégorie : majoration appliquée puis arrondi à l'euro.
-create or replace function public.vehicle_price_cents(p_base int, p_pct int) returns int
-language sql immutable as $$
-  select (round(p_base * (100 + p_pct) / 100.0 / 100.0) * 100)::int;
+-- Prix d'une formule pour une catégorie de véhicule (grille service_prices, sinon prix de la formule).
+drop function if exists public.vehicle_price_cents(int, int);
+create or replace function public.vehicle_price_cents(p_service_id uuid, p_category text) returns int
+language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select price_cents from public.service_prices where service_id = p_service_id and category = p_category),
+    (select price_cents from public.services where id = p_service_id));
 $$;
 
 -- Ancienne signature (avant la tarification par véhicule)
@@ -378,19 +408,20 @@ begin
   end if;
   select categories into v_cats from public.vehicle_catalog where brand = p_vehicle_brand and model = p_vehicle_model;
   if v_cats is not null and not p_admin then
-    if 'monospace' = any(v_cats) and 'utilitaire' = any(v_cats) then
+    if 'utilitaire' = any(v_cats) and cardinality(v_cats) > 1 then
       -- Même nom en version voiture (VP) et camionnette (CTTE) : la carte grise tranche (case J.1)
       if p_vehicle_genre = '' then
         raise exception 'VEHICLE_GENRE_REQUIRED';
       end if;
-      if p_vehicle_category <> (case p_vehicle_genre when 'CTTE' then 'utilitaire' else 'monospace' end) then
+      if p_vehicle_category <> (case p_vehicle_genre when 'CTTE' then 'utilitaire'
+                                else (select c from unnest(v_cats) c where c <> 'utilitaire' limit 1) end) then
         raise exception 'VEHICLE_MISMATCH';
       end if;
     elsif not (p_vehicle_category = any(v_cats)) then
       raise exception 'VEHICLE_MISMATCH';
     end if;
   end if;
-  v_price := public.vehicle_price_cents(v.price_cents, vc.surcharge_pct);
+  v_price := public.vehicle_price_cents(v.id, vc.code);
 
   -- Lieu et frais de déplacement
   if p_location = 'home' then
@@ -459,7 +490,7 @@ begin
       p_vehicle_model, p_vehicle_genre, v_cats is not null, coalesce(p_address, ''),
       case when p_location = 'home' then p_lat end,
       case when p_location = 'home' then p_lon end,
-      v_dist, v.price_cents, vc.surcharge_pct, v_price, v_fee, v_price + v_fee, coalesce(p_notes, ''),
+      v_dist, v.price_cents, 0, v_price, v_fee, v_price + v_fee, coalesce(p_notes, ''),
       case when p_admin then 'admin' else 'online' end
     ) returning id into v_id;
   exception when exclusion_violation then
@@ -516,6 +547,10 @@ drop trigger if exists services_notify on public.services;
 create trigger services_notify after insert or update or delete on public.services
   for each statement execute function public.notify_availability();
 
+drop trigger if exists service_prices_notify on public.service_prices;
+create trigger service_prices_notify after insert or update or delete on public.service_prices
+  for each statement execute function public.notify_availability();
+
 drop trigger if exists vehicle_categories_notify on public.vehicle_categories;
 create trigger vehicle_categories_notify after insert or update or delete on public.vehicle_categories
   for each statement execute function public.notify_availability();
@@ -536,6 +571,7 @@ alter table public.bookings      enable row level security;
 alter table public.admins        enable row level security;
 alter table public.vehicle_categories enable row level security;
 alter table public.vehicle_catalog    enable row level security;
+alter table public.service_prices     enable row level security;
 
 drop policy if exists admin_all on public.settings;
 create policy admin_all on public.settings      for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -549,13 +585,15 @@ drop policy if exists admin_all on public.bookings;
 create policy admin_all on public.bookings      for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_all on public.vehicle_categories;
 create policy admin_all on public.vehicle_categories for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists admin_all on public.service_prices;
+create policy admin_all on public.service_prices     for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_all on public.vehicle_catalog;
 create policy admin_all on public.vehicle_catalog    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_self on public.admins;
 create policy admin_self on public.admins       for select to authenticated using (user_id = auth.uid());
 
 revoke all on all tables in schema public from anon;
-grant select, insert, update, delete on public.vehicle_categories, public.vehicle_catalog to authenticated;
+grant select, insert, update, delete on public.vehicle_categories, public.vehicle_catalog, public.service_prices to authenticated;
 grant select, insert, update, delete on public.settings, public.services, public.opening_hours,
   public.closures, public.bookings to authenticated;
 grant select on public.admins to authenticated;

@@ -11,7 +11,7 @@ import { ZoneMap } from '../components/ZoneMap';
 import { DayTimeline } from '../components/DayTimeline';
 import { AnimatedPrice, Barcode, CarSilhouette } from '../components/Decor';
 import { Combo } from '../components/Combo';
-import { CAR_BRANDS, CATEGORY_EXAMPLES, MOTO_BRANDS, displayBrand, displayModel, modelsOf, resolveCategory, vehicleKey, vehiclePrice } from '../lib/vehicles';
+import { CAR_BRANDS, CATEGORY_EXAMPLES, MOTO_BRANDS, displayBrand, displayModel, gridPrice, modelsOf, resolveCategory, vehicleKey } from '../lib/vehicles';
 import { parseHHMM } from '../lib/time';
 import type { OpeningHour, VehicleCategory } from '../lib/types';
 
@@ -185,11 +185,8 @@ export function BookingPage() {
   const category = config?.vehicle_categories.find((c) => c.code === vehicleCategory) ?? null;
   const vehicleReady = veh.brand.trim().length > 0 && veh.model.trim().length > 0 && !!category;
   const vehicleName = `${vehRes.known ? displayBrand(vehicleKey(veh.brand)) : veh.brand.trim()} ${vehRes.known ? displayModel(vehicleKey(veh.model)) : veh.model.trim()}`;
-  const priceFor = (base: number, code: string | null) => {
-    const c = config?.vehicle_categories.find((x) => x.code === code);
-    return c ? vehiclePrice(base, c.surcharge_pct) : base;
-  };
-  const servicePrice = service ? priceFor(service.price_cents, vehicleCategory) : 0;
+  const priceFor = (s: { id: string; price_cents: number }, code: string | null) => gridPrice(config?.prices ?? [], s.id, code, s.price_cents);
+  const servicePrice = service ? priceFor(service, vehicleCategory) : 0;
 
   const go = (n: number) => {
     setDir(n > step ? 'fwd' : 'back');
@@ -391,7 +388,7 @@ export function BookingPage() {
                       <span className="tile-title">{s.name}</span>
                       <span className="tile-meta"><Stopwatch size={14} /> {formatDuration(s.duration_min)} de travail</span>
                     </span>
-                    <span className="tile-price"><small>Citadine</small>{formatPrice(priceFor(s.price_cents, 'citadine'))}</span>
+                    <span className="tile-price"><small>Citadine</small>{formatPrice(priceFor(s, 'citadine'))}</span>
                     {s.description && (
                       <span className="tile-incl">
                         {includedItems(s.description).map((x) => <span key={x} className="incl"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" /></svg>{x}</span>)}
@@ -459,7 +456,7 @@ export function BookingPage() {
                   <>
                     <p className="section-label plain">Ce modèle existe en plusieurs carrosseries : laquelle est la vôtre&nbsp;?</p>
                     <CategoryPicker list={carCategories.filter((c) => vehRes.allowed!.includes(c.code))} value={vehicleCategory}
-                                    base={service.price_cents} onPick={(code) => setVeh({ ...veh, chosen: code })} />
+                                    price={(code) => priceFor(service, code)} onPick={(code) => setVeh({ ...veh, chosen: code })} />
                   </>
                 )}
                 {!vehRes.known && (
@@ -468,7 +465,7 @@ export function BookingPage() {
                       <strong>Modèle non reconnu</strong>
                       <span>Choisissez la catégorie la plus proche. Le professionnel la vérifiera à son arrivée.</span>
                     </div>
-                    <CategoryPicker list={carCategories} value={vehicleCategory} base={service.price_cents}
+                    <CategoryPicker list={carCategories} value={vehicleCategory} price={(code) => priceFor(service, code)}
                                     onPick={(code) => setVeh({ ...veh, chosen: code })} />
                   </>
                 )}
@@ -484,7 +481,7 @@ export function BookingPage() {
                 <div key={c.code} className={`price-row${c.code === vehicleCategory ? ' on' : ''}`}>
                   <span className="price-row-icon"><CategoryIcon code={c.code} size={18} /></span>
                   <span className="price-row-label">{c.label}<small>{CATEGORY_EXAMPLES[c.code] ?? ''}</small></span>
-                  <strong>{formatPrice(vehiclePrice(service.price_cents, c.surcharge_pct))}</strong>
+                  <strong>{formatPrice(priceFor(service, c.code))}</strong>
                 </div>
               ))}
             </div>
@@ -603,7 +600,7 @@ export function BookingPage() {
                 </div>
                 <div className="ticket-body">
                   <Row label={`${service.name} · ${formatDuration(service.duration_min)}`} value={formatPrice(servicePrice)} />
-                  {category && <Row label="Véhicule" value={`${vehicleName} · ${category.label}${category.surcharge_pct ? ` (${category.surcharge_pct > 0 ? '+' : ''}${category.surcharge_pct} %)` : ''}`} />}
+                  {category && <Row label="Véhicule" value={`${vehicleName} · ${category.label}`} />}
                   {location === 'home' && <Row label={quote ? `Déplacement · ~${String(quote.distance_km).replace('.', ',')} km` : 'Déplacement'} value={quote?.fee_cents ? formatPrice(quote.fee_cents) : 'Offert'} />}
                   {location === 'home' && address && <Row label="Adresse" value={address.label} />}
                 </div>
@@ -649,8 +646,8 @@ function DayStrip({ days, selected, onSelect }: { days: { day: DayKey; count: nu
   );
 }
 
-function CategoryPicker({ list, value, base, onPick }: {
-  list: VehicleCategory[]; value: string | null; base: number; onPick: (code: string) => void;
+function CategoryPicker({ list, value, price, onPick }: {
+  list: VehicleCategory[]; value: string | null; price: (code: string) => number; onPick: (code: string) => void;
 }) {
   return (
     <div className="cat-grid" role="radiogroup" aria-label="Catégorie du véhicule">
@@ -660,7 +657,7 @@ function CategoryPicker({ list, value, base, onPick }: {
           <CategoryIcon code={c.code} size={24} />
           <span className="cat-label">{c.label}</span>
           <small>{CATEGORY_EXAMPLES[c.code] ?? ''}</small>
-          <strong>{formatPrice(vehiclePrice(base, c.surcharge_pct))}</strong>
+          <strong>{formatPrice(price(c.code))}</strong>
         </button>
       ))}
     </div>

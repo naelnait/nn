@@ -1,8 +1,8 @@
 // Mode démo : tout est stocké dans le navigateur (localStorage), aucun serveur requis.
 // Les règles sont identiques à celles du serveur. Synchronisation entre onglets en temps réel.
 import type { Backend } from './types';
-import { BookingError, type Booking, type Closure, type Interval, type OpeningHour, type Service, type Settings, type VehicleCategory } from '../types';
-import { DEFAULT_VEHICLE_CATEGORIES, lookupVehicle, needsGenre, vehicleKey, vehiclePrice } from '../vehicles';
+import { BookingError, type Booking, type Closure, type Interval, type OpeningHour, type Service, type ServicePrice, type Settings, type VehicleCategory } from '../types';
+import { DEFAULT_PRICE_GRID, DEFAULT_VEHICLE_CATEGORIES, categoryForGenre, gridPrice, lookupVehicle, needsGenre, vehicleKey } from '../vehicles';
 import { bufferAfter, checkSlot, overlaps, rulesFrom } from '../slots';
 import { travelQuote } from '../zone';
 
@@ -13,10 +13,11 @@ interface DemoDb {
   closures: Closure[];
   bookings: Booking[];
   vehicleCategories: VehicleCategory[];
+  prices: ServicePrice[];
 }
 
-// v2 : tarification par véhicule et Complet à 190 € (les données démo v1 sont abandonnées)
-const KEY = 'detailing-demo-db-v2';
+// v3 : grille de prix par catégorie (4 catégories), départ à Gas (les données démo antérieures sont abandonnées)
+const KEY = 'detailing-demo-db-v3';
 const SESSION_KEY = 'detailing-demo-admin';
 export const DEMO_ADMIN = { email: 'admin@demo.fr', password: 'demo' };
 
@@ -40,8 +41,9 @@ export const DEFAULT_SETTINGS: Settings = {
   zone_b_lat: 48.4439,
   zone_b_lon: 1.489,
   zone_width_km: 20,
-  base_lat: 48.6436,
-  base_lon: 1.8296,
+  // Rue de la République, 28320 Gas
+  base_lat: 48.566873,
+  base_lon: 1.667562,
   fee_fixed_cents: 0,
   fee_per_km_cents: 50,
   fee_free_km: 10,
@@ -53,14 +55,23 @@ function uuid(): string {
 }
 
 function seed(): DemoDb {
+  const db = seedBase();
+  db.prices = db.services.flatMap((s) =>
+    Object.entries(DEFAULT_PRICE_GRID[s.name] ?? {}).map(([category, price_cents]) => ({ service_id: s.id, category, price_cents })),
+  );
+  return db;
+}
+
+function seedBase(): DemoDb {
   return {
     settings: { ...DEFAULT_SETTINGS },
     services: [
       { id: uuid(), name: 'Intérieur', description: 'Aspiration, sièges, plastiques, vitres intérieures.', duration_min: 150, price_cents: 8000, active: true, sort: 1 },
       { id: uuid(), name: 'Extérieur', description: 'Lavage, décontamination, jantes, protection.', duration_min: 150, price_cents: 7000, active: true, sort: 2 },
-      { id: uuid(), name: 'Complet', description: 'Intérieur + extérieur.', duration_min: 270, price_cents: 19000, active: true, sort: 3 },
+      { id: uuid(), name: 'Complet', description: 'Intérieur + extérieur.', duration_min: 270, price_cents: 14900, active: true, sort: 3 },
     ],
     vehicleCategories: DEFAULT_VEHICLE_CATEGORIES.map((c) => ({ ...c })),
+    prices: [],
     hours: [1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, open_time: '08:30', close_time: '18:30' })),
     closures: [],
     bookings: [],
@@ -132,6 +143,7 @@ export function createDemoBackend(): Backend {
         services: db.services.filter((s) => s.active).sort((a, b) => a.sort - b.sort),
         hours: [...db.hours],
         vehicle_categories: [...db.vehicleCategories].sort((a, b) => a.sort - b.sort),
+        prices: db.prices.filter((p) => db.services.some((s) => s.id === p.service_id && s.active)),
       };
     },
 
@@ -170,12 +182,12 @@ export function createDemoBackend(): Backend {
       if (cats && !admin) {
         if (needsGenre(cats)) {
           if (!i.vehicle_genre) throw new BookingError('VEHICLE_GENRE_REQUIRED');
-          if (vc.code !== (i.vehicle_genre === 'CTTE' ? 'utilitaire' : 'monospace')) throw new BookingError('VEHICLE_MISMATCH');
+          if (vc.code !== categoryForGenre(cats, i.vehicle_genre)) throw new BookingError('VEHICLE_MISMATCH');
         } else if (!cats.includes(vc.code as never)) {
           throw new BookingError('VEHICLE_MISMATCH');
         }
       }
-      const price = vehiclePrice(svc.price_cents, vc.surcharge_pct);
+      const price = gridPrice(db.prices, svc.id, vc.code, svc.price_cents);
 
       let fee = 0;
       let distance: number | null = null;
@@ -227,7 +239,7 @@ export function createDemoBackend(): Backend {
         address: i.location_type === 'home' ? i.address : '',
         distance_km: distance,
         base_price_cents: svc.price_cents,
-        vehicle_surcharge_pct: vc.surcharge_pct,
+        vehicle_surcharge_pct: 0,
         price_cents: price,
         travel_fee_cents: fee,
         total_cents: price + fee,
@@ -331,13 +343,16 @@ export function createDemoBackend(): Backend {
       return [...load().vehicleCategories].sort((a, b) => a.sort - b.sort);
     },
 
-    async saveVehicleCategories(list) {
+    async listServicePrices() {
       requireAdmin();
-      if (list.some((c) => !Number.isInteger(c.surcharge_pct) || c.surcharge_pct < -90 || c.surcharge_pct > 300)) {
-        throw new BookingError('INVALID_INPUT');
-      }
+      return [...load().prices];
+    },
+
+    async saveServicePrices(list) {
+      requireAdmin();
+      if (list.some((p) => !Number.isInteger(p.price_cents) || p.price_cents < 0)) throw new BookingError('INVALID_INPUT');
       const db = load();
-      db.vehicleCategories = list.map((c) => ({ ...c }));
+      db.prices = list.map((p) => ({ ...p }));
       save(db);
     },
 

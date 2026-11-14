@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { CAR_BRANDS, displayModel, lookupVehicle, modelsOf, needsGenre, resolveCategory, vehiclePrice } from './vehicles';
+import { CAR_BRANDS, DEFAULT_PRICE_GRID, displayModel, gridPrice, lookupVehicle, modelsOf, needsGenre, resolveCategory } from './vehicles';
 
 describe('catalogue véhicules', () => {
   it('classe les modèles courants', () => {
     expect(lookupVehicle('Renault', 'Clio')?.[0]).toBe('citadine');
     expect(lookupVehicle('peugeot', '3008')).toEqual(['suv']);
-    expect(lookupVehicle('Volkswagen', 'Golf')).toEqual(['berline']);
+    expect(lookupVehicle('Volkswagen', 'Golf')).toEqual(['citadine']); // berline -> citadine
+    expect(lookupVehicle('Renault', 'Scenic')).toEqual(['suv']); // monospace -> SUV
+    expect(lookupVehicle('Peugeot', '206')).toEqual(['citadine']); // modèle des années 2000
+    expect(lookupVehicle('BYD', 'Atto 3')).toEqual(['suv']); // marque chinoise
+    expect(lookupVehicle('MG', 'ZS')).toEqual(['suv']);
+    expect(lookupVehicle('Leapmotor', 'T03')).toEqual(['citadine']);
     expect(lookupVehicle('Renault', 'Trafic')).toEqual(['utilitaire']);
-    expect(lookupVehicle('Mercedes', 'Classe A')?.[0]).toBe('berline');
-    expect(lookupVehicle('BMW', 'Série 3')?.[0]).toBe('berline');
+    expect(lookupVehicle('Mercedes', 'Classe A')?.[0]).toBe('citadine');
+    expect(lookupVehicle('BMW', 'Série 3')?.[0]).toBe('citadine');
     expect(lookupVehicle('Citroën', 'c3')).toEqual(['citadine']);
     expect(lookupVehicle('Tesla', 'Model Y')).toEqual(['suv']);
     expect(lookupVehicle('Inconnue', 'X')).toBeNull();
@@ -19,21 +24,22 @@ describe('catalogue véhicules', () => {
     expect(needsGenre(lookupVehicle('Renault', 'Clio'))).toBe(false);
     expect(resolveCategory('car', 'Renault', 'Kangoo', '', '').category).toBeNull();
     expect(resolveCategory('car', 'Renault', 'Kangoo', '', 'CTTE').category).toBe('utilitaire');
-    expect(resolveCategory('car', 'Renault', 'Kangoo', '', 'VP').category).toBe('monospace');
+    expect(resolveCategory('car', 'Renault', 'Kangoo', '', 'VP').category).toBe('suv');
   });
   it('résout la catégorie', () => {
     expect(resolveCategory('car', 'Peugeot', '3008', 'citadine', '').category).toBe('suv'); // impossible de déclarer un SUV en citadine
-    expect(resolveCategory('car', 'Renault', 'Clio', 'berline', '').category).toBe('berline'); // Clio break admise
     expect(resolveCategory('car', 'Marque', 'Inconnue', '', '').category).toBeNull();
     expect(resolveCategory('car', 'Marque', 'Inconnue', 'suv', '').category).toBe('suv');
     expect(resolveCategory('moto', 'Yamaha', 'MT-07', '', '').category).toBe('moto');
   });
-  it('arrondit le prix à l’euro comme le serveur', () => {
-    expect(vehiclePrice(19000, 0)).toBe(19000);
-    expect(vehiclePrice(19000, 10)).toBe(20900);
-    expect(vehiclePrice(19000, 20)).toBe(22800);
-    expect(vehiclePrice(19000, 35)).toBe(25700); // 256,50 € -> 257 €
-    expect(vehiclePrice(19000, -20)).toBe(15200);
+  it('applique la grille de prix', () => {
+    expect(DEFAULT_PRICE_GRID.Complet).toEqual({ moto: 7000, citadine: 14900, suv: 16500, utilitaire: 18900 });
+    const prices = [{ service_id: 's', category: 'suv', price_cents: 16500 }];
+    expect(gridPrice(prices, 's', 'suv', 14900)).toBe(16500);
+    expect(gridPrice(prices, 's', 'citadine', 14900)).toBe(14900); // sans ligne : prix de la formule
+    for (const g of Object.values(DEFAULT_PRICE_GRID)) {
+      expect(g.utilitaire > g.suv && g.suv > g.citadine && g.citadine > g.moto).toBe(true);
+    }
   });
   it('affiche des noms lisibles', () => {
     expect(displayModel('CLASSE A')).toBe('Classe A');

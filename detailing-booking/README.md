@@ -24,24 +24,22 @@ Site de prise de rendez-vous en ligne pour une activité de nettoyage / detailin
 
 ### Tarif selon le véhicule
 
-Le client choisit la marque et le modèle (obligatoires). Le prix de la formule est majoré selon la catégorie, puis arrondi à l'euro :
+Quatre catégories. Le client choisit la marque et le modèle (obligatoires) ; le prix vient d'une grille formule × catégorie, modifiable dans l'espace pro (onglet Formules) :
 
-| Catégorie | Majoration par défaut | Complet (190 €) |
-|---|---|---|
-| Moto / scooter | −20 % | 152 € |
-| Citadine (Clio, 208, C3…) | 0 % | 190 € |
-| Berline / compacte / break (Golf, 308, Série 3…) | +10 % | 209 € |
-| SUV / 4x4 (3008, Captur, Model Y…) | +20 % | 228 € |
-| Monospace / ludospace (Scénic, Kangoo VP…) | +25 % | 238 € |
-| Utilitaire / fourgon (Trafic, Transit, Kangoo Van…) | +35 % | 257 € |
+| Catégorie | Complet | Intérieur | Extérieur |
+|---|---|---|---|
+| Moto / scooter | 70 € | 38 € | 33 € |
+| Citadine (berlines et breaks compris) | 149 € | 80 € | 70 € |
+| SUV / 4x4 (monospaces compris) | 165 € | 89 € | 78 € |
+| Utilitaire / fourgon | 189 € | 101 € | 89 € |
 
-Les majorations se règlent dans l'espace pro (onglet Formules).
+Les prix du Complet ont été fournis. Ceux d'Intérieur et d'Extérieur appliquent le même écart entre catégories, à partir de 80 € et 70 € pour une citadine : à valider.
 
-**Classement des modèles** : `src/data/vehicles.json` (551 modèles, 58 marques) est généré par `scripts/build_vehicle_catalog.py` à partir des fichiers officiels ADEME/UTAC « véhicules particuliers commercialisés en France » (data.gouv.fr, éditions 2012, 2013, 2014 et édition courante), d'après leurs champs *Carrosserie* et *gamme* :
-- TS terrains/chemins → SUV ; monospace, combispace, minispace → monospace/ludospace ; minibus → utilitaire ;
-- berline/coupé/cabriolet de gamme économique ou inférieure → citadine ; autres berlines et breaks → berline.
+**Classement des modèles** : `src/data/vehicles.json` (805 modèles, 88 marques) est généré par `scripts/build_vehicle_catalog.py` à partir des fichiers officiels ADEME/UTAC « véhicules particuliers commercialisés en France » (data.gouv.fr) :
+- éditions 2012, 2013, 2014 et courante, d'après le champ *Carrosserie* : berline, break, coupé, cabriolet → citadine ; TS terrains/chemins, monospace, combispace, minispace → SUV ; minibus → utilitaire ;
+- édition 2011 (sans carrosserie) : modèles encore vendus en 2011, classés par mots-clés.
 
-Un complément manuel couvre les modèles 2015-2024 absents de ces éditions et les utilitaires immatriculés en camionnette. Quand un même nom existe en version voiture et utilitaire (Kangoo, Berlingo, Partner, Caddy…), le client indique le **genre de la carte grise (case J.1)** : VP → ludospace, CTTE → utilitaire. Le serveur refuse une catégorie incohérente avec le modèle (un 3008 ne peut pas être déclaré en citadine). Un modèle absent du catalogue est accepté avec la catégorie choisie par le client et signalé « à vérifier » dans le planning.
+Un complément manuel couvre les modèles 2000-2010 retirés avant 2011, les modèles récents (2015-2025) dont les marques chinoises vendues en France (BYD, MG, Leapmotor, Xpeng, Zeekr, Omoda, Jaecoo, Lynk & Co, Seres, Voyah, Chery…), les voitures sans permis et les utilitaires immatriculés en camionnette. Quand un même nom existe en version voiture et utilitaire (Kangoo, Berlingo, Partner, Caddy…), le client indique le **genre de la carte grise (case J.1)** : VP → SUV, CTTE → utilitaire. Le serveur refuse une catégorie incohérente avec le modèle ; un modèle absent du catalogue est accepté avec la catégorie choisie et signalé « à vérifier » dans le planning.
 
 ### Calcul des frais de déplacement
 
@@ -49,7 +47,7 @@ Un complément manuel couvre les modèles 2015-2024 absents de ces éditions et 
 distance estimée = distance à vol d'oiseau (point de départ → client) × 1,3
 frais            = forfait fixe + (distance estimée − km offerts) × prix/km, arrondi à l'euro supérieur
 ```
-Valeurs par défaut : forfait 0 €, 10 km offerts, 0,50 €/km. Exemple : Versailles depuis Rambouillet ≈ 36 km → 14 €.
+Point de départ : rue de la République, 28320 Gas. Valeurs par défaut : forfait 0 €, 10 km offerts, 0,50 €/km. Exemples : Épernon offert, Chartres 8 €, Versailles 23 €, Paris 34 €.
 
 ### Zone d'intervention
 
@@ -117,9 +115,9 @@ src/pages/Admin.tsx        Espace pro
 ## À faire / à valider avec le pro
 
 - [ ] Prix et durées réels des formules.
-- [ ] Valider les majorations par catégorie de véhicule (valeurs par défaut proposées).
+- [ ] Valider les prix Intérieur et Extérieur par catégorie (déduits du Complet).
 - [ ] Atelier : adresse, puis activation dans Paramètres.
-- [ ] Point de départ réel et grille de frais de déplacement.
+- [ ] Grille de frais de déplacement (0,50 €/km au-delà de 10 km par défaut).
 - [ ] E-mails de confirmation (client + pro) via Resend et une Edge Function Supabase.
 - [ ] Anti-spam du formulaire (Cloudflare Turnstile).
 - [ ] Acompte en ligne (Stripe), si souhaité. Actuellement : paiement sur place.

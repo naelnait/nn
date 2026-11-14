@@ -9,6 +9,7 @@ describe('zone et frais', () => {
     expect(isInZone({ lat: 48.4439, lon: 1.489 }, s)).toBe(true); // Chartres
     expect(isInZone({ lat: 48.8049, lon: 2.1204 }, s)).toBe(true); // Versailles
     expect(isInZone({ lat: 48.6436, lon: 1.8296 }, s)).toBe(true); // Rambouillet
+    expect(isInZone({ lat: 48.566873, lon: 1.667562 }, s)).toBe(true); // Gas (point de départ)
   });
   it('refuse hors zone', () => {
     expect(isInZone({ lat: 45.76, lon: 4.83 }, s)).toBe(false); // Lyon
@@ -16,10 +17,12 @@ describe('zone et frais', () => {
     expect(isInZone({ lat: 47.9029, lon: 1.9093 }, s)).toBe(false); // Orléans
   });
   it('calcule les frais comme le serveur', () => {
-    expect(travelQuote({ lat: 48.6436, lon: 1.8296 }, s).fee_cents).toBe(0); // départ
+    expect(travelQuote({ lat: 48.566873, lon: 1.667562 }, s).fee_cents).toBe(0); // départ : Gas
+    expect(travelQuote({ lat: 48.61, lon: 1.6744 }, s).fee_cents).toBe(0); // Épernon, dans les 10 km offerts
     const v = travelQuote({ lat: 48.8049, lon: 2.1204 }, s);
-    expect(v.fee_cents).toBe(1400); // 36,2 km - 10 offerts = 26,2 x 0,50 € = 13,12 € arrondi à 14 €
-    expect(v.distance_km).toBe(36.2);
+    expect(v.fee_cents).toBe(2300); // 55,2 km - 10 offerts = 45,2 x 0,50 € = 22,60 € arrondi à 23 €
+    expect(v.distance_km).toBe(55.2);
+    expect(travelQuote({ lat: 48.4439, lon: 1.489 }, s).fee_cents).toBe(800); // Chartres
   });
 });
 
