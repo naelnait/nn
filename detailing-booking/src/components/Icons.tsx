@@ -226,3 +226,11 @@ export function VehicleIcon({ type, ...p }: P & { type: string }) {
   if (t.includes('voiture')) return <Car {...p} />;
   return <Wrench {...p} />;
 }
+
+/** Icône d'une catégorie tarifaire de véhicule */
+export function CategoryIcon({ code, ...p }: P & { code: string }) {
+  if (code === 'moto') return <Moto {...p} />;
+  if (code === 'suv') return <Suv {...p} />;
+  if (code === 'monospace' || code === 'utilitaire') return <Van {...p} />;
+  return <Car {...p} />;
+}

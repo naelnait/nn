@@ -22,6 +22,27 @@ Site de prise de rendez-vous en ligne pour une activité de nettoyage / detailin
 - Zone et frais recalculés côté serveur : le prix ne peut pas être falsifié depuis le navigateur.
 - Les visiteurs ne voient que des plages occupées, jamais les données des autres clients. Le point de départ du pro reste privé.
 
+### Tarif selon le véhicule
+
+Le client choisit la marque et le modèle (obligatoires). Le prix de la formule est majoré selon la catégorie, puis arrondi à l'euro :
+
+| Catégorie | Majoration par défaut | Complet (190 €) |
+|---|---|---|
+| Moto / scooter | −20 % | 152 € |
+| Citadine (Clio, 208, C3…) | 0 % | 190 € |
+| Berline / compacte / break (Golf, 308, Série 3…) | +10 % | 209 € |
+| SUV / 4x4 (3008, Captur, Model Y…) | +20 % | 228 € |
+| Monospace / ludospace (Scénic, Kangoo VP…) | +25 % | 238 € |
+| Utilitaire / fourgon (Trafic, Transit, Kangoo Van…) | +35 % | 257 € |
+
+Les majorations se règlent dans l'espace pro (onglet Formules).
+
+**Classement des modèles** : `src/data/vehicles.json` (551 modèles, 58 marques) est généré par `scripts/build_vehicle_catalog.py` à partir des fichiers officiels ADEME/UTAC « véhicules particuliers commercialisés en France » (data.gouv.fr, éditions 2012, 2013, 2014 et édition courante), d'après leurs champs *Carrosserie* et *gamme* :
+- TS terrains/chemins → SUV ; monospace, combispace, minispace → monospace/ludospace ; minibus → utilitaire ;
+- berline/coupé/cabriolet de gamme économique ou inférieure → citadine ; autres berlines et breaks → berline.
+
+Un complément manuel couvre les modèles 2015-2024 absents de ces éditions et les utilitaires immatriculés en camionnette. Quand un même nom existe en version voiture et utilitaire (Kangoo, Berlingo, Partner, Caddy…), le client indique le **genre de la carte grise (case J.1)** : VP → ludospace, CTTE → utilitaire. Le serveur refuse une catégorie incohérente avec le modèle (un 3008 ne peut pas être déclaré en citadine). Un modèle absent du catalogue est accepté avec la catégorie choisie par le client et signalé « à vérifier » dans le planning.
+
 ### Calcul des frais de déplacement
 
 ```
@@ -46,7 +67,7 @@ Sans configuration Supabase, le site tourne en **mode démo** : les données son
 
 ### 1. Base de données : Supabase (gratuit pour démarrer)
 1. Créer un projet sur supabase.com (région Europe, ex. Paris `eu-west-3`).
-2. **SQL Editor** → coller et exécuter `supabase/schema.sql`.
+2. **SQL Editor** → coller et exécuter `supabase/schema.sql`, puis `supabase/vehicle_catalog.sql` (catalogue des modèles).
 3. **Authentication → Sign In / Providers** : désactiver « Allow new users to sign up ».
 4. **Authentication → Users → Add user** : créer le compte du pro (e-mail + mot de passe).
 5. SQL Editor : `insert into public.admins (user_id) select id from auth.users where email = 'email-du-pro@exemple.fr';`
@@ -96,7 +117,7 @@ src/pages/Admin.tsx        Espace pro
 ## À faire / à valider avec le pro
 
 - [ ] Prix et durées réels des formules.
-- [ ] Prix selon le type de véhicule (citadine / SUV / moto) — le type est déjà demandé au client, mais sans effet sur le prix.
+- [ ] Valider les majorations par catégorie de véhicule (valeurs par défaut proposées).
 - [ ] Atelier : adresse, puis activation dans Paramètres.
 - [ ] Point de départ réel et grille de frais de déplacement.
 - [ ] E-mails de confirmation (client + pro) via Resend et une Edge Function Supabase.

@@ -6,17 +6,18 @@ import { bufferAfter, checkSlot, daySlots, rulesFrom } from '../lib/slots';
 import { addDays, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, sameDay, weekdayOf, zonedTime, type DayKey } from '../lib/time';
 import { BookingError, type BookingResult, type Interval, type LocationType, type PublicConfig, type Service, type TravelQuote } from '../lib/types';
 import { buildIcs, downloadIcs } from '../lib/ics';
-import { Car, CarKey, ChevronLeft, Clipboard, Flag, Garage, Gauge, Home, MapPin, Route, ServiceIcon, Spray, Stopwatch, VehicleIcon, Wheel, Wrench } from '../components/Icons';
+import { Car, CarKey, ChevronLeft, Clipboard, Flag, Garage, Gauge, Home, MapPin, Route, CategoryIcon, ServiceIcon, Spray, Stopwatch, Wheel, Wrench } from '../components/Icons';
 import { ZoneMap } from '../components/ZoneMap';
 import { DayTimeline } from '../components/DayTimeline';
 import { AnimatedPrice, Barcode, CarSilhouette } from '../components/Decor';
+import { Combo } from '../components/Combo';
+import { CAR_BRANDS, CATEGORY_EXAMPLES, MOTO_BRANDS, displayBrand, displayModel, modelsOf, resolveCategory, vehicleKey, vehiclePrice } from '../lib/vehicles';
 import { parseHHMM } from '../lib/time';
-import type { OpeningHour } from '../lib/types';
+import type { OpeningHour, VehicleCategory } from '../lib/types';
 
 /** Build « lien de test » (page hébergée sur claude.ai) : pas de téléchargement de fichier possible. */
 const IS_TEST_LINK = import.meta.env.VITE_TEST_LINK === '1';
-const VEHICLE_TYPES = ['Voiture', 'SUV / 4x4', 'Utilitaire', 'Moto', 'Autre'];
-const STEPS = ['Prestation', 'Lieu', 'Créneau', 'Coordonnées'] as const;
+const STEPS = ['Prestation', 'Véhicule', 'Lieu', 'Créneau', 'Coordonnées'] as const;
 const WD = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
@@ -84,7 +85,10 @@ export function BookingPage() {
   const [slot, setSlot] = useState<Date | null>(null);
   const [toast, setToast] = useState('');
 
-  const [form, setForm] = useState({ name: '', email: '', phone: '', vehicleType: VEHICLE_TYPES[0], vehicle: '', notes: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', notes: '' });
+  const [veh, setVeh] = useState<{ kind: 'car' | 'moto'; brand: string; model: string; chosen: string; genre: '' | 'VP' | 'CTTE' }>(
+    { kind: 'car', brand: '', model: '', chosen: '', genre: '' },
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
@@ -160,7 +164,7 @@ export function BookingPage() {
 
   // Jour par défaut : le premier jour disponible
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 3) return;
     const cur = day && days.find((d) => sameDay(d.day, day));
     if (!cur || cur.count === 0) setDay(days.find((d) => d.count > 0)?.day ?? null);
   }, [step, days, day]);
@@ -171,9 +175,21 @@ export function BookingPage() {
     if (checkSlot(slot, service.duration_min, buffer, rules) !== null) {
       setSlot(null);
       setToast("Ce créneau vient d'être réservé. Choisissez-en un autre.");
-      if (step > 2) { setDir('back'); setStep(2); }
+      if (step > 3) { setDir('back'); setStep(3); }
     }
   }, [rules, slot, service, buffer, step]);
+
+  // Véhicule : catégorie tarifaire et prix de la formule
+  const vehRes = resolveCategory(veh.kind, veh.brand, veh.model, veh.chosen, veh.genre);
+  const vehicleCategory = vehRes.category;
+  const category = config?.vehicle_categories.find((c) => c.code === vehicleCategory) ?? null;
+  const vehicleReady = veh.brand.trim().length > 0 && veh.model.trim().length > 0 && !!category;
+  const vehicleName = `${vehRes.known ? displayBrand(vehicleKey(veh.brand)) : veh.brand.trim()} ${vehRes.known ? displayModel(vehicleKey(veh.model)) : veh.model.trim()}`;
+  const priceFor = (base: number, code: string | null) => {
+    const c = config?.vehicle_categories.find((x) => x.code === code);
+    return c ? vehiclePrice(base, c.surcharge_pct) : base;
+  };
+  const servicePrice = service ? priceFor(service.price_cents, vehicleCategory) : 0;
 
   const go = (n: number) => {
     setDir(n > step ? 'fwd' : 'back');
@@ -189,7 +205,7 @@ export function BookingPage() {
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!service || !slot) return;
+    if (!service || !slot || !vehicleCategory) return;
     if (formRef.current && !formRef.current.reportValidity()) return;
     setSubmitting(true);
     setSubmitError('');
@@ -201,8 +217,10 @@ export function BookingPage() {
         customer_name: form.name,
         email: form.email,
         phone: form.phone,
-        vehicle_type: form.vehicleType,
-        vehicle: form.vehicle,
+        vehicle_category: vehicleCategory ?? '',
+        vehicle_brand: vehicleKey(veh.brand),
+        vehicle_model: vehicleKey(veh.model),
+        vehicle_genre: vehRes.needsGenre ? veh.genre : '',
         address: location === 'home' ? address?.label ?? '' : '',
         lat: location === 'home' ? address?.lat ?? null : null,
         lon: location === 'home' ? address?.lon ?? null : null,
@@ -215,7 +233,7 @@ export function BookingPage() {
         end: new Date(slot.getTime() + service.duration_min * 60_000),
         location: location === 'home' ? address?.label ?? '' : settings?.atelier_address || 'Atelier',
         isHome: location === 'home',
-        vehicle: [form.vehicleType, form.vehicle].filter(Boolean).join(' · '),
+        vehicle: `${vehicleName} · ${category?.label ?? ''}`,
       });
       window.scrollTo({ top: 0 });
     } catch (err) {
@@ -223,9 +241,10 @@ export function BookingPage() {
       if (err instanceof BookingError && err.code === 'SLOT_TAKEN') {
         setSlot(null);
         void refresh();
-        go(2);
+        go(3);
         setToast(err.message);
       }
+      if (err instanceof BookingError && err.code.startsWith('VEHICLE')) go(1);
     } finally {
       setSubmitting(false);
     }
@@ -302,13 +321,15 @@ export function BookingPage() {
     );
   }
 
-  const total = (service?.price_cents ?? 0) + (location === 'home' ? quote?.fee_cents ?? 0 : 0);
+  const total = servicePrice + (location === 'home' ? quote?.fee_cents ?? 0 : 0);
+  const carCategories = config.vehicle_categories.filter((c) => c.code !== 'moto');
   const zoneText = `${settings.zone_width_km} km autour de l'axe ${settings.zone_a_label} – ${settings.zone_b_label}`;
 
   let cta: { label: string; disabled: boolean; onClick: () => void } | null = null;
-  if (step === 1) cta = { label: 'Continuer', disabled: !locationReady, onClick: () => go(2) };
-  if (step === 2) cta = { label: 'Continuer', disabled: !slot, onClick: () => go(3) };
-  if (step === 3) cta = { label: submitting ? 'Réservation…' : `Confirmer · ${formatPrice(total)}`, disabled: submitting, onClick: () => void submit() };
+  if (step === 1) cta = { label: 'Continuer', disabled: !vehicleReady, onClick: () => go(2) };
+  if (step === 2) cta = { label: 'Continuer', disabled: !locationReady, onClick: () => go(3) };
+  if (step === 3) cta = { label: 'Continuer', disabled: !slot, onClick: () => go(4) };
+  if (step === 4) cta = { label: submitting ? 'Réservation…' : `Confirmer · ${formatPrice(total)}`, disabled: submitting, onClick: () => void submit() };
 
   return (
     <AppFrame
@@ -331,7 +352,7 @@ export function BookingPage() {
         <div className="bottombar">
           {service && (
             <div className="bottombar-info">
-              <span>{service.name}{slot ? ` · ${formatTime(slot)}` : ''}</span>
+              <span>{service.name}{category && step > 1 ? ` · ${category.label}` : ''}{slot ? ` · ${formatTime(slot)}` : ''}</span>
               <strong><AnimatedPrice cents={total} /></strong>
             </div>
           )}
@@ -356,7 +377,7 @@ export function BookingPage() {
                 <li><Spray size={16} /> Paiement sur place</li>
               </ul>
             </section>
-            <p className="section-label plain">{config.services.length} formule{config.services.length > 1 ? 's' : ''} · prix fixes</p>
+            <p className="section-label plain">{config.services.length} formule{config.services.length > 1 ? 's' : ''} · prix selon le véhicule</p>
             <div className="list">
               {config.services.length === 0 && <div className="empty">Aucune prestation disponible pour le moment.</div>}
               {config.services.map((s, i) => {
@@ -370,7 +391,7 @@ export function BookingPage() {
                       <span className="tile-title">{s.name}</span>
                       <span className="tile-meta"><Stopwatch size={14} /> {formatDuration(s.duration_min)} de travail</span>
                     </span>
-                    <span className="tile-price"><small>Prix fixe</small>{formatPrice(s.price_cents)}</span>
+                    <span className="tile-price"><small>Citadine</small>{formatPrice(priceFor(s.price_cents, 'citadine'))}</span>
                     {s.description && (
                       <span className="tile-incl">
                         {includedItems(s.description).map((x) => <span key={x} className="incl"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" /></svg>{x}</span>)}
@@ -389,7 +410,88 @@ export function BookingPage() {
           </>
         )}
 
-        {step === 1 && (
+        {step === 1 && service && (
+          <>
+            <span className="title-badge"><CategoryIcon code={vehicleCategory ?? 'citadine'} size={22} /></span>
+            <h1 className="title">Quel véhicule&nbsp;?</h1>
+            <p className="subtitle">La marque et le modèle fixent le tarif : un utilitaire demande plus de travail qu'un SUV, un SUV plus qu'une citadine.</p>
+            <div className="segmented" role="radiogroup" aria-label="Type de véhicule">
+              <span className={`segmented-thumb ${veh.kind === 'moto' ? 'atelier' : 'home'}`} aria-hidden="true" />
+              <button type="button" role="radio" aria-checked={veh.kind === 'car'} onClick={() => setVeh({ kind: 'car', brand: '', model: '', chosen: '', genre: '' })}>
+                <CategoryIcon code="citadine" size={18} /> Voiture, utilitaire</button>
+              <button type="button" role="radio" aria-checked={veh.kind === 'moto'} onClick={() => setVeh({ kind: 'moto', brand: '', model: '', chosen: '', genre: '' })}>
+                <CategoryIcon code="moto" size={18} /> Moto, scooter</button>
+            </div>
+            <div className="fields">
+              <Combo id="brand" label="Marque" required value={veh.brand}
+                     options={veh.kind === 'moto' ? MOTO_BRANDS.map((b) => ({ key: b, label: b })) : CAR_BRANDS}
+                     onChange={(v) => setVeh({ ...veh, brand: v, model: '', chosen: '', genre: '' })}
+                     emptyHint="Marque absente de la liste : vous pouvez la saisir librement." />
+              <Combo id="model" label="Modèle" required value={veh.model} disabled={!veh.brand.trim()}
+                     options={veh.kind === 'moto' ? [] : modelsOf(veh.brand)}
+                     onChange={(v) => setVeh({ ...veh, model: v, chosen: '', genre: '' })}
+                     emptyHint="Modèle absent de la liste : saisissez-le, puis choisissez la catégorie ci-dessous." />
+            </div>
+
+            {veh.brand.trim() && veh.model.trim() && veh.kind === 'car' && (
+              <>
+                {vehRes.known && vehRes.needsGenre && (
+                  <div className="genre-card">
+                    <strong>Ce modèle existe en version voiture et en version utilitaire.</strong>
+                    <span>Regardez la case <b>J.1</b> de la carte grise :</span>
+                    <div className="genre-btns" role="radiogroup" aria-label="Genre sur la carte grise">
+                      {([['VP', 'Voiture particulière'], ['CTTE', 'Camionnette (utilitaire)']] as const).map(([g, l]) => (
+                        <button key={g} type="button" role="radio" aria-checked={veh.genre === g} className={`genre-btn${veh.genre === g ? ' on' : ''}`}
+                                onClick={() => setVeh({ ...veh, genre: g })}>
+                          <span className="genre-code">{g}</span><span>{l}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {vehRes.known && !vehRes.needsGenre && vehRes.allowed && vehRes.allowed.length === 1 && category && (
+                  <div className="result-card good">
+                    <strong>{vehicleName} · {category.label}</strong>
+                    <span>Catégorie issue du fichier officiel des véhicules commercialisés en France (ADEME).</span>
+                  </div>
+                )}
+                {vehRes.known && !vehRes.needsGenre && vehRes.allowed && vehRes.allowed.length > 1 && (
+                  <>
+                    <p className="section-label plain">Ce modèle existe en plusieurs carrosseries : laquelle est la vôtre&nbsp;?</p>
+                    <CategoryPicker list={carCategories.filter((c) => vehRes.allowed!.includes(c.code))} value={vehicleCategory}
+                                    base={service.price_cents} onPick={(code) => setVeh({ ...veh, chosen: code })} />
+                  </>
+                )}
+                {!vehRes.known && (
+                  <>
+                    <div className="result-card warn">
+                      <strong>Modèle non reconnu</strong>
+                      <span>Choisissez la catégorie la plus proche. Le professionnel la vérifiera à son arrivée.</span>
+                    </div>
+                    <CategoryPicker list={carCategories} value={vehicleCategory} base={service.price_cents}
+                                    onPick={(code) => setVeh({ ...veh, chosen: code })} />
+                  </>
+                )}
+              </>
+            )}
+            {veh.kind === 'moto' && veh.brand.trim() && veh.model.trim() && category && (
+              <div className="result-card good"><strong>{vehicleName} · {category.label}</strong><span>Tarif deux-roues appliqué.</span></div>
+            )}
+
+            <div className="price-grid">
+              <p className="section-label plain">Tarifs {service.name} selon le véhicule</p>
+              {config.vehicle_categories.map((c) => (
+                <div key={c.code} className={`price-row${c.code === vehicleCategory ? ' on' : ''}`}>
+                  <span className="price-row-icon"><CategoryIcon code={c.code} size={18} /></span>
+                  <span className="price-row-label">{c.label}<small>{CATEGORY_EXAMPLES[c.code] ?? ''}</small></span>
+                  <strong>{formatPrice(vehiclePrice(service.price_cents, c.surcharge_pct))}</strong>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
           <>
             <span className="title-badge"><MapPin size={22} /></span>
             <h1 className="title">Où intervient-on&nbsp;?</h1>
@@ -434,7 +536,7 @@ export function BookingPage() {
           </>
         )}
 
-        {step === 2 && service && (
+        {step === 3 && service && (
           <>
             <span className="title-badge"><Gauge size={22} /></span>
             <h1 className="title">Quand&nbsp;?</h1>
@@ -473,7 +575,7 @@ export function BookingPage() {
           </>
         )}
 
-        {step === 3 && service && slot && (
+        {step === 4 && service && slot && (
           <>
             <span className="title-badge"><CarKey size={22} /></span>
             <h1 className="title">Vos coordonnées</h1>
@@ -491,16 +593,6 @@ export function BookingPage() {
                 <input id="email" type="email" required maxLength={200} autoComplete="email" inputMode="email" placeholder=" "
                        value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               </Field>
-              <p className="section-label">Véhicule</p>
-              <div className="chips" role="radiogroup" aria-label="Type de véhicule">
-                {VEHICLE_TYPES.map((v) => (
-                  <button key={v} type="button" role="radio" aria-checked={form.vehicleType === v}
-                          className={`chip-btn${form.vehicleType === v ? ' on' : ''}`} onClick={() => setForm({ ...form, vehicleType: v })}><VehicleIcon type={v} size={18} /> {v}</button>
-                ))}
-              </div>
-              <Field id="vehicle" label="Marque et modèle (facultatif)">
-                <input id="vehicle" maxLength={200} placeholder=" " value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} />
-              </Field>
               <Field id="notes" label="Précisions : état, accès, point d'eau… (facultatif)">
                 <textarea id="notes" rows={3} maxLength={2000} placeholder=" " value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </Field>
@@ -510,7 +602,8 @@ export function BookingPage() {
                   <span className="ticket-ref">{formatTime(slot)} → {formatTime(new Date(slot.getTime() + service.duration_min * 60_000))}</span>
                 </div>
                 <div className="ticket-body">
-                  <Row label={`${service.name} · ${formatDuration(service.duration_min)}`} value={formatPrice(service.price_cents)} />
+                  <Row label={`${service.name} · ${formatDuration(service.duration_min)}`} value={formatPrice(servicePrice)} />
+                  {category && <Row label="Véhicule" value={`${vehicleName} · ${category.label}${category.surcharge_pct ? ` (${category.surcharge_pct > 0 ? '+' : ''}${category.surcharge_pct} %)` : ''}`} />}
                   {location === 'home' && <Row label={quote ? `Déplacement · ~${String(quote.distance_km).replace('.', ',')} km` : 'Déplacement'} value={quote?.fee_cents ? formatPrice(quote.fee_cents) : 'Offert'} />}
                   {location === 'home' && address && <Row label="Adresse" value={address.label} />}
                 </div>
@@ -552,6 +645,24 @@ function DayStrip({ days, selected, onSelect }: { days: { day: DayKey; count: nu
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function CategoryPicker({ list, value, base, onPick }: {
+  list: VehicleCategory[]; value: string | null; base: number; onPick: (code: string) => void;
+}) {
+  return (
+    <div className="cat-grid" role="radiogroup" aria-label="Catégorie du véhicule">
+      {list.map((c) => (
+        <button key={c.code} type="button" role="radio" aria-checked={value === c.code}
+                className={`cat-btn${value === c.code ? ' on' : ''}`} onClick={() => onPick(c.code)}>
+          <CategoryIcon code={c.code} size={24} />
+          <span className="cat-label">{c.label}</span>
+          <small>{CATEGORY_EXAMPLES[c.code] ?? ''}</small>
+          <strong>{formatPrice(vehiclePrice(base, c.surcharge_pct))}</strong>
+        </button>
+      ))}
     </div>
   );
 }

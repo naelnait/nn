@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { backend } from '../lib/backend';
 import { AddressInput } from '../components/AddressInput';
 import type { AddressSuggestion } from '../lib/geocode';
-import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type Settings } from '../lib/types';
-import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, ServiceIcon, Spray, Stopwatch, VehicleIcon, Wrench } from '../components/Icons';
+import { BookingError, type Booking, type Closure, type LocationType, type OpeningHour, type Service, type Settings, type VehicleCategory } from '../lib/types';
+import { CarLift, Clipboard, Cone, FuelPump, Garage, Gauge, MapPin, Route, CategoryIcon, ServiceIcon, Spray, Stopwatch, Wrench } from '../components/Icons';
 import { ZoneMap } from '../components/ZoneMap';
+import { Combo } from '../components/Combo';
+import { CAR_BRANDS, DEFAULT_VEHICLE_CATEGORIES, displayBrand, displayModel, lookupVehicle, modelsOf, vehicleKey, vehiclePrice } from '../lib/vehicles';
 import { TZ, dayKeyOf, dayKeyString, formatDate, formatDuration, formatPrice, formatTime, zonedTime } from '../lib/time';
 
 type Tab = 'planning' | 'closures' | 'services' | 'hours' | 'settings';
@@ -218,7 +220,16 @@ function Planning() {
                   {b.status === 'cancelled' && <span className="tag danger">Annulé</span>}
                 </div>
                 <div>{b.customer_name} · <a href={`tel:${b.phone.replace(/\s/g, '')}`}>{b.phone}</a>{b.email && <> · <a href={`mailto:${b.email}`}>{b.email}</a></>}</div>
-                {(b.vehicle_type || b.vehicle) && <div className="muted with-icon small"><VehicleIcon type={b.vehicle_type} size={16} /> {[b.vehicle_type, b.vehicle].filter(Boolean).join(' — ')}</div>}
+                {(b.vehicle_brand || b.vehicle) && (
+                  <div className="veh-line">
+                    <span className="with-icon small"><CategoryIcon code={b.vehicle_category} size={16} />
+                      <strong>{b.vehicle_brand ? `${displayBrand(b.vehicle_brand)} ${displayModel(b.vehicle_model)}` : b.vehicle}</strong>
+                      {b.vehicle_type && <span className="muted">· {b.vehicle_type}</span>}
+                    </span>
+                    {b.vehicle_genre && <span className="tag">Carte grise : {b.vehicle_genre}</span>}
+                    {b.vehicle_brand && !b.vehicle_verified && <span className="tag warn">Modèle à vérifier</span>}
+                  </div>
+                )}
                 {b.address && (
                   <div className="addr-row">
                     <span className="muted with-icon small"><MapPin size={16} /> {b.address}{b.distance_km != null && b.distance_km >= 1 && <> · ~{String(b.distance_km).replace('.', ',')} km</>}</span>
@@ -228,6 +239,9 @@ function Planning() {
                 {b.notes && <div className="notes">{b.notes}</div>}
                 <div className="booking-foot">
                   <span>
+                    {b.base_price_cents != null && b.vehicle_surcharge_pct !== 0 && (
+                      <span className="muted">{formatPrice(b.base_price_cents)} {b.vehicle_surcharge_pct > 0 ? '+' : '−'} {Math.abs(b.vehicle_surcharge_pct)} % → </span>
+                    )}
                     {b.travel_fee_cents > 0 && <>{formatPrice(b.price_cents)} + {formatPrice(b.travel_fee_cents)} déplacement = </>}
                     <strong>{formatPrice(b.total_cents)}</strong>
                   </span>
@@ -255,7 +269,8 @@ function Planning() {
 
 function ManualBooking({ onDone }: { onDone: () => void }) {
   const [services, setServices] = useState<Service[]>([]);
-  const [f, setF] = useState({ serviceId: '', location: 'home' as LocationType, when: '', name: '', phone: '', email: '', vehicle: '', notes: '' });
+  const [f, setF] = useState({ serviceId: '', location: 'home' as LocationType, when: '', name: '', phone: '', email: '', brand: '', model: '', category: '', notes: '' });
+  const [cats, setCats] = useState<VehicleCategory[]>(DEFAULT_VEHICLE_CATEGORIES);
   const [address, setAddress] = useState<AddressSuggestion | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -266,6 +281,7 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
       setServices(active);
       setF((p) => ({ ...p, serviceId: p.serviceId || active[0]?.id || '' }));
     }, (e) => setError(errMsg(e)));
+    backend.listVehicleCategories().then(setCats, () => undefined);
   }, []);
 
   return (
@@ -274,12 +290,17 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
       const start = parseLocal(f.when);
       if (!start) return setError('Date invalide.');
       if (f.location === 'home' && !address) return setError("Choisissez l'adresse dans la liste.");
+      if (!f.brand.trim() || !f.model.trim()) return setError('La marque et le modèle sont obligatoires.');
+      const known = lookupVehicle(f.brand, f.model);
+      const category = f.category || known?.[0] || '';
+      if (!category) return setError('Modèle non reconnu : choisissez la catégorie.');
       setBusy(true);
       setError('');
       try {
         await backend.createBooking({
           service_id: f.serviceId, location_type: f.location, start,
-          customer_name: f.name, email: f.email, phone: f.phone, vehicle_type: '', vehicle: f.vehicle,
+          customer_name: f.name, email: f.email, phone: f.phone,
+          vehicle_category: category, vehicle_brand: vehicleKey(f.brand), vehicle_model: vehicleKey(f.model), vehicle_genre: '',
           address: address?.label ?? '', lat: address?.lat ?? null, lon: address?.lon ?? null, notes: f.notes,
         }, { admin: true });
         onDone();
@@ -316,10 +337,18 @@ function ManualBooking({ onDone }: { onDone: () => void }) {
         <div><label htmlFor="m-phone">Téléphone</label><input id="m-phone" required minLength={6} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
         <div><label htmlFor="m-email">E-mail (facultatif)</label><input id="m-email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
       </div>
-      <div className="row">
-        <div><label htmlFor="m-veh">Véhicule</label><input id="m-veh" value={f.vehicle} onChange={(e) => setF({ ...f, vehicle: e.target.value })} /></div>
-        <div><label htmlFor="m-notes">Notes</label><input id="m-notes" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
+      <div className="row veh-row">
+        <Combo plain id="m-brand" label="Marque" required value={f.brand} options={CAR_BRANDS} onChange={(v) => setF({ ...f, brand: v, model: '', category: '' })} />
+        <Combo plain id="m-model" label="Modèle" required value={f.model} options={modelsOf(f.brand)} onChange={(v) => setF({ ...f, model: v, category: '' })} />
+        <div>
+          <label htmlFor="m-cat">Catégorie tarifaire</label>
+          <select id="m-cat" value={f.category || lookupVehicle(f.brand, f.model)?.[0] || ''} onChange={(e) => setF({ ...f, category: e.target.value })}>
+            <option value="">À choisir</option>
+            {cats.map((c) => <option key={c.code} value={c.code}>{c.label} ({c.surcharge_pct > 0 ? '+' : ''}{c.surcharge_pct} %)</option>)}
+          </select>
+        </div>
       </div>
+      <label htmlFor="m-notes">Notes</label><input id="m-notes" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
       {error && <p className="alert error">{error}</p>}
       <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer le RDV'}</button>
     </form>
@@ -422,11 +451,46 @@ function Services() {
           </div>
         </form>
       ))}
+      <VehicleTariffs services={list.filter((x) => x.active)} />
       <button type="button" className="btn" onClick={() => setList((l) => [...l, { id: '', name: 'Nouvelle formule', description: '', duration_min: 120, price_cents: 5000, active: false, sort: l.length + 1 }])}>
         + Ajouter une formule
       </button>
       {msg && <p className="alert ok">{msg}</p>}
     </section>
+  );
+}
+
+function VehicleTariffs({ services }: { services: Service[] }) {
+  const [cats, setCats] = useState<VehicleCategory[]>([]);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => { backend.listVehicleCategories().then(setCats, (e) => setMsg({ ok: false, text: errMsg(e) })); }, []);
+  const set = (code: string, pct: number) => setCats((l) => l.map((c) => (c.code === code ? { ...c, surcharge_pct: pct } : c)));
+  return (
+    <form className="card form" onSubmit={async (e) => {
+      e.preventDefault();
+      try { await backend.saveVehicleCategories(cats); setMsg({ ok: true, text: 'Tarifs par véhicule enregistrés.' }); } catch (err) { setMsg({ ok: false, text: errMsg(err) }); }
+    }}>
+      <h3 className="with-icon"><CategoryIcon code="utilitaire" size={20} /> Tarifs selon le véhicule</h3>
+      <p className="hint">Majoration appliquée au prix de chaque formule, arrondie à l'euro. La citadine sert de référence.</p>
+      <div className="tariff-table" role="table">
+        <div className="tariff-row head" role="row">
+          <span role="columnheader">Catégorie</span><span role="columnheader">Majoration</span>
+          {services.map((s) => <span key={s.id} role="columnheader">{s.name}</span>)}
+        </div>
+        {cats.map((c) => (
+          <div key={c.code} className="tariff-row" role="row">
+            <span role="cell" className="with-icon small"><CategoryIcon code={c.code} size={16} /> {c.label}</span>
+            <span role="cell" className="pct-input">
+              <input type="number" min={-90} max={300} step={5} value={c.surcharge_pct} aria-label={`Majoration ${c.label}`}
+                     onChange={(e) => set(c.code, Math.round(Number(e.target.value)))} /> %
+            </span>
+            {services.map((s) => <span key={s.id} role="cell" className="num">{formatPrice(vehiclePrice(s.price_cents, c.surcharge_pct))}</span>)}
+          </div>
+        ))}
+      </div>
+      {msg && <p className={`alert ${msg.ok ? 'ok' : 'error'}`}>{msg.text}</p>}
+      <button type="submit" className="btn primary">Enregistrer les tarifs</button>
+    </form>
   );
 }
 

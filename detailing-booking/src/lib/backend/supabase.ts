@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Backend } from './types';
-import { BookingError, ERROR_MESSAGES, type Booking, type BookingErrorCode, type Closure, type Service, type Settings } from '../types';
+import { BookingError, ERROR_MESSAGES, type Booking, type BookingErrorCode, type Closure, type Service, type Settings, type VehicleCategory } from '../types';
 
 function asBookingError(err: { message: string } | null): Error | null {
   if (!err) return null;
@@ -43,8 +43,10 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
           p_name: i.customer_name,
           p_email: i.email,
           p_phone: i.phone,
-          p_vehicle_type: i.vehicle_type,
-          p_vehicle: i.vehicle,
+          p_vehicle_category: i.vehicle_category,
+          p_vehicle_brand: i.vehicle_brand,
+          p_vehicle_model: i.vehicle_model,
+          p_vehicle_genre: i.vehicle_genre,
           p_address: i.address,
           p_lat: i.lat,
           p_lon: i.lon,
@@ -120,6 +122,14 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
     async saveService(s) {
       const row = { ...s, id: s.id || undefined };
       check(await sb.from('services').upsert(row));
+    },
+
+    async listVehicleCategories() {
+      return check(await sb.from('vehicle_categories').select('code, label, surcharge_pct, sort').order('sort')) as VehicleCategory[];
+    },
+
+    async saveVehicleCategories(list) {
+      check(await sb.from('vehicle_categories').upsert(list.map(({ code, label, surcharge_pct, sort }) => ({ code, label, surcharge_pct, sort }))));
     },
 
     async listHours() {

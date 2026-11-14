@@ -545,6 +545,62 @@ button { font: inherit; color: inherit; }
 }
 
 /* =========================================================================
+   Véhicule et tarifs
+   ========================================================================= */
+.combo { position: relative; }
+.combo .address-list { z-index: 40; }
+.combo.plain { min-width: 0; }
+.genre-card {
+  display: grid; gap: 6px; margin-top: 14px; padding: 16px; border-radius: var(--r-lg); background: var(--surface);
+  box-shadow: var(--shadow), inset 0 0 0 1.5px var(--accent-soft); animation: fade-up .35s var(--ease) both;
+}
+.genre-card span { color: var(--muted); font-size: .92rem; }
+.genre-card b { color: var(--text); }
+.genre-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.genre-btn {
+  display: grid; gap: 2px; justify-items: start; text-align: left; border: 0; border-radius: var(--r-md); padding: 12px 14px;
+  background: var(--surface-2); cursor: pointer; transition: transform .15s var(--ease), background-color .2s, color .2s;
+}
+.genre-btn:active { transform: scale(.97); }
+.genre-btn span:last-child { font-size: .82rem; color: var(--muted); }
+.genre-code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 700; font-size: 1.05rem; letter-spacing: .04em; }
+.genre-btn.on { background: var(--accent); color: var(--on-accent); }
+.genre-btn.on span:last-child { color: inherit; opacity: .85; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
+.cat-btn {
+  display: grid; gap: 2px; justify-items: start; text-align: left; border: 0; border-radius: var(--r-md); padding: 12px;
+  background: var(--surface); box-shadow: var(--shadow), inset 0 0 0 1.5px transparent; cursor: pointer;
+  transition: transform .15s var(--ease), box-shadow .2s; animation: pop .3s var(--ease) both;
+}
+.cat-btn svg { color: var(--accent); margin-bottom: 4px; }
+.cat-btn:active { transform: scale(.97); }
+.cat-btn.on { box-shadow: var(--shadow), inset 0 0 0 2px var(--accent); }
+.cat-label { font-weight: 700; font-size: .92rem; }
+.cat-btn small { color: var(--muted); font-size: .74rem; line-height: 1.3; }
+.cat-btn strong { margin-top: 6px; font-variant-numeric: tabular-nums; }
+.result-card.warn { background: var(--warn-soft); color: var(--warn); --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 5H9v6h2zm0 8H9v2h2z'/%3E%3C/svg%3E"); }
+.price-grid { margin-top: 20px; background: var(--surface); border-radius: var(--r-lg); padding: 4px 16px 8px; box-shadow: var(--shadow); }
+.price-grid .section-label { margin: 12px 0 4px; }
+.price-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); transition: color .2s; }
+.price-row:last-child { border-bottom: 0; }
+.price-row-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); transition: background-color .2s, color .2s; }
+.price-row-label { display: grid; font-size: .92rem; font-weight: 600; min-width: 0; }
+.price-row-label small { font-weight: 400; font-size: .74rem; color: var(--muted); }
+.price-row strong { font-variant-numeric: tabular-nums; }
+.price-row.on .price-row-icon { background: var(--accent); color: var(--on-accent); }
+.price-row.on strong, .price-row.on .price-row-label { color: var(--accent); }
+.veh-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.veh-line strong { color: var(--text); font-weight: 600; }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.veh-row { align-items: end; }
+.tariff-table { display: grid; gap: 2px; margin-top: 8px; overflow-x: auto; }
+.tariff-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) 110px repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); min-width: 520px; }
+.tariff-row.head { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.tariff-row .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.pct-input { display: inline-flex; align-items: center; gap: 6px; }
+.admin .pct-input input { width: 76px; min-height: 38px; padding: 6px 10px; }
+
+/* =========================================================================
    Espace pro
    ========================================================================= */
 .page.admin { min-height: 100vh; }

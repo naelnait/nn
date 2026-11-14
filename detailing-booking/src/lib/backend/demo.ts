@@ -1,7 +1,8 @@
 // Mode démo : tout est stocké dans le navigateur (localStorage), aucun serveur requis.
 // Les règles sont identiques à celles du serveur. Synchronisation entre onglets en temps réel.
 import type { Backend } from './types';
-import { BookingError, type Booking, type Closure, type Interval, type OpeningHour, type Service, type Settings } from '../types';
+import { BookingError, type Booking, type Closure, type Interval, type OpeningHour, type Service, type Settings, type VehicleCategory } from '../types';
+import { DEFAULT_VEHICLE_CATEGORIES, lookupVehicle, needsGenre, vehicleKey, vehiclePrice } from '../vehicles';
 import { bufferAfter, checkSlot, overlaps, rulesFrom } from '../slots';
 import { travelQuote } from '../zone';
 
@@ -11,9 +12,11 @@ interface DemoDb {
   hours: OpeningHour[];
   closures: Closure[];
   bookings: Booking[];
+  vehicleCategories: VehicleCategory[];
 }
 
-const KEY = 'detailing-demo-db-v1';
+// v2 : tarification par véhicule et Complet à 190 € (les données démo v1 sont abandonnées)
+const KEY = 'detailing-demo-db-v2';
 const SESSION_KEY = 'detailing-demo-admin';
 export const DEMO_ADMIN = { email: 'admin@demo.fr', password: 'demo' };
 
@@ -55,8 +58,9 @@ function seed(): DemoDb {
     services: [
       { id: uuid(), name: 'Intérieur', description: 'Aspiration, sièges, plastiques, vitres intérieures.', duration_min: 150, price_cents: 8000, active: true, sort: 1 },
       { id: uuid(), name: 'Extérieur', description: 'Lavage, décontamination, jantes, protection.', duration_min: 150, price_cents: 7000, active: true, sort: 2 },
-      { id: uuid(), name: 'Complet', description: 'Intérieur + extérieur.', duration_min: 270, price_cents: 14000, active: true, sort: 3 },
+      { id: uuid(), name: 'Complet', description: 'Intérieur + extérieur.', duration_min: 270, price_cents: 19000, active: true, sort: 3 },
     ],
+    vehicleCategories: DEFAULT_VEHICLE_CATEGORIES.map((c) => ({ ...c })),
     hours: [1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, open_time: '08:30', close_time: '18:30' })),
     closures: [],
     bookings: [],
@@ -127,6 +131,7 @@ export function createDemoBackend(): Backend {
         settings: pub,
         services: db.services.filter((s) => s.active).sort((a, b) => a.sort - b.sort),
         hours: [...db.hours],
+        vehicle_categories: [...db.vehicleCategories].sort((a, b) => a.sort - b.sort),
       };
     },
 
@@ -154,6 +159,23 @@ export function createDemoBackend(): Backend {
       if (name.length < 2 || phone.length < 6 || (!admin && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))) {
         throw new BookingError('INVALID_INPUT');
       }
+
+      // Véhicule : mêmes contrôles que create_booking côté serveur
+      const brand = vehicleKey(i.vehicle_brand);
+      const model = vehicleKey(i.vehicle_model);
+      if (!brand || !model) throw new BookingError('VEHICLE_REQUIRED');
+      const vc = db.vehicleCategories.find((c) => c.code === i.vehicle_category);
+      if (!vc) throw new BookingError('INVALID_INPUT');
+      const cats = lookupVehicle(brand, model);
+      if (cats && !admin) {
+        if (needsGenre(cats)) {
+          if (!i.vehicle_genre) throw new BookingError('VEHICLE_GENRE_REQUIRED');
+          if (vc.code !== (i.vehicle_genre === 'CTTE' ? 'utilitaire' : 'monospace')) throw new BookingError('VEHICLE_MISMATCH');
+        } else if (!cats.includes(vc.code as never)) {
+          throw new BookingError('VEHICLE_MISMATCH');
+        }
+      }
+      const price = vehiclePrice(svc.price_cents, vc.surcharge_pct);
 
       let fee = 0;
       let distance: number | null = null;
@@ -195,20 +217,27 @@ export function createDemoBackend(): Backend {
         customer_name: name,
         email,
         phone,
-        vehicle_type: i.vehicle_type,
-        vehicle: i.vehicle,
+        vehicle_type: vc.label,
+        vehicle: `${brand} ${model}`,
+        vehicle_category: vc.code,
+        vehicle_brand: brand,
+        vehicle_model: model,
+        vehicle_genre: i.vehicle_genre,
+        vehicle_verified: cats !== null,
         address: i.location_type === 'home' ? i.address : '',
         distance_km: distance,
-        price_cents: svc.price_cents,
+        base_price_cents: svc.price_cents,
+        vehicle_surcharge_pct: vc.surcharge_pct,
+        price_cents: price,
         travel_fee_cents: fee,
-        total_cents: svc.price_cents + fee,
+        total_cents: price + fee,
         notes: i.notes,
         source: admin ? 'admin' : 'online',
         status: 'confirmed',
       };
       db.bookings.push(booking);
       save(db);
-      return { id: booking.id, total_cents: booking.total_cents, travel_fee_cents: fee };
+      return { id: booking.id, price_cents: price, total_cents: booking.total_cents, travel_fee_cents: fee };
     },
 
     onAvailabilityChange(cb) {
@@ -294,6 +323,21 @@ export function createDemoBackend(): Backend {
       const idx = db.services.findIndex((x) => x.id === s.id);
       if (idx >= 0) db.services[idx] = { ...s };
       else db.services.push({ ...s, id: uuid() });
+      save(db);
+    },
+
+    async listVehicleCategories() {
+      requireAdmin();
+      return [...load().vehicleCategories].sort((a, b) => a.sort - b.sort);
+    },
+
+    async saveVehicleCategories(list) {
+      requireAdmin();
+      if (list.some((c) => !Number.isInteger(c.surcharge_pct) || c.surcharge_pct < -90 || c.surcharge_pct > 300)) {
+        throw new BookingError('INVALID_INPUT');
+      }
+      const db = load();
+      db.vehicleCategories = list.map((c) => ({ ...c }));
       save(db);
     },
 

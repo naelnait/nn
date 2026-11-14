@@ -48,10 +48,19 @@ export interface Settings {
 export type PrivateSettingKey = 'base_lat' | 'base_lon' | 'fee_fixed_cents' | 'fee_per_km_cents' | 'fee_free_km' | 'road_factor';
 export type PublicSettings = Omit<Settings, PrivateSettingKey>;
 
+export interface VehicleCategory {
+  code: string;
+  label: string;
+  /** Majoration du prix de la formule, en % (négative possible). */
+  surcharge_pct: number;
+  sort: number;
+}
+
 export interface PublicConfig {
   settings: PublicSettings;
   services: Service[];
   hours: OpeningHour[];
+  vehicle_categories: VehicleCategory[];
 }
 
 export interface Interval {
@@ -72,8 +81,11 @@ export interface BookingInput {
   customer_name: string;
   email: string;
   phone: string;
-  vehicle_type: string;
-  vehicle: string;
+  vehicle_category: string;
+  vehicle_brand: string;
+  vehicle_model: string;
+  /** Genre inscrit en case J.1 de la carte grise, demandé seulement s'il lève une ambiguïté. */
+  vehicle_genre: '' | 'VP' | 'CTTE';
   address: string;
   lat: number | null;
   lon: number | null;
@@ -82,6 +94,7 @@ export interface BookingInput {
 
 export interface BookingResult {
   id: string;
+  price_cents: number;
   total_cents: number;
   travel_fee_cents: number;
 }
@@ -100,8 +113,15 @@ export interface Booking {
   phone: string;
   vehicle_type: string;
   vehicle: string;
+  vehicle_category: string;
+  vehicle_brand: string;
+  vehicle_model: string;
+  vehicle_genre: string;
+  vehicle_verified: boolean;
   address: string;
   distance_km: number | null;
+  base_price_cents: number | null;
+  vehicle_surcharge_pct: number;
   price_cents: number;
   travel_fee_cents: number;
   total_cents: number;
@@ -122,6 +142,9 @@ export type BookingErrorCode =
   | 'SERVICE_UNAVAILABLE'
   | 'LOCATION_UNAVAILABLE'
   | 'OUT_OF_ZONE'
+  | 'VEHICLE_REQUIRED'
+  | 'VEHICLE_MISMATCH'
+  | 'VEHICLE_GENRE_REQUIRED'
   | 'TOO_SOON'
   | 'TOO_FAR'
   | 'OUTSIDE_HOURS'
@@ -133,6 +156,9 @@ export const ERROR_MESSAGES: Record<BookingErrorCode, string> = {
   SERVICE_UNAVAILABLE: "Cette formule n'est plus disponible.",
   LOCATION_UNAVAILABLE: "Ce mode d'intervention n'est pas disponible.",
   OUT_OF_ZONE: "Cette adresse est en dehors de la zone d'intervention.",
+  VEHICLE_REQUIRED: 'La marque et le modèle du véhicule sont obligatoires.',
+  VEHICLE_MISMATCH: 'La catégorie choisie ne correspond pas à ce modèle. Revenez à l’étape Véhicule.',
+  VEHICLE_GENRE_REQUIRED: 'Indiquez le genre inscrit sur la carte grise (case J.1) : VP ou CTTE.',
   TOO_SOON: 'Ce créneau est trop proche, merci de choisir une date plus lointaine.',
   TOO_FAR: 'Ce créneau est trop loin dans le futur.',
   OUTSIDE_HOURS: "Ce créneau est en dehors des horaires d'ouverture.",

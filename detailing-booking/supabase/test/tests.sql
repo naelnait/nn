@@ -32,12 +32,25 @@ create or replace function pg_temp.book(svc text, start_at timestamptz,
                                         lat double precision default 48.8049,
                                         lon double precision default 2.1204,
                                         is_admin boolean default false,
-                                        loc text default 'home') returns text language sql as $$
+                                        loc text default 'home',
+                                        cat text default 'citadine',
+                                        brand text default 'Renault',
+                                        model text default 'Clio',
+                                        genre text default '') returns text language sql as $$
   select format($f$select public.create_booking(%L, %L, %L, 'Jean Test', 'jean@test.fr', '0600000000',
-                 'voiture', 'Clio', '1 rue Test, Versailles', %s, %s, '', %s)$f$,
-                pg_temp.svc(svc), loc, start_at, lat, lon, is_admin::text);
+                 %L, %L, %L, %L, '1 rue Test, Versailles', %s, %s, '', %s)$f$,
+                pg_temp.svc(svc), loc, start_at, cat, brand, model, genre, lat, lon, is_admin::text);
 $$;
-grant execute on function pg_temp.book(text, timestamptz, double precision, double precision, boolean, text) to anon, authenticated;
+grant execute on function pg_temp.book(text, timestamptz, double precision, double precision, boolean, text, text, text, text, text) to anon, authenticated;
+
+-- Prix facturé (prestation, hors déplacement) d'un RDV créé par un appel
+create or replace function pg_temp.price_of(sql text) returns int language plpgsql as $$
+declare r jsonb;
+begin
+  execute sql into r;
+  return (r->>'price_cents')::int;
+end $$;
+grant execute on function pg_temp.price_of(text) to anon, authenticated;
 
 set role anon;
 
@@ -158,6 +171,54 @@ do $$ begin
   from public.services where name = 'Extérieur';
   raise exception 'ÉCHEC: chevauchement accepté';
 exception when exclusion_violation then null;
+end $$;
+
+-- 24. Tarification par véhicule (Complet = 190 €)
+set role anon;
+do $$
+declare cit int; ber int; suv int; uti int; moto int;
+begin
+  cit  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '2 days'));
+  ber  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '3 days', cat => 'berline', brand => 'Volkswagen', model => 'Golf'));
+  suv  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '4 days', cat => 'suv', brand => 'peugeot', model => ' 3008 '));
+  uti  := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '5 days', cat => 'utilitaire', brand => 'Renault', model => 'Trafic'));
+  moto := pg_temp.price_of(pg_temp.book('Complet', pg_temp.monday(8, 30) + interval '9 days', cat => 'moto', brand => 'Yamaha', model => 'MT-07'));
+  if cit <> 19000 then raise exception 'ÉCHEC: citadine % au lieu de 19000', cit; end if;
+  if ber <> 20900 then raise exception 'ÉCHEC: berline % au lieu de 20900', ber; end if;
+  if suv <> 22800 then raise exception 'ÉCHEC: SUV % au lieu de 22800', suv; end if;
+  if uti <> 25700 then raise exception 'ÉCHEC: utilitaire % au lieu de 25700 (256,50 € arrondi)', uti; end if;
+  if moto <> 15200 then raise exception 'ÉCHEC: moto % au lieu de 15200', moto; end if;
+  if not (uti > suv and suv > cit) then raise exception 'ÉCHEC: ordre utilitaire > SUV > citadine non respecté'; end if;
+end $$;
+-- 25. Contrôles du véhicule
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'citadine', brand => 'Peugeot', model => '3008'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'citadine', brand => 'Renault', model => 'Trafic'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', brand => 'Renault', model => ''), 'VEHICLE_REQUIRED');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', brand => '', model => 'Clio'), 'VEHICLE_REQUIRED');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'inconnue'), 'INVALID_INPUT');
+-- Kangoo : version voiture (VP) ou camionnette (CTTE) selon la carte grise
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'monospace', brand => 'Renault', model => 'Kangoo'), 'VEHICLE_GENRE_REQUIRED');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'monospace', brand => 'Renault', model => 'Kangoo', genre => 'CTTE'), 'VEHICLE_MISMATCH');
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '2 days', cat => 'utilitaire', brand => 'Renault', model => 'Kangoo', genre => 'CTTE'), null);
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '3 days', cat => 'monospace', brand => 'Citroen', model => 'Berlingo', genre => 'VP'), null);
+-- Accents et casse : « citroën  c3 » est reconnu comme CITROEN C3 (citadine), donc contrôlé
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'utilitaire', brand => 'citroën', model => '  c3 '), 'VEHICLE_MISMATCH');
+-- Clio : citadine ou break (berline) admis
+select pg_temp.expect(pg_temp.book('Extérieur', pg_temp.monday(15) + interval '4 days', cat => 'berline', brand => 'Renault', model => 'Clio'), null);
+reset role;
+do $$ begin
+  if (select vehicle_verified from public.bookings where vehicle_model = 'MT-07') then
+    raise exception 'ÉCHEC: un modèle hors catalogue doit être marqué « à vérifier »';
+  end if;
+  if not (select vehicle_verified from public.bookings where vehicle_model = '3008') then
+    raise exception 'ÉCHEC: un modèle du catalogue doit être marqué vérifié';
+  end if;
+  if (select vehicle from public.bookings where vehicle_model = '3008') <> 'PEUGEOT 3008' then
+    raise exception 'ÉCHEC: marque/modèle mal enregistrés';
+  end if;
+  if (select price_cents from public.services where name = 'Complet') <> 19000 then
+    raise exception 'ÉCHEC: le Complet doit valoir 190 €';
+  end if;
 end $$;
 
 \echo 'Tous les tests SQL sont passés.'

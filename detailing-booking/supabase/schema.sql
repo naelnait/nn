@@ -76,6 +76,24 @@ create table if not exists public.closures (
   check (ends_at > starts_at)
 );
 
+-- Catégories de véhicule et majoration du prix de la formule (en %, peut être négative)
+create table if not exists public.vehicle_categories (
+  code          text primary key,
+  label         text not null,
+  surcharge_pct int  not null default 0 check (surcharge_pct between -90 and 300),
+  sort          int  not null default 0,
+  active        boolean not null default true
+);
+
+-- Catalogue marque/modèle -> catégories admises (la première est la catégorie par défaut).
+-- Rempli par supabase/vehicle_catalog.sql (sources ADEME/UTAC via data.gouv.fr + complément manuel).
+create table if not exists public.vehicle_catalog (
+  brand      text not null,
+  model      text not null,
+  categories text[] not null,
+  primary key (brand, model)
+);
+
 create table if not exists public.bookings (
   id                uuid primary key default gen_random_uuid(),
   created_at        timestamptz not null default now(),
@@ -116,6 +134,14 @@ end $$;
 
 create index if not exists bookings_start_idx on public.bookings (start_at);
 
+alter table public.bookings add column if not exists vehicle_category      text not null default '';
+alter table public.bookings add column if not exists vehicle_brand         text not null default '';
+alter table public.bookings add column if not exists vehicle_model         text not null default '';
+alter table public.bookings add column if not exists vehicle_genre         text not null default '';
+alter table public.bookings add column if not exists vehicle_verified      boolean not null default false;
+alter table public.bookings add column if not exists base_price_cents      int;
+alter table public.bookings add column if not exists vehicle_surcharge_pct int not null default 0;
+
 create table if not exists public.admins (
   user_id uuid primary key
 );
@@ -128,9 +154,21 @@ insert into public.services (name, description, duration_min, price_cents, sort)
 select * from (values
   ('Intérieur',  'Aspiration, sièges, plastiques, vitres intérieures.', 150, 8000,  1),
   ('Extérieur',  'Lavage, décontamination, jantes, protection.',       150, 7000,  2),
-  ('Complet',    'Intérieur + extérieur.',                              270, 14000, 3)
+  ('Complet',    'Intérieur + extérieur.',                              270, 19000, 3)
 ) as v(name, description, duration_min, price_cents, sort)
 where not exists (select 1 from public.services);
+
+-- Passage du Complet de 140 € à 190 € (ne touche pas un prix déjà modifié à la main)
+update public.services set price_cents = 19000 where name = 'Complet' and price_cents = 14000;
+
+insert into public.vehicle_categories (code, label, surcharge_pct, sort) values
+  ('moto',       'Moto / scooter',        -20, 0),
+  ('citadine',   'Citadine',                0, 1),
+  ('berline',    'Berline / compacte / break', 10, 2),
+  ('suv',        'SUV / 4x4',              20, 3),
+  ('monospace',  'Monospace / ludospace',  25, 4),
+  ('utilitaire', 'Utilitaire / fourgon',   35, 5)
+on conflict (code) do nothing;
 
 insert into public.opening_hours (weekday, open_time, close_time)
 select d, time '08:30', time '18:30' from generate_series(1, 6) as d
@@ -210,6 +248,9 @@ language sql stable security definer set search_path = public as $$
                  from public.settings s where id = 1),
     'services', coalesce((select jsonb_agg(to_jsonb(v) order by v.sort, v.name)
                           from public.services v where v.active), '[]'::jsonb),
+    'vehicle_categories', coalesce((select jsonb_agg(jsonb_build_object(
+                            'code', c.code, 'label', c.label, 'surcharge_pct', c.surcharge_pct, 'sort', c.sort)
+                          order by c.sort) from public.vehicle_categories c where c.active), '[]'::jsonb),
     'hours',    coalesce((select jsonb_agg(jsonb_build_object(
                             'weekday', h.weekday,
                             'open_time', to_char(h.open_time, 'HH24:MI'),
@@ -241,19 +282,39 @@ returns jsonb language sql stable security definer set search_path = public as $
   select public.travel_quote_internal(s, p_lat, p_lon) from public.settings s where id = 1;
 $$;
 
+-- Clé de comparaison marque/modèle : sans accents, majuscules, espaces normalisés.
+create or replace function public.vehicle_key(p text) returns text
+language sql immutable as $$
+  select upper(regexp_replace(btrim(translate(coalesce(p, ''),
+    'àâäáãéèêëîïíìôöóòõùûüúçñÀÂÄÁÃÉÈÊËÎÏÍÌÔÖÓÒÕÙÛÜÚÇÑ',
+    'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN')), '\s+', ' ', 'g'));
+$$;
+
+-- Prix d'une formule pour une catégorie : majoration appliquée puis arrondi à l'euro.
+create or replace function public.vehicle_price_cents(p_base int, p_pct int) returns int
+language sql immutable as $$
+  select (round(p_base * (100 + p_pct) / 100.0 / 100.0) * 100)::int;
+$$;
+
+-- Ancienne signature (avant la tarification par véhicule)
+drop function if exists public.create_booking(uuid, text, timestamptz, text, text, text, text, text, text,
+  double precision, double precision, text, boolean);
+
 -- Création d'un RDV. Codes d'erreur renvoyés (message de l'exception) :
--- INVALID_INPUT, SERVICE_UNAVAILABLE, LOCATION_UNAVAILABLE, OUT_OF_ZONE,
--- TOO_SOON, TOO_FAR, OUTSIDE_HOURS, SLOT_TAKEN, FORBIDDEN
+-- INVALID_INPUT, SERVICE_UNAVAILABLE, LOCATION_UNAVAILABLE, OUT_OF_ZONE, VEHICLE_REQUIRED,
+-- VEHICLE_MISMATCH, VEHICLE_GENRE_REQUIRED, TOO_SOON, TOO_FAR, OUTSIDE_HOURS, SLOT_TAKEN, FORBIDDEN
 create or replace function public.create_booking(
-  p_service_id   uuid,
-  p_location     text,
-  p_start        timestamptz,
-  p_name         text,
-  p_email        text,
-  p_phone        text,
-  p_vehicle_type text,
-  p_vehicle      text,
-  p_address      text,
+  p_service_id       uuid,
+  p_location         text,
+  p_start            timestamptz,
+  p_name             text,
+  p_email            text,
+  p_phone            text,
+  p_vehicle_category text,
+  p_vehicle_brand    text,
+  p_vehicle_model    text,
+  p_vehicle_genre    text,
+  p_address          text,
   p_lat          double precision,
   p_lon          double precision,
   p_notes        text,
@@ -271,6 +332,9 @@ declare
   v_local  timestamp;
   v_min    int;
   v_id     uuid;
+  vc       public.vehicle_categories;
+  v_cats   text[];
+  v_price  int;
 begin
   if p_admin and not public.is_admin() then
     raise exception 'FORBIDDEN';
@@ -290,7 +354,6 @@ begin
      or length(p_email) > 200
      or (p_email <> '' and p_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$')
      or length(coalesce(p_notes, '')) > 2000
-     or length(coalesce(p_vehicle, '')) > 200
      or length(coalesce(p_address, '')) > 300
      or p_start is null then
     raise exception 'INVALID_INPUT';
@@ -298,6 +361,36 @@ begin
   if not p_admin and p_email = '' then
     raise exception 'INVALID_INPUT';
   end if;
+
+  -- Véhicule : marque et modèle obligatoires, catégorie cohérente avec le catalogue
+  p_vehicle_brand := public.vehicle_key(p_vehicle_brand);
+  p_vehicle_model := public.vehicle_key(p_vehicle_model);
+  p_vehicle_genre := upper(btrim(coalesce(p_vehicle_genre, '')));
+  if p_vehicle_brand = '' or p_vehicle_model = '' then
+    raise exception 'VEHICLE_REQUIRED';
+  end if;
+  if length(p_vehicle_brand) > 60 or length(p_vehicle_model) > 80 or p_vehicle_genre not in ('', 'VP', 'CTTE') then
+    raise exception 'INVALID_INPUT';
+  end if;
+  select * into vc from public.vehicle_categories where code = p_vehicle_category and active;
+  if not found then
+    raise exception 'INVALID_INPUT';
+  end if;
+  select categories into v_cats from public.vehicle_catalog where brand = p_vehicle_brand and model = p_vehicle_model;
+  if v_cats is not null and not p_admin then
+    if 'monospace' = any(v_cats) and 'utilitaire' = any(v_cats) then
+      -- Même nom en version voiture (VP) et camionnette (CTTE) : la carte grise tranche (case J.1)
+      if p_vehicle_genre = '' then
+        raise exception 'VEHICLE_GENRE_REQUIRED';
+      end if;
+      if p_vehicle_category <> (case p_vehicle_genre when 'CTTE' then 'utilitaire' else 'monospace' end) then
+        raise exception 'VEHICLE_MISMATCH';
+      end if;
+    elsif not (p_vehicle_category = any(v_cats)) then
+      raise exception 'VEHICLE_MISMATCH';
+    end if;
+  end if;
+  v_price := public.vehicle_price_cents(v.price_cents, vc.surcharge_pct);
 
   -- Lieu et frais de déplacement
   if p_location = 'home' then
@@ -357,22 +450,23 @@ begin
   begin
     insert into public.bookings (
       service_id, service_name, location_type, start_at, end_at, buffer_after_min, occupied_until,
-      customer_name, email, phone, vehicle_type, vehicle, address, lat, lon, distance_km,
-      price_cents, travel_fee_cents, total_cents, notes, source
+      customer_name, email, phone, vehicle_type, vehicle, vehicle_category, vehicle_brand, vehicle_model,
+      vehicle_genre, vehicle_verified, address, lat, lon, distance_km,
+      base_price_cents, vehicle_surcharge_pct, price_cents, travel_fee_cents, total_cents, notes, source
     ) values (
       v.id, v.name, p_location, p_start, v_end, v_buffer, v_end + make_interval(mins => v_buffer),
-      p_name, p_email, p_phone, left(coalesce(p_vehicle_type, ''), 40), coalesce(p_vehicle, ''),
-      coalesce(p_address, ''),
+      p_name, p_email, p_phone, vc.label, p_vehicle_brand || ' ' || p_vehicle_model, vc.code, p_vehicle_brand,
+      p_vehicle_model, p_vehicle_genre, v_cats is not null, coalesce(p_address, ''),
       case when p_location = 'home' then p_lat end,
       case when p_location = 'home' then p_lon end,
-      v_dist, v.price_cents, v_fee, v.price_cents + v_fee, coalesce(p_notes, ''),
+      v_dist, v.price_cents, vc.surcharge_pct, v_price, v_fee, v_price + v_fee, coalesce(p_notes, ''),
       case when p_admin then 'admin' else 'online' end
     ) returning id into v_id;
   exception when exclusion_violation then
     raise exception 'SLOT_TAKEN';
   end;
 
-  return jsonb_build_object('id', v_id, 'total_cents', v.price_cents + v_fee,
+  return jsonb_build_object('id', v_id, 'total_cents', v_price + v_fee, 'price_cents', v_price,
                             'travel_fee_cents', v_fee, 'start_at', p_start, 'end_at', v_end);
 end $$;
 
@@ -422,6 +516,10 @@ drop trigger if exists services_notify on public.services;
 create trigger services_notify after insert or update or delete on public.services
   for each statement execute function public.notify_availability();
 
+drop trigger if exists vehicle_categories_notify on public.vehicle_categories;
+create trigger vehicle_categories_notify after insert or update or delete on public.vehicle_categories
+  for each statement execute function public.notify_availability();
+
 drop trigger if exists settings_notify on public.settings;
 create trigger settings_notify after update on public.settings
   for each statement execute function public.notify_availability();
@@ -436,6 +534,8 @@ alter table public.opening_hours enable row level security;
 alter table public.closures      enable row level security;
 alter table public.bookings      enable row level security;
 alter table public.admins        enable row level security;
+alter table public.vehicle_categories enable row level security;
+alter table public.vehicle_catalog    enable row level security;
 
 drop policy if exists admin_all on public.settings;
 create policy admin_all on public.settings      for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -447,10 +547,15 @@ drop policy if exists admin_all on public.closures;
 create policy admin_all on public.closures      for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_all on public.bookings;
 create policy admin_all on public.bookings      for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists admin_all on public.vehicle_categories;
+create policy admin_all on public.vehicle_categories for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists admin_all on public.vehicle_catalog;
+create policy admin_all on public.vehicle_catalog    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 drop policy if exists admin_self on public.admins;
 create policy admin_self on public.admins       for select to authenticated using (user_id = auth.uid());
 
 revoke all on all tables in schema public from anon;
+grant select, insert, update, delete on public.vehicle_categories, public.vehicle_catalog to authenticated;
 grant select, insert, update, delete on public.settings, public.services, public.opening_hours,
   public.closures, public.bookings to authenticated;
 grant select on public.admins to authenticated;
@@ -459,7 +564,7 @@ revoke execute on all functions in schema public from public, anon, authenticate
 grant execute on function public.get_public_config()                          to anon, authenticated;
 grant execute on function public.get_busy(timestamptz, timestamptz)           to anon, authenticated;
 grant execute on function public.quote_travel(double precision, double precision) to anon, authenticated;
-grant execute on function public.create_booking(uuid, text, timestamptz, text, text, text, text, text,
-  text, double precision, double precision, text, boolean)                     to anon, authenticated;
+grant execute on function public.create_booking(uuid, text, timestamptz, text, text, text, text, text, text,
+  text, text, double precision, double precision, text, boolean)               to anon, authenticated;
 grant execute on function public.is_admin()                                   to authenticated;
 grant execute on function public.replace_opening_hours(jsonb)                 to authenticated;
