@@ -250,7 +250,7 @@
     (useHA ? fetchHAWeather : fetchOpenMeteo)(function (err, w) {
       if (err) {
         if ($('w-temp').textContent === '--°') $('w-label').textContent = 'Météo indisponible';
-        setTimeout(updateWeather, 60000);
+        setTimeout(updateWeather, 20000);
         return;
       }
       renderWeather(w);

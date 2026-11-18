@@ -90,6 +90,16 @@ URL de démarrage = l'adresse ci-dessus, plein écran, écran toujours allumé,
 lancement au démarrage. Laisser la tablette sur secteur ; si la batterie gonfle
 avec l'âge, la retirer ou limiter la charge.
 
+**Vieux smartphone (ex. Samsung Galaxy S6 / S6 edge, Android 7)** : utiliser en
+**paysage** (heure et météo à gauche, appareils à droite). Fully Kiosk Browser
+s'installe encore sur Android 7. Si la météo reste « indisponible », mettre
+`weather.source: "homeassistant"` (Android 7.0 ne reconnaît pas certains
+certificats HTTPS récents). Pas de limite de charge sur ce modèle : brancher le
+chargeur sur une prise connectée et ajouter dans Home Assistant l'intégration
+« Fully Kiosk Browser » (niveau de batterie) pour couper la charge à 80 % et la
+relancer à 30 %. Si le dos du téléphone se bombe, cesser de l'utiliser
+(batterie gonflée).
+
 **iPad** : Safari → Partager → « Sur l'écran d'accueil » (plein écran), Réglages >
 Luminosité > Verrouillage auto : Jamais, puis Accessibilité > **Accès guidé**
 pour bloquer l'iPad sur la page.
