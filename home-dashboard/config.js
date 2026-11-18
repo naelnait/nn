@@ -35,12 +35,15 @@ var CONFIG = {
   // icon : "bulb" | "tv" | "pc" | "plug" | "fan" | "speaker"
   // statusEntity (facultatif) : entité qui donne l'état réel (ex. ping du PC).
   devices: [
-    { name: "Salon",   entity: "light.salon",   icon: "bulb" },
-    { name: "Chambre", entity: "light.chambre", icon: "bulb" },
-    { name: "Bureau",  entity: "light.bureau",  icon: "bulb" },
-    { name: "Télé",    entity: "media_player.tv", icon: "tv" },
-    { name: "PC",      entity: "switch.pc", statusEntity: "binary_sensor.pc", icon: "pc" },
-    { name: "Prise",   entity: "switch.prise",  icon: "plug" }
+    // Identifiants probables : à vérifier dans Home Assistant (Paramètres > Entités)
+    { name: "Salon",        entity: "light.salon",        icon: "bulb" },
+    { name: "Donut",        entity: "light.donut",        icon: "bulb" },
+    { name: "Cuisine",      entity: "light.cuisine",      icon: "bulb" },
+    { name: "Chambre",      entity: "light.chambre",      icon: "bulb" },
+    { name: "Salle de bain", entity: "light.salle_de_bain", icon: "bulb" },
+    { name: "Enceinte",     entity: "media_player.salon", icon: "speaker" },
+    { name: "Télé",         entity: "media_player.tv",    icon: "tv" },
+    { name: "PC",           entity: "switch.pc", statusEntity: "binary_sensor.pc", icon: "pc" }
   ],
 
   // Assombrit l'écran la nuit (heures pleines, 0-23). Mettre null pour désactiver.
