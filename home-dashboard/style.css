@@ -1,0 +1,177 @@
+/* Compatible vieux navigateurs : pas de variables CSS, pas de grid, pas de "gap". */
+* { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #0f1115;
+  color: #e8eaed;
+  font-family: -apple-system, "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  overflow: hidden;
+}
+
+#app {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  height: 100%;
+  padding: 16px;
+}
+
+#left {
+  -webkit-box-flex: 0; -webkit-flex: 0 0 40%; flex: 0 0 40%;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+  padding-right: 16px;
+  min-width: 0;
+}
+
+#right {
+  -webkit-box-flex: 1; -webkit-flex: 1 1 auto; flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column;
+}
+
+/* ---------- Horloge ---------- */
+#clock { padding: 8px 4px 20px; }
+#time {
+  font-size: 96px; font-size: 11vw;
+  font-weight: 200; line-height: 1; letter-spacing: -2px;
+}
+#time .colon { -webkit-animation: blink 2s steps(1) infinite; animation: blink 2s steps(1) infinite; }
+@-webkit-keyframes blink { 50% { opacity: .25; } }
+@keyframes blink { 50% { opacity: .25; } }
+#date { margin-top: 8px; font-size: 22px; color: #9aa0a6; }
+
+/* ---------- Météo ---------- */
+#weather {
+  background: #181b21;
+  border-radius: 18px;
+  padding: 18px;
+}
+.w-now { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; -webkit-align-items: center; align-items: center; }
+.w-icon { width: 84px; height: 84px; -webkit-flex-shrink: 0; flex-shrink: 0; margin-right: 14px; }
+.w-icon svg, .h-icon svg, .t-icon svg { width: 100%; height: 100%; display: block; }
+.w-temp { font-size: 56px; font-weight: 300; line-height: 1; }
+.w-label { font-size: 18px; color: #c4c7cc; margin-top: 4px; }
+
+.w-details {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap;
+  margin: 14px -4px 0;
+}
+.w-details .d {
+  margin: 4px; padding: 8px 12px;
+  background: #20242c; border-radius: 10px;
+  font-size: 15px; color: #c4c7cc;
+}
+.w-details .d b { color: #e8eaed; font-weight: 500; }
+
+.w-hourly {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  margin-top: 16px;
+  border-top: 1px solid #262a32;
+  padding-top: 12px;
+}
+.w-hourly .h {
+  -webkit-box-flex: 1; -webkit-flex: 1 1 0; flex: 1 1 0;
+  text-align: center; font-size: 14px; color: #9aa0a6;
+}
+.w-hourly .h-icon { width: 34px; height: 34px; margin: 6px auto; }
+.w-hourly .h-temp { color: #e8eaed; font-size: 17px; }
+.w-hourly .h-rain { color: #6fa8ff; font-size: 12px; margin-top: 2px; }
+
+/* ---------- Appareils ---------- */
+.right-head {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+  -webkit-box-pack: justify; -webkit-justify-content: space-between; justify-content: space-between;
+  padding: 8px 6px 12px;
+}
+.right-head h2 { font-size: 22px; font-weight: 500; }
+.status { font-size: 14px; color: #9aa0a6; }
+.status .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #666; margin-right: 6px; vertical-align: middle; }
+.status.ok .dot { background: #34c759; }
+.status.demo .dot { background: #f5a623; }
+.status.err .dot { background: #ff453a; }
+
+#devices {
+  display: -webkit-box; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap;
+  -webkit-align-content: flex-start; align-content: flex-start;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  -webkit-box-flex: 1; -webkit-flex: 1 1 auto; flex: 1 1 auto;
+}
+
+.tile {
+  width: 31.33%; width: calc(33.333% - 12px);
+  margin: 6px;
+  background: #181b21;
+  border-radius: 18px;
+  overflow: hidden;
+  -webkit-transition: background .2s; transition: background .2s;
+}
+.tile-main {
+  display: block; width: 100%;
+  background: none; border: 0; color: inherit; font: inherit; text-align: left;
+  padding: 16px; cursor: pointer;
+  outline: none;
+}
+.tile .t-icon { width: 44px; height: 44px; color: #7d838c; }
+.tile .t-name { font-size: 19px; font-weight: 500; margin-top: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .t-state { font-size: 14px; color: #9aa0a6; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.tile.on { background: #2a2620; }
+.tile.on .t-icon { color: #ffc94d; }
+.tile.on .t-state { color: #ffd77a; }
+.tile.on.media .t-icon, .tile.on.computer .t-icon { color: #6fa8ff; }
+.tile.on.media, .tile.on.computer { background: #1d2533; }
+.tile.on.media .t-state, .tile.on.computer .t-state { color: #9cc2ff; }
+.tile.unavailable { opacity: .45; }
+.tile.busy .tile-main { opacity: .6; }
+
+.tile-extra { padding: 0 16px 14px; display: none; }
+.tile.on .tile-extra.has { display: block; }
+
+.tile input[type=range] {
+  width: 100%; height: 34px;
+  -webkit-appearance: none; appearance: none;
+  background: transparent;
+}
+.tile input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: #4a4235; }
+.tile input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 28px; height: 28px; margin-top: -10px;
+  border-radius: 50%; background: #ffc94d; border: 0;
+}
+.tile input[type=range]::-moz-range-track { height: 8px; border-radius: 4px; background: #4a4235; }
+.tile input[type=range]::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: #ffc94d; border: 0; }
+
+.tile.on .tile-extra.has.btns { display: -webkit-box; display: -webkit-flex; display: flex; }
+.btns button {
+  -webkit-box-flex: 1; -webkit-flex: 1 1 0; flex: 1 1 0;
+  margin-right: 8px; padding: 10px 0;
+  background: #2a3446; color: #e8eaed; border: 0; border-radius: 10px;
+  font-size: 18px; font-family: inherit; cursor: pointer; outline: none;
+}
+.btns button:last-child { margin-right: 0; }
+.btns button:active { background: #3a4760; }
+
+/* ---------- Mode nuit ---------- */
+#night {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: #000; opacity: 0; pointer-events: none;
+  -webkit-transition: opacity 2s; transition: opacity 2s;
+}
+
+/* ---------- Portrait / petits écrans ---------- */
+@media (orientation: portrait) {
+  html, body { overflow: auto; }
+  #app { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; height: auto; min-height: 100%; }
+  #left { -webkit-flex: 0 0 auto; flex: 0 0 auto; padding-right: 0; margin-bottom: 16px; }
+  #time { font-size: 20vw; }
+  #devices { overflow: visible; }
+  .tile { width: calc(50% - 12px); }
+}
+@media (max-width: 700px) and (orientation: landscape) {
+  .tile { width: calc(50% - 12px); }
+}
