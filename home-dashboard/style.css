@@ -164,8 +164,8 @@ html, body {
 }
 
 /* ---------- Portrait / petits écrans ---------- */
-@media (orientation: portrait) {
-  html, body { overflow: auto; }
+@media (orientation: portrait), (max-height: 520px) {
+  html, body { height: auto; min-height: 100%; overflow: visible; overflow-x: hidden; }
   #app { -webkit-box-orient: vertical; -webkit-flex-direction: column; flex-direction: column; height: auto; min-height: 100%; }
   #left { -webkit-flex: 0 0 auto; flex: 0 0 auto; padding-right: 0; margin-bottom: 16px; }
   #time { font-size: 20vw; }
